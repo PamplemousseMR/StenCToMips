@@ -9,5 +9,5 @@ L’objectif de ce projet est d’implémenter un compilateur pour le langage St
 - **structure de controle** if,else,while,for
 - *appel de fonction* (optionel)  
 - **printf,printa**
-- **stenciel**
+- **stencil**
 - **return**
