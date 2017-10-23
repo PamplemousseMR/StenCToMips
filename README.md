@@ -1,7 +1,7 @@
-#StenCToMips
+# StenCToMips
 L’objectif de ce projet est d’implémenter un compilateur pour le langage StenC, à écrire en C à l’aide des outils Lex et Yacc, qui produit un code exécutable MIPS correspondant aux programmes d’entrée. 
 
-###Token
+### Token
 - **int** (const))
 - **define**
 - **main**
