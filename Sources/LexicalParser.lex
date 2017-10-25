@@ -5,27 +5,33 @@
 
 %}
 
-FOR					    (?i:for)
-WHILE				    (?i:while)
-IF              (?i:if)
-ELSE            (?i:else)
-RETURN 			    (?i:return)
-MAIN				    (main)
-VARIABLE 			  [a-zA-Z_][0-9a-zA-Z_]*
-CHIFFRE  			  ([0-9]+[0-9]*)
-TYPE				    (void|int)[ \*]*
-OPERATOR        (\+|-|\/|%)
-INCREMENT       (\+\+|--)
-AFFECT			    (\+=|-=|\*=|\/=|%=|=)
-COMPARATOR      (<=|>=|==|!=|>|<|&&|\|\||!)
-LBRA				    (\()
-RBRA 				    (\))
-LHOO				    (\[)
-RHOO				    (\])
-LEMB				    (\{)
-REMB				    (\})
-COMMA				    (\,)
-SEMI				    (\;)
+DEFINE            (#define)[ ]
+FOR					      (?i:for)
+WHILE				      (?i:while)
+IF                (?i:if)
+ELSE              (?i:else)
+RETURN 			      (?i:return)
+MAIN				      (main)
+VARIABLE 			    [a-zA-Z_][0-9a-zA-Z_]*
+CHIFFRE  			    ([0-9]+[0-9]*)
+TYPE				      (void|int|stencil)[ ]
+OPERATOR          (\+|-|\/|%)
+OPERATOR_STENCIL  ($)
+INCREMENT         (\+\+|--)
+AFFECT			      (\+=|-=|\*=|\/=|%=|=)
+COMPARATOR        (<=|>=|==|!=|>|<|&&|\|\||!)
+LBRA				      (\()
+RBRA 				      (\))
+LHOO				      (\[)
+RHOO				      (\])
+LEMB				      (\{)
+REMB				      (\})
+COMMA				      (\,)
+SEMI				      (\;)
+COM_SINGLE        (\/\/[^\n]*)
+COM_MULTI         (\/\*(.|\n)*\*\/)
+USELESS           [ |\n|\t]
+UNKNOW            .
 
 %%
 
@@ -80,6 +86,12 @@ SEMI				    (\;)
 {OPERATOR} {
   
   printf("OPERATOR : %s\n",yytext);
+
+}
+
+{OPERATOR_STENCIL} {
+  
+  printf("OPERATOR_STENCIL : %s\n",yytext);
 
 }
 
@@ -147,6 +159,26 @@ SEMI				    (\;)
   
   printf("SEMI : %s\n",yytext);
 
+}
+
+{COM_SINGLE} {
+
+  printf("COM_SINGLE : %s\n",yytext);
+
+}
+
+{COM_MULTI} {
+
+  printf("COM_MULTI : %s\n",yytext);
+
+}
+
+{USELESS} {}
+
+{UNKNOW} {
+  
+  printf("\x1b[31mUNKNOW : %sEND\n",yytext);
+  printf("\x1b[0m");
 }
 
 %%

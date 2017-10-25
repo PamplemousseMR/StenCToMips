@@ -7,6 +7,11 @@ int main()
 	int image[HEIGHT][WIDTH]; // Image originale en niveaux de gris.
 	int sobel[HEIGHT][WIDTH]; // Image transformée.
 
+	/*
+	TEST dsfgsdfgh
+	dafgsdfg
+	*/
+
 	stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 }};
 	stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 }};
 
