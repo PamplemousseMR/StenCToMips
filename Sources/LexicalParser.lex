@@ -12,6 +12,8 @@ IF                (?i:if)
 ELSE              (?i:else)
 RETURN 			      (?i:return)
 MAIN				      (main)
+PRINTF					(?i:printf)
+PRINTI					(?i:printi)
 VARIABLE 			    [a-zA-Z_][0-9a-zA-Z_]*
 CHIFFRE  			    ([0-9]+[0-9]*)
 TYPE				      (void|int|stencil)[ ]
@@ -30,6 +32,7 @@ COMMA				      (\,)
 SEMI				      (\;)
 COM_SINGLE        (\/\/[^\n]*)
 COM_MULTI         (\/\*(.|\n)*\*\/)
+STRING			(\"([^\"\n]|\\(.|\n))*\")
 USELESS           [ |\n|\t]
 UNKNOW            .
 
@@ -63,6 +66,18 @@ UNKNOW            .
 
   printf("MAIN : %s\n",yytext);
 
+}
+
+{PRINTF} {
+	
+	printf("PRINTF : %s\n",yytext);
+	
+}
+
+{PRINTI} {
+	
+	printf("PRINTI : %s\n",yytext);
+	
 }
 
 {VARIABLE} {
@@ -173,12 +188,17 @@ UNKNOW            .
 
 }
 
+{STRING} {
+	
+	printf("STRING : %s\n",yytext);
+	
+}
+
 {USELESS} {}
 
 {UNKNOW} {
   
-  printf("\x1b[31mUNKNOW : %sEND\n",yytext);
-  printf("\x1b[0m");
+  printf("\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
 }
 
 %%
