@@ -23,6 +23,13 @@ int main()
 			sobel[i][j] = 	sqrt((pow(gx $ image[i][j], 2) +
 							pow(gy $ image[i][j], 2)) / 4.);
 		}
+		printf("toto tata titi ");
+		printf("toto \"tata\" \n titi");
+		printf("toto "tata titi"\
+		);printf("toto);
+		printf("toto "\ tata");
+		printf("toto);
+		printi(gx);
 	}
 	return 0;
 }
