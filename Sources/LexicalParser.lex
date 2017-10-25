@@ -8,6 +8,7 @@
 FOR					    (?i:for)
 WHILE				    (?i:while)
 IF              (?i:if)
+ELSE            (?i:else)
 RETURN 			    (?i:return)
 MAIN				    (main)
 VARIABLE 			  [a-zA-Z_][0-9a-zA-Z_]*
