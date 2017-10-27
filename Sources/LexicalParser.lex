@@ -12,8 +12,8 @@ IF                (?i:if)
 ELSE              (?i:else)
 RETURN 			      (?i:return)
 MAIN				      (main)
-PRINTF					(?i:printf)
-PRINTI					(?i:printi)
+PRINTF					  (?i:printf)
+PRINTI					  (?i:printi)
 VARIABLE 			    [a-zA-Z_][0-9a-zA-Z_]*
 CHIFFRE  			    ([0-9]+[0-9]*)
 TYPE				      (void|int|stencil)[ ]
@@ -32,11 +32,17 @@ COMMA				      (\,)
 SEMI				      (\;)
 COM_SINGLE        (\/\/[^\n]*)
 COM_MULTI         (\/\*(.|\n)*\*\/)
-STRING			(\"([^\"\n]|\\(.|\n))*\")
+STRING			      (\"([^\"\n]|\\(.|\n))*\")
 USELESS           [ |\n|\t]
 UNKNOW            .
 
 %%
+
+{DEFINE} {
+
+  printf("DEFINE : %s\n",yytext);
+
+}
 
 {FOR} {
 
