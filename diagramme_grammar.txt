@@ -1,0 +1,65 @@
+PROGRAMME : PREPROCESSEURS FONCTIONS 
+			| FONCTIONS
+
+PREPROCESSEURS : 	PREPROCESSEUR PREPROCESSEURS
+					| PREPROCESSEUR
+
+PREPROCESSEUR : define id chiffre endline
+
+FONCTIONS : MAIN
+
+MAIN : type main lbra ARGS rbra lemb INSTRUCTIONS remb
+
+INSTRUCTIONS : 	LINE INSTRUCTION 
+				| LINE
+
+LINE : 	FOR 
+		| WHILE 
+		| IF 
+		| BLOC
+		| INITIALISATION 
+		| AFFECTATION 
+		| EVALUATION
+
+//------------------------------------------
+
+AFFECTATION : 	VARIABLE equals EVALUATION semi 
+				| VARIABLE affect EVALUATION semi 
+
+INITIALISATION : type VARINITS semi
+
+VARINITS : 	VARINIT coma VARINITS
+        	| VARINIT
+
+VARINIT : 	VARIABLE
+    		| VARIABLE equals EVALUATION
+
+VARIABLE : 	id HOOKS
+
+HOOKS : LHOO EVALUATION RHOO HOOKS 
+		| epsilon
+
+//------------------------------------------
+
+BLOC : lemb INSTRUCTIONS remb | LINE
+
+FOR : 	for lbra TODO semi TODO semi TODO rbra BLOC
+
+IF : if lbra CONDITION rbra BLOC ELSE
+
+ELSE : else BLOC | epsilon
+
+WHILE : while lbra CONDITION rbra BLOC
+
+//------------------------------------------
+
+CONDITION : EVALUATION COMPARATOR EVALUATION 
+
+//-----------------------------------------
+
+EVALUATION : un peux pres tout, la vie la mort et toute ces choses ...
+
+stencils 
+fonctions (on gere pas les autres fonctions que le main) 
+EVALUATION(aussi appel de fonctions,CONDITION, calcule, variable, printf, printi, ...)  
+&&  ||  ! la fleme

@@ -3,25 +3,33 @@
 #include <string.h>
 #include <stdio.h>
 
+#define STATE_NORMAL 0
+#define STATE_DEFINE 1
+
+int state = STATE_NORMAL;
+
 %}
 
 DEFINE            (#define)[ ]
-FOR					      (?i:for)
-WHILE				      (?i:while)
-IF                (?i:if)
-ELSE              (?i:else)
-RETURN 			      (?i:return)
+ENDLINE           (\n)
+FOR					      (for)
+WHILE				      (while)
+IF                (if)
+ELSE              (else)
+RETURN 			      (return)
 MAIN				      (main)
-PRINTF					  (?i:printf)
-PRINTI					  (?i:printi)
-VARIABLE 			    [a-zA-Z_][0-9a-zA-Z_]*
+PRINTF					  (printf)
+PRINTI					  (printi)
+ID      			    [a-zA-Z_][0-9a-zA-Z_]*
 CHIFFRE  			    ([0-9]+[0-9]*)
-TYPE				      (void|int|stencil)[ ]
+TYPE				      (void|int)[ ]
+STENCIL           (stencil)[ ]
 OPERATOR          (\+|-|\/|%)
 OPERATOR_STENCIL  ($)
 INCREMENT         (\+\+|--)
-AFFECT			      (\+=|-=|\*=|\/=|%=|=)
-COMPARATOR        (<=|>=|==|!=|>|<|&&|\|\||!)
+EQUALS            (=)
+AFFECT			      (\+=|-=|\*=|\/=|%=)
+COMPARATOR        (<=|>=|==|!=|>|<)
 LBRA				      (\()
 RBRA 				      (\))
 LHOO				      (\[)
@@ -33,14 +41,25 @@ SEMI				      (\;)
 COM_SINGLE        (\/\/[^\n]*)
 COM_MULTI         (\/\*(.|\n)*\*\/)
 STRING			      (\"([^\"\n]|\\(.|\n))*\")
-USELESS           [ |\n|\t]
+USELESS           [ |\t]
 UNKNOW            .
 
 %%
 
 {DEFINE} {
 
+  state = STATE_DEFINE;
   printf("DEFINE : %s\n",yytext);
+
+}
+
+{ENDLINE} {
+
+  if(state == STATE_DEFINE)
+  {
+    printf("ENDLINE : %s\n",yytext);
+    state = STATE_NORMAL;
+  }
 
 }
 
@@ -86,9 +105,9 @@ UNKNOW            .
 	
 }
 
-{VARIABLE} {
+{ID} {
   
-  printf("VARIABLE : %s\n",yytext);
+  printf("ID : %s\n",yytext);
 
 }
 
@@ -101,6 +120,12 @@ UNKNOW            .
 {TYPE} {
 
 	printf("TYPE : %s\n",yytext);
+
+}
+
+{STENCIL} {
+
+  printf("STENCIL : %s\n",yytext);
 
 }
 
@@ -119,6 +144,12 @@ UNKNOW            .
 {INCREMENT} {
   
   printf("INCREMENT : %s\n",yytext);
+
+}
+
+{EQUALS} {
+  
+  printf("EQUALS : %s\n",yytext);
 
 }
 
