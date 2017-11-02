@@ -2,3 +2,7 @@
 Sources/a\.out
 
 Sources/lex\.yy\.c
+
+Build/
+
+YACCFOREVER\.prog

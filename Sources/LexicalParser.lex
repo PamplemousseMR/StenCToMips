@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "y.tab.h"
+
 #define STATE_NORMAL 0
 #define STATE_DEFINE 1
 
@@ -12,35 +14,35 @@ int state = STATE_NORMAL;
 
 DEFINE            (#define)[ ]
 ENDLINE           (\n)
-FOR					      (for)
-WHILE				      (while)
+FOR               (for)
+WHILE             (while)
 IF                (if)
 ELSE              (else)
-RETURN 			      (return)
-MAIN				      (main)
-PRINTF					  (printf)
-PRINTI					  (printi)
-ID      			    [a-zA-Z_][0-9a-zA-Z_]*
-CHIFFRE  			    ([0-9]+[0-9]*)
-TYPE				      (void|int)[ ]
+RETURN            (return)
+MAIN              (main)
+PRINTF            (printf)
+PRINTI            (printi)
+ID                [a-zA-Z_][0-9a-zA-Z_]*
+CHIFFRE           ([0-9]+[0-9]*)
+TYPE              (int)[ ]
 STENCIL           (stencil)[ ]
 OPERATOR          (\+|-|\/|%)
 OPERATOR_STENCIL  ($)
 INCREMENT         (\+\+|--)
 EQUALS            (=)
-AFFECT			      (\+=|-=|\*=|\/=|%=)
+AFFECT            (\+=|-=|\*=|\/=|%=)
 COMPARATOR        (<=|>=|==|!=|>|<)
-LBRA				      (\()
-RBRA 				      (\))
-LHOO				      (\[)
-RHOO				      (\])
-LEMB				      (\{)
-REMB				      (\})
-COMMA				      (\,)
-SEMI				      (\;)
+LBRA              (\()
+RBRA              (\))
+LHOO              (\[)
+RHOO              (\])
+LEMB              (\{)
+REMB              (\})
+COMMA             (\,)
+SEMI              (\;)
 COM_SINGLE        (\/\/[^\n]*)
 COM_MULTI         (\/\*(.|\n)*\*\/)
-STRING			      (\"([^\"\n]|\\(.|\n))*\")
+STRING            (\"([^\"\n]|\\(.|\n))*\")
 USELESS           [ |\t]
 UNKNOW            .
 
@@ -49,7 +51,7 @@ UNKNOW            .
 {DEFINE} {
 
   state = STATE_DEFINE;
-  printf("DEFINE : %s\n",yytext);
+  printf("\t\tDEFINE : %s\n",yytext);
 
 }
 
@@ -57,7 +59,7 @@ UNKNOW            .
 
   if(state == STATE_DEFINE)
   {
-    printf("ENDLINE : %s\n",yytext);
+    printf("\t\tENDLINE : %s\n",yytext);
     state = STATE_NORMAL;
   }
 
@@ -65,189 +67,200 @@ UNKNOW            .
 
 {FOR} {
 
-	printf("FOR : %s\n",yytext);
+  printf("\t\tFOR : %s\n",yytext);
 
 }
 
 {WHILE} {
 
-	printf("WHILE : %s\n",yytext);
+  printf("\t\tWHILE : %s\n",yytext);
 
 }
 
 {IF} {
 
-  printf("IF : %s\n",yytext);
+  printf("\t\tIF : %s\n",yytext);
 
 }
 
 {RETURN} {
 
-  printf("RETURN : %s\n",yytext);
+  printf("\t\tRETURN : %s\n",yytext);
 
 }
 
 {MAIN} {
 
-  printf("MAIN : %s\n",yytext);
+  printf("\t\tMAIN : %s\n",yytext);
 
 }
 
 {PRINTF} {
-	
-	printf("PRINTF : %s\n",yytext);
-	
+  
+  printf("\t\tPRINTF : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return PRINTF;
+  
 }
 
 {PRINTI} {
-	
-	printf("PRINTI : %s\n",yytext);
-	
+  
+  printf("\t\tPRINTI : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return PRINTI;
+  
 }
 
 {ID} {
   
-  printf("ID : %s\n",yytext);
+  printf("\t\tID : %s\n",yytext);
 
 }
 
 {CHIFFRE} {
 
-  printf("CHIFFRE : %s\n",yytext);
+  printf("\t\tCHIFFRE : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return CHIFFRE;
 
 }
 
 {TYPE} {
 
-	printf("TYPE : %s\n",yytext);
+  printf("\t\tTYPE : %s\n",yytext);
 
 }
 
 {STENCIL} {
 
-  printf("STENCIL : %s\n",yytext);
+  printf("\t\tSTENCIL : %s\n",yytext);
 
 }
 
 {OPERATOR} {
   
-  printf("OPERATOR : %s\n",yytext);
+  printf("\t\tOPERATOR : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return OPERATOR;
 
 }
 
 {OPERATOR_STENCIL} {
   
-  printf("OPERATOR_STENCIL : %s\n",yytext);
+  printf("\t\tOPERATOR_STENCIL : %s\n",yytext);
 
 }
 
 {INCREMENT} {
   
-  printf("INCREMENT : %s\n",yytext);
+  printf("\t\tINCREMENT : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return INCREMENT;
 
 }
 
 {EQUALS} {
   
-  printf("EQUALS : %s\n",yytext);
+  printf("\t\tEQUALS : %s\n",yytext);
 
 }
 
 {AFFECT} {
   
-  printf("AFFECT : %s\n",yytext);
+  printf("\t\tAFFECT : %s\n",yytext);
 
 }
 
 {COMPARATOR} {
   
-  printf("COMPARATOR : %s\n",yytext);
+  printf("\t\tCOMPARATOR : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return COMPARATOR;
 
 }
 
 {LBRA} {
-  
-  printf("LBRA : %s\n",yytext);
+
+  printf("\t\tLBRA : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return LBRA;
 
 }
 
 {RBRA} {
   
-  printf("RBRA : %s\n",yytext);
+  printf("\t\tRBRA : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return RBRA;
 
 }
 
 {LHOO} {
   
-  printf("LHOO : %s\n",yytext);
+  printf("\t\tLHOO : %s\n",yytext);
 
 }
 
 {RHOO} {
   
-  printf("RHOO : %s\n",yytext);
+  printf("\t\tRHOO : %s\n",yytext);
 
 }
 
 {LEMB} {
   
-  printf("LEMB : %s\n",yytext);
+  printf("\t\tLEMB : %s\n",yytext);
 
 }
 
 {REMB} {
   
-  printf("RBRA : %s\n",yytext);
+  printf("\t\tRBRA : %s\n",yytext);
 
 }
 
 {COMMA} {
   
-  printf("COMMA : %s\n",yytext);
+  printf("\t\tCOMMA : %s\n",yytext);
 
 }
 
 {SEMI} {
   
-  printf("SEMI : %s\n",yytext);
+  printf("\t\tSEMI : %s\n",yytext);
 
 }
 
 {COM_SINGLE} {
 
-  printf("COM_SINGLE : %s\n",yytext);
+  printf("\t\tCOM_SINGLE : %s\n",yytext);
 
 }
 
 {COM_MULTI} {
 
-  printf("COM_MULTI : %s\n",yytext);
+  printf("\t\tCOM_MULTI : %s\n",yytext);
 
 }
 
 {STRING} {
-	
-	printf("STRING : %s\n",yytext);
-	
+  
+  printf("\t\tSTRING : %s\n",yytext);
+  yylval.String = strdup(yytext);
+  return STRING;
+  
 }
 
 {USELESS} {}
 
-{UNKNOW} {
+{UNKNOW} 
+{
   
-  printf("\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
+  printf("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
+
 }
 
 %%
-
-int main()
-{
-
-  yylex();
-
-  return 1;
-  
-}
 
 int yywrap()
 {

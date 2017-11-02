@@ -19,7 +19,10 @@ LINE : 	FOR
 		| BLOC
 		| INITIALISATION 
 		| AFFECTATION 
-		| EVALUATION
+		| EVALUATION semi
+		| RETURN
+
+RETURN : return EVALUATION semi
 
 //------------------------------------------
 
@@ -43,23 +46,29 @@ HOOKS : LHOO EVALUATION RHOO HOOKS
 
 BLOC : lemb INSTRUCTIONS remb | LINE
 
-FOR : 	for lbra TODO semi TODO semi TODO rbra BLOC
+FOR : 	for lbra INITIALISATION semi EVALUATION semi EVALUATION rbra BLOC
 
-IF : if lbra CONDITION rbra BLOC ELSE
+IF : if lbra EVALUATION rbra BLOC ELSE
 
 ELSE : else BLOC | epsilon
 
-WHILE : while lbra CONDITION rbra BLOC
-
-//------------------------------------------
-
-CONDITION : EVALUATION COMPARATOR EVALUATION 
+WHILE : while lbra EVALUATION rbra BLOC
 
 //-----------------------------------------
 
-EVALUATION : un peux pres tout, la vie la mort et toute ces choses ...
+EVALUATION : 	VARIABLE
+				| chiffre
+				| lbra EVALUTATION rbra
+				| printf lbra string rbra
+				| printi lbra EVALUATION rbra
+				| EVALUATION comparator EVALUATION
+				| EVALUATION operator EVALUATION
+				| EVALUATION increment
+				| increment EVALUATION 
 
 stencils 
 fonctions (on gere pas les autres fonctions que le main) 
-EVALUATION(aussi appel de fonctions,CONDITION, calcule, variable, printf, printi, ...)  
+EVALUATION(aussi appel de fonctions, calcule)  
 &&  ||  ! la fleme
+STENCIL   
+OPERATOR_STENCIL 
