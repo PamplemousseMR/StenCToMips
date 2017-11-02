@@ -10,10 +10,10 @@ FONCTIONS : MAIN
 
 MAIN : type main lbra ARGS rbra lemb INSTRUCTIONS remb
 
-INSTRUCTIONS : 	LINE INSTRUCTION 
-				| LINE
+INSTRUCTIONS : 	LIGNE INSTRUCTION 
+				| LIGNE
 
-LINE : 	FOR 
+LIGNE : 	FOR 
 		| WHILE 
 		| IF 
 		| BLOC
@@ -44,7 +44,8 @@ HOOKS : LHOO EVALUATION RHOO HOOKS
 
 //------------------------------------------
 
-BLOC : lemb INSTRUCTIONS remb | LINE
+BLOC : lemb INSTRUCTIONS remb 					// USELESS ! remplacer par LEMB suite_instructions REMB ! dans ligne !
+	   | LIGNE
 
 FOR : 	for lbra INITIALISATION semi EVALUATION semi EVALUATION rbra BLOC
 
@@ -68,7 +69,7 @@ EVALUATION : 	VARIABLE
 
 stencils 
 fonctions (on gere pas les autres fonctions que le main) 
-EVALUATION(aussi appel de fonctions, calcule)  
+EVALUATION aussi appel de fonctions 
 &&  ||  ! la fleme
 STENCIL   
 OPERATOR_STENCIL 
