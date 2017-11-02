@@ -43,6 +43,11 @@
 
 %% //==============================================================================================
 
+variable : 	ID hooks	{ printf("ID hooks\n"); }
+
+hooks : LHOO evaluation RHOO hooks		{ printf("LHOO evaluation RHOO hooks\n"); }
+		| a:vide
+		
 evaluation : 	LBRA evaluation RBRA  						{ printf("LBRA evaluation RBRA\n"); }						//checked
 				| PRINTF LBRA STRING RBRA  					{ printf("PRINTF LBRA STRING RBRA\n"); }					//checked
 				| PRINTI LBRA evaluation RBRA  				{ printf("PRINTI LBRA evaluation RBRA\n"); }				//checked
