@@ -246,7 +246,7 @@ UNKNOW            .
 
 {REMB} {
   
-  printf("\t\REMB : %s\n",yytext);
+  printf("\t\tREMB : %s\n",yytext);
   yylval.String = strdup(yytext);
   return REMB;
 

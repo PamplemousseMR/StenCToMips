@@ -43,11 +43,12 @@
 
 %% //==============================================================================================
 
-variable : 	ID hooks	{ printf("ID hooks\n"); }
+variable : 	ID hooks	{ printf("ID hooks\n"); };
 
-hooks : LHOO evaluation RHOO hooks		{ printf("LHOO evaluation RHOO hooks\n"); }
-		| a:vide
-		
+hooks : /*epsilon*/							{}
+		| LHOO evaluation RHOO hooks		{ printf("LHOO evaluation RHOO hooks\n"); }
+		;
+
 evaluation : 	LBRA evaluation RBRA  						{ printf("LBRA evaluation RBRA\n"); }						//checked
 				| PRINTF LBRA STRING RBRA  					{ printf("PRINTF LBRA STRING RBRA\n"); }					//checked
 				| PRINTI LBRA evaluation RBRA  				{ printf("PRINTI LBRA evaluation RBRA\n"); }				//checked
@@ -56,6 +57,7 @@ evaluation : 	LBRA evaluation RBRA  						{ printf("LBRA evaluation RBRA\n"); }	
 				| evaluation_valeur INCREMENT  				{ printf("evaluation_valeur INCREMENT\n"); }				//checked
 				| INCREMENT evaluation  					{ printf("INCREMENT evaluation\n"); }						//checked
 				| CHIFFRE 									{ printf("CHIFFRE\n"); }									//checked
+				| variable
 				;
 
 evaluation_valeur : evaluation
