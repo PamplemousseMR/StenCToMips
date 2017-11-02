@@ -13,7 +13,7 @@ MAIN : type main lbra ARGS rbra lemb INSTRUCTIONS remb
 INSTRUCTIONS : 	LIGNE INSTRUCTION 
 				| LIGNE
 
-LIGNE : 	FOR 
+LIGNE : FOR 
 		| WHILE 
 		| IF 
 		| BLOC
