@@ -1,4 +1,4 @@
-%start evaluation
+%start ligne
 
 %union {
 
@@ -43,24 +43,51 @@
 
 %% //==============================================================================================
 
-variable : 	ID hooks	{ printf("ID hooks\n"); };
+suite_instructions : ligne suite_instructions				{ printf("suite_instructions -> ligne suite_instructions \n"); }		//checked
+					| ligne									{ printf("suite_instructions -> ligne\n"); }							//checked
+					;
 
-hooks : /*epsilon*/							{}
-		| LHOO evaluation RHOO hooks		{ printf("LHOO evaluation RHOO hooks\n"); }
+ligne : for 												{ printf("ligne -> for\n"); }											//checked
+		| while												{ printf("ligne -> while\n"); }											//checked
+		| if 												{ printf("ligne -> if\n"); }											//checked
+		| LEMB suite_instructions REMB 						{ printf("ligne -> LEMB suite_instructions REMB\n"); }					//checked
+		| evaluation SEMI									{ printf("ligne -> evaluation\n"); }									//checked
 		;
 
-evaluation : 	LBRA evaluation RBRA  						{ printf("LBRA evaluation RBRA\n"); }						//checked
-				| PRINTF LBRA STRING RBRA  					{ printf("PRINTF LBRA STRING RBRA\n"); }					//checked
-				| PRINTI LBRA evaluation RBRA  				{ printf("PRINTI LBRA evaluation RBRA\n"); }				//checked
-				| evaluation_valeur COMPARATOR evaluation  	{ printf("evaluation_valeur COMPARATOR evaluation \n"); }	//checked
-				| evaluation_valeur OPERATOR evaluation  	{ printf("evaluation_valeur OPERATOR evaluation\n"); }		//checked
-				| evaluation_valeur INCREMENT  				{ printf("evaluation_valeur INCREMENT\n"); }				//checked
-				| INCREMENT evaluation  					{ printf("INCREMENT evaluation\n"); }						//checked
-				| CHIFFRE 									{ printf("CHIFFRE\n"); }									//checked
-				| variable
+//-------------------------------------------------------------------------------------------------
+
+
+variable : 	ID 	hooks 										{ printf("variable -> ID hooks\n"); };									//checked
+
+hooks : LHOO evaluation RHOO hooks							{ printf("hooks -> LHOO evaluation RHOO\n"); }							//checked
+		| ;																															//checked
+
+//-------------------------------------------------------------------------------------------------
+
+for : FOR LBRA SEMI SEMI RBRA ligne							{ printf("for -> FOR LBRA SEMI SEMI RBRA ligne\n"); };					//checked
+	
+while : WHILE LBRA evaluation RBRA ligne 					{ printf("while -> WHILE LBRA evaluation RBA ligne\n"); };				//checked
+
+if : IF LBRA evaluation RBRA ligne else						{ printf("if -> IF LBRA evaluation RBRA ligne else\n"); };				//checked
+
+else : ELSE ligne											{ printf("else -> ELSE ligne\n"); }										//checked
+	   | ;
+
+
+//-------------------------------------------------------------------------------------------------
+
+evaluation : 	LBRA evaluation RBRA  						{ printf("evaluation -> LBRA evaluation RBRA\n"); }						//checked
+				| PRINTF LBRA STRING RBRA  					{ printf("evaluation -> PRINTF LBRA STRING RBRA\n"); }					//checked
+				| PRINTI LBRA evaluation RBRA  				{ printf("evaluation -> PRINTI LBRA evaluation RBRA\n"); }				//checked
+				| evaluation_valeur COMPARATOR evaluation  	{ printf("evaluation -> evaluation_valeur COMPARATOR evaluation \n"); }	//checked
+				| evaluation_valeur OPERATOR evaluation  	{ printf("evaluation -> evaluation_valeur OPERATOR evaluation\n"); }	//checked
+				| evaluation_valeur INCREMENT  				{ printf("evaluation -> evaluation_valeur INCREMENT\n"); }				//checked
+				| INCREMENT evaluation  					{ printf("evaluation -> INCREMENT evaluation\n"); }						//checked
+				| CHIFFRE 									{ printf("evaluation -> CHIFFRE\n"); }									//checked
+				| variable									{ printf("evaluation -> variable\n"); }
 				;
 
-evaluation_valeur : evaluation
+evaluation_valeur : evaluation ;																									//checked
 
 %% //==============================================================================================
 
