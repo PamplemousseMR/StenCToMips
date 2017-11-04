@@ -12,23 +12,22 @@ int main()
 	dafgsdfg
 	*/
 
-	stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 }};
-	stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 }};
+//	stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 }};
+//	stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 }};
 
 	// Filtre Sobel
 	for (i = 1; i < HEIGHT - 1; i++) 
 	{
 		for (j = 1; j < WIDTH - 1; j++) 
 		{
-			sobel[i][j] = 	sqrt((pow(gx $ image[i][j], 2) +
-							pow(gy $ image[i][j], 2)) / 4.);
+//			sobel[i][j] = 	sqrt((pow(gx $ image[i][j], 2) +
+//							pow(gy $ image[i][j], 2)) / 4.);
+			i++;
 		}
 		printf("toto tata titi ");
 		printf("toto \"tata\" \n titi");
-		printf("toto "tata titi"\
-		);printf("toto);
-		printf("toto "\ tata");
-		printf("toto);
+		printf("toto \
+		);printf(");
 		printi(gx);
 	}
 	return 0;
