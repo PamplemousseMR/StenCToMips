@@ -166,7 +166,7 @@ evaluation_valeur  : 	LBRA evaluation RBRA
 				
 apres_evaluation :	COMPARATOR evaluation	  	
 					| OPERATOR evaluation  	
-					| INCREMENT evaluation
+					| INCREMENT 
 					| 
 					;
 	
