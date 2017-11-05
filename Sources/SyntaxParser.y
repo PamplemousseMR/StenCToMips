@@ -34,14 +34,13 @@
 %token<String> REMB        
 %token<String> COMMA        
 %token<String> SEMI        
-%token<String> STRING     
+%token<String> STRING 
 
 %type<String> programme           
 %type<String> suite_instructions_preprocesseurs           
 %type<String> instruction_preprocesseur           
 %type<String> suite_fonctions           
 %type<String> main           
-%type<String> arguments           
 %type<String> suite_instructions           
 %type<String> ligne           
 %type<String> return           
@@ -92,12 +91,10 @@ instruction_preprocesseur : DEFINE ID CHIFFRE ENDLINE		{ printf("DEFINE ID CHIFF
 
 suite_fonctions : main										{ printf("main -> suite_fonctions\n"); } ; 								//checked
 
-main : TYPE MAIN LBRA arguments RBRA LEMB suite_instructions REMB { printf("TYPE MAIN LBRA arguments RBRA LEMB suite_instructions REMB -> main\n"); }; //checked
-
-arguments : {};																														//TODO
+main : TYPE MAIN LBRA RBRA LEMB suite_instructions REMB 	{ printf("TYPE MAIN LBRA RBRA LEMB suite_instructions REMB -> main\n"); }; //checked
 
 suite_instructions : ligne suite_instructions				{ printf("ligne suite_instructions  -> suite_instructions\n"); }		//checked
-					| ligne									{ printf("ligne -> suite_instructions\n"); }							//checked
+					| {}									{ printf("ligne -> suite_instructions\n"); }							//checked
 					;
 
 ligne : for 												{ printf("for -> ligne\n"); }											//checked
@@ -116,7 +113,7 @@ return : RETURN evaluation									{ printf("RETURN evaluation -> return : %s%s 
 //				Les variables
 //-------------------------------------------------------------------------------------------------
 
-variable : 	ID 	hooks 										{ printf("ID hooks -> variable\n"); };									//checked
+variable : 	ID hooks 										{ printf("ID hooks -> variable\n"); };									//checked
 
 hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }							//checked
 		| {}
@@ -150,12 +147,14 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }										//ch
 	   | {}
 	   ;
 
-
 //-------------------------------------------------------------------------------------------------
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : evaluation_valeur apres_evaluation							{ $$ = "evaluation";printf("evaluation_valeur apres_evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); };
+evaluation : evaluation_valeur apres_evaluation							{ 	
+																			$$ = "evaluation";
+																			printf("evaluation_valeur apres_evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); 
+																		};
 
 evaluation_valeur  : 	LBRA evaluation RBRA 				 			{ $$ = "evaluation_valeur";printf("LBRA evaluation RBRA -> evaluation_valeur : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }				
 						| PRINTF LBRA STRING RBRA						{ $$ = "evaluation_valeur";printf("PRINTF LBRA STRING RBRA -> evaluation_valeur : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }
@@ -171,9 +170,6 @@ apres_evaluation :	COMPARATOR evaluation	  							{ $$ = "apres_evaluation";prin
 					| 													{ $$ = "apres_evaluation"; }
 					;
 	
-
-
-
 %% //==============================================================================================
 
 int main(void) 

@@ -10,6 +10,12 @@ int main()
 //  stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 }}; 
 //  stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 }}; 
 
+	if(1)
+		if(1)
+			printf("lol");
+		else
+			printf("bah nan");
+
 	// Filtre Sobel
 	for (i = 1; i < HEIGHT - 1; i++) 
 	{
