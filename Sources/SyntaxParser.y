@@ -154,18 +154,24 @@ else : ELSE ligne											{ printf("ELSE ligne -> else\n"); }										//check
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : 	LBRA evaluation_valeur RBRA  						{ printf("LBRA evaluation RBRA -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }						//checked
-				| PRINTF LBRA STRING RBRA  							{ printf("PRINTF LBRA STRING RBRA -> evaluation : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }					//checked
-				| PRINTI LBRA evaluation_valeur RBRA  				{ printf("PRINTI LBRA evaluation RBRA -> evaluation : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }				//checked
-				| INCREMENT evaluation_valeur  						{ printf("INCREMENT evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }						//checked
-				| CHIFFRE 											{ printf("CHIFFRE -> evaluation : %s%s%s\n", KGRN, $1, KNRM); }									//checked
-				| evaluation_valeur COMPARATOR evaluation_valeur  	{ printf("evaluation_valeur COMPARATOR evaluation  -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }	//checked ugly
-				| evaluation_valeur OPERATOR evaluation_valeur  	{ printf("evaluation_valeur OPERATOR evaluation -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }	//checked ugly
-				| evaluation_valeur INCREMENT  						{ printf("evaluation_valeur INCREMENT -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }				//checked ugly
-				| variable											{ printf("variable -> evaluation : %s%s%s\n", KGRN, $1, KNRM); }									//checked ugly
-				;
+evaluation : evaluation_valeur apres_evaluation ;
 
-evaluation_valeur : evaluation ;																									//checked ugly
+evaluation_valeur  : 	LBRA evaluation RBRA  						
+						| PRINTF LBRA STRING RBRA
+						| PRINTI LBRA evaluation RBRA  				
+						| INCREMENT evaluation  						
+						| CHIFFRE 							
+						| variable											
+						;
+				
+apres_evaluation :	COMPARATOR evaluation	  	
+					| OPERATOR evaluation  	
+					| INCREMENT evaluation
+					| 
+					;
+	
+
+
 
 %% //==============================================================================================
 
