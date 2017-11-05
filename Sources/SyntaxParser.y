@@ -154,15 +154,15 @@ else : ELSE ligne											{ printf("ELSE ligne -> else\n"); }										//check
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : 	LBRA evaluation RBRA  						{ printf("LBRA evaluation RBRA -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }						//checked
-				| PRINTF LBRA STRING RBRA  					{ printf("PRINTF LBRA STRING RBRA -> evaluation : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }					//checked
-				| PRINTI LBRA evaluation RBRA  				{ printf("PRINTI LBRA evaluation RBRA -> evaluation : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }				//checked
-				| INCREMENT evaluation  					{ printf("INCREMENT evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }						//checked
-				| CHIFFRE 									{ printf("CHIFFRE -> evaluation : %s%s%s\n", KGRN, $1, KNRM); }									//checked
-				| evaluation_valeur COMPARATOR evaluation  	{ printf("evaluation_valeur COMPARATOR evaluation  -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }	//checked ugly
-				| evaluation_valeur OPERATOR evaluation  	{ printf("evaluation_valeur OPERATOR evaluation -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }	//checked ugly
-				| evaluation_valeur INCREMENT  				{ printf("evaluation_valeur INCREMENT -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }				//checked ugly
-				| variable									{ printf("variable -> evaluation : %s%s%s\n", KGRN, $1, KNRM); }									//checked ugly
+evaluation : 	LBRA evaluation_valeur RBRA  						{ printf("LBRA evaluation RBRA -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }						//checked
+				| PRINTF LBRA STRING RBRA  							{ printf("PRINTF LBRA STRING RBRA -> evaluation : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }					//checked
+				| PRINTI LBRA evaluation_valeur RBRA  				{ printf("PRINTI LBRA evaluation RBRA -> evaluation : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }				//checked
+				| INCREMENT evaluation_valeur  						{ printf("INCREMENT evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }						//checked
+				| CHIFFRE 											{ printf("CHIFFRE -> evaluation : %s%s%s\n", KGRN, $1, KNRM); }									//checked
+				| evaluation_valeur COMPARATOR evaluation_valeur  	{ printf("evaluation_valeur COMPARATOR evaluation  -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }	//checked ugly
+				| evaluation_valeur OPERATOR evaluation_valeur  	{ printf("evaluation_valeur OPERATOR evaluation -> evaluation : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }	//checked ugly
+				| evaluation_valeur INCREMENT  						{ printf("evaluation_valeur INCREMENT -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }				//checked ugly
+				| variable											{ printf("variable -> evaluation : %s%s%s\n", KGRN, $1, KNRM); }									//checked ugly
 				;
 
 evaluation_valeur : evaluation ;																									//checked ugly
