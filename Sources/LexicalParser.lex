@@ -5,6 +5,12 @@
 
 #include "y.tab.h"
 
+#ifdef _DEBUG
+#define OUTPUT printf
+#else
+#define OUTPUT
+#endif
+
 #define STATE_NORMAL 0
 #define STATE_DEFINE 1
 
@@ -51,7 +57,7 @@ UNKNOW				.
 {DEFINE} {
 
 	state = STATE_DEFINE;
-	printf("\t\tDEFINE : %s\n",yytext);
+	OUTPUT("\t\tDEFINE : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return DEFINE;
 }
@@ -60,7 +66,7 @@ UNKNOW				.
 
 	if(state == STATE_DEFINE)
 	{
-		printf("\t\tENDLINE : %s\n",yytext);
+		OUTPUT("\t\tENDLINE : %s\n",yytext);
 		state = STATE_NORMAL;
 		yylval.String = strdup(yytext);
 		return ENDLINE;
@@ -70,7 +76,7 @@ UNKNOW				.
 
 {FOR} {
 
-	printf("\t\tFOR : %s\n",yytext);
+	OUTPUT("\t\tFOR : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return FOR;
 
@@ -78,7 +84,7 @@ UNKNOW				.
 
 {WHILE} {
 
-	printf("\t\tWHILE : %s\n",yytext);
+	OUTPUT("\t\tWHILE : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return WHILE;
 
@@ -86,7 +92,7 @@ UNKNOW				.
 
 {IF} {
 
-	printf("\t\tIF : %s\n",yytext);
+	OUTPUT("\t\tIF : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return IF;
 
@@ -94,7 +100,7 @@ UNKNOW				.
 
 {ELSE} {
 	
-	printf("\t\tELSE : %s", yytext);
+	OUTPUT("\t\tELSE : %s", yytext);
 	yylval.String = strdup(yytext);
 	return ELSE;
 
@@ -102,7 +108,7 @@ UNKNOW				.
 
 {RETURN} {
 
-	printf("\t\tRETURN : %s\n",yytext);
+	OUTPUT("\t\tRETURN : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return RETURN;
 
@@ -110,7 +116,7 @@ UNKNOW				.
 
 {MAIN} {
 
-	printf("\t\tMAIN : %s\n",yytext);
+	OUTPUT("\t\tMAIN : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return MAIN;
 
@@ -118,7 +124,7 @@ UNKNOW				.
 
 {PRINTF} {
 	
-	printf("\t\tPRINTF : %s\n",yytext);
+	OUTPUT("\t\tPRINTF : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return PRINTF;
 	
@@ -126,7 +132,7 @@ UNKNOW				.
 
 {PRINTI} {
 	
-	printf("\t\tPRINTI : %s\n",yytext);
+	OUTPUT("\t\tPRINTI : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return PRINTI;
 	
@@ -134,7 +140,7 @@ UNKNOW				.
 
 {ID} {
 	
-	printf("\t\tID : %s\n",yytext);
+	OUTPUT("\t\tID : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return ID;
 
@@ -142,7 +148,7 @@ UNKNOW				.
 
 {CHIFFRE} {
 
-	printf("\t\tCHIFFRE : %s\n",yytext);
+	OUTPUT("\t\tCHIFFRE : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return CHIFFRE;
 
@@ -150,7 +156,7 @@ UNKNOW				.
 
 {TYPE} {
 
-	printf("\t\tTYPE : %s\n",yytext);
+	OUTPUT("\t\tTYPE : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return TYPE;
 
@@ -158,7 +164,7 @@ UNKNOW				.
 
 {STENCIL} {
 
-	printf("\t\tSTENCIL : %s\n",yytext);
+	OUTPUT("\t\tSTENCIL : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return STENCIL;
 
@@ -166,7 +172,7 @@ UNKNOW				.
 
 {OPERATOR} {
 	
-	printf("\t\tOPERATOR : %s\n",yytext);
+	OUTPUT("\t\tOPERATOR : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return OPERATOR;
 
@@ -174,7 +180,7 @@ UNKNOW				.
 
 {OPERATOR_STENCIL} {
 	
-	printf("\t\tOPERATOR_STENCIL : %s\n",yytext);
+	OUTPUT("\t\tOPERATOR_STENCIL : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return OPERATOR_STENCIL;
 
@@ -182,7 +188,7 @@ UNKNOW				.
 
 {INCREMENT} {
 	
-	printf("\t\tINCREMENT : %s\n",yytext);
+	OUTPUT("\t\tINCREMENT : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return INCREMENT;
 
@@ -190,7 +196,7 @@ UNKNOW				.
 
 {EQUALS} {
 	
-	printf("\t\tEQUALS : %s\n",yytext);
+	OUTPUT("\t\tEQUALS : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return EQUALS;
 
@@ -198,7 +204,7 @@ UNKNOW				.
 
 {AFFECT} {
 	
-	printf("\t\tAFFECT : %s\n",yytext);
+	OUTPUT("\t\tAFFECT : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return AFFECT;
 
@@ -206,7 +212,7 @@ UNKNOW				.
 
 {COMPARATOR} {
 	
-	printf("\t\tCOMPARATOR : %s\n",yytext);
+	OUTPUT("\t\tCOMPARATOR : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return COMPARATOR;
 
@@ -214,7 +220,7 @@ UNKNOW				.
 
 {LBRA} {
 
-	printf("\t\tLBRA : %s\n",yytext);
+	OUTPUT("\t\tLBRA : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return LBRA;
 
@@ -222,7 +228,7 @@ UNKNOW				.
 
 {RBRA} {
 	
-	printf("\t\tRBRA : %s\n",yytext);
+	OUTPUT("\t\tRBRA : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return RBRA;
 
@@ -230,7 +236,7 @@ UNKNOW				.
 
 {LHOO} {
 	
-	printf("\t\tLHOO : %s\n",yytext);
+	OUTPUT("\t\tLHOO : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return LHOO;
 
@@ -238,7 +244,7 @@ UNKNOW				.
 
 {RHOO} {
 	
-	printf("\t\tRHOO : %s\n",yytext);
+	OUTPUT("\t\tRHOO : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return RHOO;
 
@@ -246,7 +252,7 @@ UNKNOW				.
 
 {LEMB} {
 	
-	printf("\t\tLEMB : %s\n",yytext);
+	OUTPUT("\t\tLEMB : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return LEMB;
 
@@ -254,7 +260,7 @@ UNKNOW				.
 
 {REMB} {
 	
-	printf("\t\tREMB : %s\n",yytext);
+	OUTPUT("\t\tREMB : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return REMB;
 
@@ -262,7 +268,7 @@ UNKNOW				.
 
 {COMMA} {
 	
-	printf("\t\tCOMMA : %s\n",yytext);
+	OUTPUT("\t\tCOMMA : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return COMMA;
 
@@ -270,7 +276,7 @@ UNKNOW				.
 
 {SEMI} {
 	
-	printf("\t\tSEMI : %s\n",yytext);
+	OUTPUT("\t\tSEMI : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return SEMI;
 
@@ -278,19 +284,19 @@ UNKNOW				.
 
 {COM_SINGLE} {
 
-	printf("\t\tCOM_SINGLE : %s\n",yytext);
+	OUTPUT("\t\tCOM_SINGLE : %s\n",yytext);
 
 }
 
 {COM_MULTI} {
 
-	printf("\t\tCOM_MULTI : %s\n",yytext);
+	OUTPUT("\t\tCOM_MULTI : %s\n",yytext);
 
 }
 
 {STRING} {
 	
-	printf("\t\tSTRING : %s\n",yytext);
+	OUTPUT("\t\tSTRING : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return STRING;
 	
@@ -301,7 +307,7 @@ UNKNOW				.
 {UNKNOW} 
 {
 	
-	printf("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
+	OUTPUT("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
 
 }
 
