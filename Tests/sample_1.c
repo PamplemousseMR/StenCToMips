@@ -7,6 +7,9 @@ int main()
 	int image[HEIGHT][WIDTH]; // Image originale en niveaux de gris.
 	int sobel[HEIGHT][WIDTH]; // Image transformée.
 
+//  stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 }}; 
+//  stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 }}; 
+
 	// Filtre Sobel
 	for (i = 1; i < HEIGHT - 1; i++) 
 	{
@@ -18,8 +21,8 @@ int main()
 		}
 		printf("toto tata titi ");
 		printf("toto \"tata\" \n titi");
-		/*printf("toto \
-		);printf(");*/
+		printf("toto \
+		);printf(");
 		printi(gx);
 	}
 	return 5+8;
