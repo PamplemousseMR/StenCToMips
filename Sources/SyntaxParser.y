@@ -57,6 +57,7 @@
 %type<String> else
 %type<String> evaluation           
 %type<String> evaluation_valeur           
+%type<String> apres_evaluation           
 
 %{
 	#include <stdio.h>
@@ -139,13 +140,13 @@ affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluatio
 //				Les instructions conditionnelles
 //-------------------------------------------------------------------------------------------------
 
-for : FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne { printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); };					//not finish
+for : FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne	{ printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); };					//not finish
 	
-while : WHILE LBRA evaluation RBRA ligne 					{ printf("WHILE LBRA evaluation RBA ligne -> while\n"); };				//checked
+while : WHILE LBRA evaluation RBRA ligne 								{ printf("WHILE LBRA evaluation RBA ligne -> while\n"); };				//checked
 
-if : IF LBRA evaluation RBRA ligne else						{ printf("IF LBRA evaluation RBRA ligne else -> if\n"); };				//checked
+if : IF LBRA evaluation RBRA ligne else									{ printf("IF LBRA evaluation RBRA ligne else -> if\n"); };				//checked
 
-else : ELSE ligne											{ printf("ELSE ligne -> else\n"); }										//checked
+else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }										//checked
 	   | {}
 	   ;
 
@@ -154,20 +155,20 @@ else : ELSE ligne											{ printf("ELSE ligne -> else\n"); }										//check
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : evaluation_valeur apres_evaluation ;
+evaluation : evaluation_valeur apres_evaluation							{ $$ = "evaluation";printf("evaluation_valeur apres_evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); };
 
-evaluation_valeur  : 	LBRA evaluation RBRA  						
-						| PRINTF LBRA STRING RBRA
-						| PRINTI LBRA evaluation RBRA  				
-						| INCREMENT evaluation  						
-						| CHIFFRE 							
-						| variable											
+evaluation_valeur  : 	LBRA evaluation RBRA 				 			{ $$ = "evaluation_valeur";printf("LBRA evaluation RBRA -> evaluation_valeur : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }				
+						| PRINTF LBRA STRING RBRA						{ $$ = "evaluation_valeur";printf("PRINTF LBRA STRING RBRA -> evaluation_valeur : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }
+						| PRINTI LBRA evaluation RBRA  					{ $$ = "evaluation_valeur";printf("PRINTI LBRA evaluation RBRA -> evaluation_valeur : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }
+						| INCREMENT evaluation  						{ $$ = "evaluation_valeur";printf("INCREMENT evaluation -> evaluation_valeur : %s%s %s%s\n", KGRN, $1, $2, KNRM); }
+						| CHIFFRE 										{ $$ = "evaluation_valeur";printf("CHIFFRE -> evaluation_valeur : %s%s%s\n", KGRN, $1, KNRM); }
+						| variable										{ $$ = "evaluation_valeur";printf("variable -> evaluation_valeur : %s%s%s\n", KGRN, $1, KNRM); }	
 						;
 				
-apres_evaluation :	COMPARATOR evaluation	  	
-					| OPERATOR evaluation  	
-					| INCREMENT 
-					| 
+apres_evaluation :	COMPARATOR evaluation	  							{ $$ = "apres_evaluation";printf("COMPARATOR evaluation -> apres_evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }
+					| OPERATOR evaluation  								{ $$ = "apres_evaluation";printf("OPERATOR evaluation -> apres_evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }
+					| INCREMENT 										{ $$ = "apres_evaluation";printf("INCREMENT -> apres_evaluation : %s%s%s\n", KGRN, $1, KNRM); }
+					| 													{ $$ = "apres_evaluation"; }
 					;
 	
 

@@ -6,9 +6,9 @@
 #include "y.tab.h"
 
 #ifdef _DEBUG
-#define OUTPUT(X,Y) printf(X,Y)
+#define OUTPUT(args...) printf(args)
 #else
-#define OUTPUT(...) 
+#define OUTPUT(...)
 #endif
 
 #define STATE_NORMAL 0
