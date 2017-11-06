@@ -66,6 +66,7 @@
 %type<String> evaluation_E
 %type<String> evaluation_F
 %type<String> evaluation_G
+%type<String> variable_incr
 
 %{
 	#include <stdio.h>
@@ -90,56 +91,56 @@
 //				La structure d'un programme 
 //-------------------------------------------------------------------------------------------------
 
-programme : suite_instructions_preprocesseurs suite_fonctions { printf("suite_instructions_preprocesseurs suite_fonctions -> programme\n"); }; //checked
+programme : suite_instructions_preprocesseurs suite_fonctions { printf("suite_instructions_preprocesseurs suite_fonctions -> programme\n"); }; 
 
-suite_instructions_preprocesseurs : instruction_preprocesseur suite_instructions_preprocesseurs { printf("instruction_preprocesseur suite_instructions_preprocesseurs -> suite_instructions_preprocesseurs\n"); } //checked
-								    | {}
+suite_instructions_preprocesseurs : instruction_preprocesseur suite_instructions_preprocesseurs { printf("instruction_preprocesseur suite_instructions_preprocesseurs -> suite_instructions_preprocesseurs\n"); } 
+								    | 						{}
 								    ;
 									
-instruction_preprocesseur : DEFINE ID CHIFFRE ENDLINE		{ printf("DEFINE ID CHIFFRE ENDLINE -> instruction_preprocesseur\n"); }; //checked
+instruction_preprocesseur : DEFINE ID CHIFFRE ENDLINE		{ printf("DEFINE ID CHIFFRE ENDLINE -> instruction_preprocesseur\n"); }; 
 
-suite_fonctions : main										{ printf("main -> suite_fonctions\n"); } ; 								//checked
+suite_fonctions : main										{ printf("main -> suite_fonctions\n"); } ; 								
 
-main : TYPE MAIN LBRA RBRA LEMB suite_instructions REMB 	{ printf("TYPE MAIN LBRA RBRA LEMB suite_instructions REMB -> main\n"); }; //checked
+main : TYPE MAIN LBRA RBRA LEMB suite_instructions REMB 	{ printf("TYPE MAIN LBRA RBRA LEMB suite_instructions REMB -> main\n"); }; 
 
-suite_instructions : ligne suite_instructions				{ printf("ligne suite_instructions  -> suite_instructions\n"); }		//checked
-					| {}									{ printf("ligne -> suite_instructions\n"); }							//checked
+suite_instructions : ligne suite_instructions				{ printf("ligne suite_instructions  -> suite_instructions\n"); }		
+					| 										{}							
 					;
 
-ligne : for 												{ printf("for -> ligne\n"); }											//checked
-		| while												{ printf("while -> ligne\n"); }											//checked
-		| if 												{ printf("if -> ligne\n"); }											//checked
-		| LEMB suite_instructions REMB 						{ printf("LEMB suite_instructions REMB -> ligne\n"); }					//checked
-		| initialisation SEMI								{ printf("initialisation SEMI -> ligne\n"); }							//checked
-		| affectation SEMI									{ printf("affectation SEMI -> ligne\n"); }								//checked
-		| return SEMI										{ printf("return SEMI -> ligne\n"); }									//checked
-		| evaluation SEMI									{ printf("evaluation SEMI -> ligne\n"); }								//checked
+ligne : for 												{ printf("for -> ligne\n"); }											
+		| while												{ printf("while -> ligne\n"); }											
+		| if 												{ printf("if -> ligne\n"); }											
+		| LEMB suite_instructions REMB 						{ printf("LEMB suite_instructions REMB -> ligne\n"); }					
+		| initialisation SEMI								{ printf("initialisation SEMI -> ligne\n"); }							
+		| affectation SEMI									{ printf("affectation SEMI -> ligne\n"); }								
+		| return SEMI										{ printf("return SEMI -> ligne\n"); }									
+		| evaluation SEMI									{ printf("evaluation SEMI -> ligne\n"); }								
 		;
 
-return : RETURN evaluation									{ printf("RETURN evaluation -> return : %s%s %s%s\n", KYEL, $1, $2, KNRM); };							//checked
+return : RETURN evaluation									{ printf("RETURN evaluation -> return : %s%s %s%s\n", KYEL, $1, $2, KNRM); };							
 
 //-------------------------------------------------------------------------------------------------
 //				Les variables
 //-------------------------------------------------------------------------------------------------
 
-variable : 	ID hooks 										{ printf("ID hooks -> variable\n"); };									//checked
+variable : 	ID hooks 										{ printf("ID hooks -> variable\n"); };									
 
-hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }							//checked
+hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }							
 		| {}
 		;
 		
-initialisation : TYPE suite_variable_init 					{ printf("TYPE suite_variable_init -> initialisation\n"); };			//checked
+initialisation : TYPE suite_variable_init 					{ printf("TYPE suite_variable_init -> initialisation\n"); };			
 
-suite_variable_init : variable_init COMMA suite_variable_init {printf("variable_init COMA suite_variable_init -> suite_variable_init\n"); } //checked
-					  | variable_init						{ printf("variable_init -> suite_variable_init\n"); }					//checked
+suite_variable_init : variable_init COMMA suite_variable_init {printf("variable_init COMA suite_variable_init -> suite_variable_init\n"); } 
+					  | variable_init						{ printf("variable_init -> suite_variable_init\n"); }					
 					  ;
 					  
-variable_init : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> variable_init\n"); }			//checked
-				| variable									{ printf("variable -> variable_init\n"); }								//checked
+variable_init : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> variable_init\n"); }			
+				| variable									{ printf("variable -> variable_init\n"); }								
 				;
 
-affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> affectation\n"); }				//checked
-			  | variable AFFECT evaluation					{ printf("variable AFFECT evaluation -> affectation\n"); }				//checked
+affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> affectation\n"); }				
+			  | variable AFFECT evaluation					{ printf("variable AFFECT evaluation -> affectation\n"); }				
 			  ;
 
 //-------------------------------------------------------------------------------------------------
@@ -148,11 +149,11 @@ affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluatio
 
 for : FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne	{ printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); };					//not finish
 	
-while : WHILE LBRA evaluation RBRA ligne 								{ printf("WHILE LBRA evaluation RBA ligne -> while\n"); };				//checked
+while : WHILE LBRA evaluation RBRA ligne 								{ printf("WHILE LBRA evaluation RBA ligne -> while\n"); };				
 
-if : IF LBRA evaluation RBRA ligne else									{ printf("IF LBRA evaluation RBRA ligne else -> if\n"); };				//checked
+if : IF LBRA evaluation RBRA ligne else									{ printf("IF LBRA evaluation RBRA ligne else -> if\n"); };				
 
-else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }										//checked
+else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }										
 	   | {}
 	   ;
 
@@ -189,9 +190,14 @@ evaluation_G : LBRA evaluation RBRA							{ printf("LBRA evaluation RBRA -> eval
 			   | PRINTF LBRA STRING RBRA					{ printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); }
 			   | OPERATOR_NEGATION evaluation				{ printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); }
 			   | CHIFFRE									{ printf("CHIFFRE -> evaluation_G\n"); }
-			   | variable 									{ printf("variable -> evaluation_G\n"); }
+			   | variable_incr								{ printf("variable_incr -> evaluation_G\n"); }
 			   ;
 
+variable_incr : OPERATOR_INCREMENT variable					{ printf("OPERATOR_INCREMENT variable -> variable_incr\n"); }
+				| variable OPERATOR_INCREMENT				{ printf("variable OPERATOR_INCREMENT -> variable_incr\n"); }
+				| variable 									{ printf("variable -> variable_incr\n"); }
+				;
+			   
 %% //==============================================================================================
 
 int main(void) 
