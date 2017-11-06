@@ -70,6 +70,6 @@ EVALUATION : 	VARIABLE
 stencils 
 fonctions (on gere pas les autres fonctions que le main) 
 EVALUATION aussi appel de fonctions 
-&&  ||  ! la fleme
 STENCIL   
 OPERATOR_STENCIL 
+++ --

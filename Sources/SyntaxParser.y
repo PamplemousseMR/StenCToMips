@@ -6,35 +6,40 @@
   
 }
 
-%token<String> DEFINE
-%token<String> ENDLINE
-%token<String> FOR
-%token<String> WHILE
-%token<String> IF
-%token<String> ELSE 
-%token<String> RETURN      
-%token<String> MAIN        
-%token<String> PRINTF        
-%token<String> PRINTI        
-%token<String> ID           
-%token<String> CHIFFRE      
-%token<String> TYPE       
-%token<String> STENCIL      
-%token<String> OPERATOR        
-%token<String> OPERATOR_STENCIL      
-%token<String> INCREMENT        
-%token<String> EQUALS        
-%token<String> AFFECT        
-%token<String> COMPARATOR   
-%token<String> LBRA        
-%token<String> RBRA        
-%token<String> LHOO        
-%token<String> RHOO        
-%token<String> LEMB        
-%token<String> REMB        
-%token<String> COMMA        
-%token<String> SEMI        
-%token<String> STRING 
+%token<String> DEFINE				
+%token<String> ENDLINE				
+%token<String> FOR					
+%token<String> WHILE				
+%token<String> IF					
+%token<String> ELSE				
+%token<String> RETURN				
+%token<String> MAIN				
+%token<String> PRINTF				
+%token<String> PRINTI				
+%token<String> STENCIL				
+%token<String> TYPE				
+%token<String> ID					
+%token<String> CHIFFRE				
+%token<String> OPERATOR_NEGATION	
+%token<String> OPERATOR_INCREMENT	
+%token<String> OPERATOR_MULTI		
+%token<String> OPERATOR_ADDITION	
+%token<String> COMPARATOR_SUPREMACY 
+%token<String> COMPARATOR_EQUALITY 
+%token<String> COMPARATOR_AND		
+%token<String> COMPARATOR_OR		
+%token<String> EQUALS				
+%token<String> AFFECT				
+%token<String> OPERATOR_STENCIL	
+%token<String> LBRA				
+%token<String> RBRA				
+%token<String> LHOO				
+%token<String> RHOO				
+%token<String> LEMB				
+%token<String> REMB				
+%token<String> COMMA				
+%token<String> SEMI				
+%token<String> STRING				
 
 %type<String> programme           
 %type<String> suite_instructions_preprocesseurs           
@@ -54,9 +59,13 @@
 %type<String> while
 %type<String> if
 %type<String> else
-%type<String> evaluation           
-%type<String> evaluation_valeur           
-%type<String> apres_evaluation           
+%type<String> evaluation
+%type<String> evaluation_B
+%type<String> evaluation_C
+%type<String> evaluation_D
+%type<String> evaluation_E
+%type<String> evaluation_F
+%type<String> evaluation_G
 
 %{
 	#include <stdio.h>
@@ -151,25 +160,38 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }										//ch
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : evaluation_valeur apres_evaluation							{ 	
-																			$$ = "evaluation";
-																			printf("evaluation_valeur apres_evaluation -> evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); 
-																		};
+evaluation : evaluation_B COMPARATOR_OR evaluation			{ printf("evaluation_B COMPARATOR_OR evaluation -> evaluation_\n"); }
+			   | evaluation_B								{ printf("evaluation_B -> evaluation\n"); }
+			   ;
+		  
+evaluation_B : evaluation_C COMPARATOR_AND evaluation_B		{ printf("evaluation_C COMPARATOR_AND evaluation_B -> evaluation_B\n"); }
+			   | evaluation_C								{ printf("evaluation_C -> evaluation_B\n"); }
+			   ;
 
-evaluation_valeur  : 	LBRA evaluation RBRA 				 			{ $$ = "evaluation_valeur";printf("LBRA evaluation RBRA -> evaluation_valeur : %s%s %s %s%s\n", KGRN, $1, $2, $3, KNRM); }				
-						| PRINTF LBRA STRING RBRA						{ $$ = "evaluation_valeur";printf("PRINTF LBRA STRING RBRA -> evaluation_valeur : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }
-						| PRINTI LBRA evaluation RBRA  					{ $$ = "evaluation_valeur";printf("PRINTI LBRA evaluation RBRA -> evaluation_valeur : %s%s %s %s %s%s\n", KGRN, $1, $2, $3, $4, KNRM); }
-						| INCREMENT evaluation  						{ $$ = "evaluation_valeur";printf("INCREMENT evaluation -> evaluation_valeur : %s%s %s%s\n", KGRN, $1, $2, KNRM); }
-						| CHIFFRE 										{ $$ = "evaluation_valeur";printf("CHIFFRE -> evaluation_valeur : %s%s%s\n", KGRN, $1, KNRM); }
-						| variable										{ $$ = "evaluation_valeur";printf("variable -> evaluation_valeur : %s%s%s\n", KGRN, $1, KNRM); }	
-						;
-				
-apres_evaluation :	COMPARATOR evaluation	  							{ $$ = "apres_evaluation";printf("COMPARATOR evaluation -> apres_evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }
-					| OPERATOR evaluation  								{ $$ = "apres_evaluation";printf("OPERATOR evaluation -> apres_evaluation : %s%s %s%s\n", KGRN, $1, $2, KNRM); }
-					| INCREMENT 										{ $$ = "apres_evaluation";printf("INCREMENT -> apres_evaluation : %s%s%s\n", KGRN, $1, KNRM); }
-					| 													{ $$ = "apres_evaluation"; }
-					;
-	
+evaluation_C : evaluation_D COMPARATOR_EQUALITY evaluation_C { printf("evaluation_COMPARATOR_EQUALITY evaluation_C -> evaluation_C\n"); }
+			   | evaluation_D								{ printf("evaluation_D -> evaluation_C\n"); } 
+			   ;
+		  
+evaluation_D : evaluation_E COMPARATOR_SUPREMACY evaluation_D { printf("evaluation_E COMPARATOR_SUPREMACY evaluation_D -> evaluation_D\n"); }
+			   | evaluation_E								{ printf("evaluation_E -> evaluation_D\n"); }
+			   ;
+		  
+evaluation_E : evaluation_F OPERATOR_ADDITION evaluation_E	{ printf("evaluation_F OPERATOR_ADDITION evaluation_E -> evaluation_E\n"); }
+			   | evaluation_F								{ printf("evaluation_F -> evaluation_E\n"); }
+			   ;
+		  
+evaluation_F : evaluation_G OPERATOR_MULTI evaluation_F		{ printf("evaluation_G OPERATOR_MULTI evaluation_F -> evaluation_F\n"); }
+			   | evaluation_G								{ printf("evaluation_G -> evaluation_F\n"); }
+			   ;
+		  
+evaluation_G : LBRA evaluation RBRA							{ printf("LBRA evaluation RBRA -> evaluation_G\n"); }
+			   | PRINTI LBRA evaluation RBRA				{ printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n"); }
+			   | PRINTF LBRA STRING RBRA					{ printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); }
+			   | OPERATOR_NEGATION evaluation				{ printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); }
+			   | CHIFFRE									{ printf("CHIFFRE -> evaluation_G\n"); }
+			   | variable 									{ printf("variable -> evaluation_G\n"); }
+			   ;
+
 %% //==============================================================================================
 
 int main(void) 

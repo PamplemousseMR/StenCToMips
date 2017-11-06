@@ -28,16 +28,21 @@ RETURN				(return)
 MAIN				(main)
 PRINTF				(printf)
 PRINTI				(printi)
+STENCIL				(stencil)
+TYPE				(int)
 ID					[a-zA-Z_][0-9a-zA-Z_]*
 CHIFFRE				([0-9]+[0-9]*)
-TYPE				(int)[ ]
-STENCIL				(stencil)[ ]
-OPERATOR			(\+|-|\/|%)
-OPERATOR_STENCIL	($)
-INCREMENT			(\+\+|--)
+OPERATOR_NEGATION	(!)
+OPERATOR_INCREMENT	(\+\+|--)
+OPERATOR_MULTI		(\/|\*)
+OPERATOR_ADDITION	(\+|-)
+COMPARATOR_SUPREMACY (<=|>=|>|<)
+COMPARATOR_EQUALITY (==|!=)
+COMPARATOR_AND		(&&)
+COMPARATOR_OR		(\|\|)
 EQUALS				(=)
 AFFECT				(\+=|-=|\*=|\/=|%=)
-COMPARATOR			(<=|>=|==|!=|>|<)
+OPERATOR_STENCIL	($)
 LBRA				(\()
 RBRA				(\))
 LHOO				(\[)
@@ -138,6 +143,22 @@ UNKNOW				.
 	
 }
 
+{STENCIL} {
+
+	OUTPUT("\t\tSTENCIL : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return STENCIL;
+
+}
+
+{TYPE} {
+
+	OUTPUT("\t\tTYPE : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return TYPE;
+
+}
+
 {ID} {
 	
 	OUTPUT("\t\tID : %s\n",yytext);
@@ -154,43 +175,67 @@ UNKNOW				.
 
 }
 
-{TYPE} {
-
-	OUTPUT("\t\tTYPE : %s\n",yytext);
-	yylval.String = strdup(yytext);
-	return TYPE;
-
-}
-
-{STENCIL} {
-
-	OUTPUT("\t\tSTENCIL : %s\n",yytext);
-	yylval.String = strdup(yytext);
-	return STENCIL;
-
-}
-
-{OPERATOR} {
+{OPERATOR_NEGATION} {
 	
-	OUTPUT("\t\tOPERATOR : %s\n",yytext);
+	OUTPUT("\t\tOPERATOR_NEGATION : %s\n",yytext);
 	yylval.String = strdup(yytext);
-	return OPERATOR;
+	return OPERATOR_NEGATION;
 
 }
 
-{OPERATOR_STENCIL} {
+{OPERATOR_INCREMENT} {
 	
-	OUTPUT("\t\tOPERATOR_STENCIL : %s\n",yytext);
+	OUTPUT("\t\tOPERATOR_INCREMENT : %s\n",yytext);
 	yylval.String = strdup(yytext);
-	return OPERATOR_STENCIL;
+	return OPERATOR_INCREMENT;
 
 }
 
-{INCREMENT} {
+{OPERATOR_MULTI} {
 	
-	OUTPUT("\t\tINCREMENT : %s\n",yytext);
+	OUTPUT("\t\tOPERATOR_MULTI : %s\n",yytext);
 	yylval.String = strdup(yytext);
-	return INCREMENT;
+	return OPERATOR_MULTI;
+
+}
+
+{OPERATOR_ADDITION} {
+	
+	OUTPUT("\t\tOPERATOR_ADDITION : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return OPERATOR_ADDITION;
+
+}
+
+{COMPARATOR_SUPREMACY} {
+	
+	OUTPUT("\t\tCOMPARATOR_SUPREMACY : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return COMPARATOR_SUPREMACY;
+
+}
+
+{COMPARATOR_EQUALITY} {
+	
+	OUTPUT("\t\tCOMPARATOR_EQUALITY : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return COMPARATOR_EQUALITY;
+
+}
+
+{COMPARATOR_AND} {
+	
+	OUTPUT("\t\tCOMPARATOR_AND : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return COMPARATOR_AND;
+
+}
+
+{COMPARATOR_OR} {
+	
+	OUTPUT("\t\tCOMPARATOR_OR : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return COMPARATOR_OR;
 
 }
 
@@ -210,13 +255,14 @@ UNKNOW				.
 
 }
 
-{COMPARATOR} {
+{OPERATOR_STENCIL} {
 	
-	OUTPUT("\t\tCOMPARATOR : %s\n",yytext);
+	OUTPUT("\t\tOPERATOR_STENCIL : %s\n",yytext);
 	yylval.String = strdup(yytext);
-	return COMPARATOR;
+	return OPERATOR_STENCIL;
 
 }
+
 
 {LBRA} {
 
@@ -304,10 +350,9 @@ UNKNOW				.
 
 {USELESS} {}
 
-{UNKNOW} 
-{
+{UNKNOW} {
 	
-	OUTPUT("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
+	printf("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
 
 }
 
