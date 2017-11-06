@@ -7,7 +7,7 @@ $(EXEC) : $(OBJS)
 	gcc $(BUILD)/y.tab.c $(BUILD)/lex.yy.c -ly -ll -o $(EXEC)
 
 $(BUILD)/y.tab.c : $(SRCDIR)/SyntaxParser.y
-	yacc -v -d $(SRCDIR)/SyntaxParser.y -o $(BUILD)/y.tab.c
+	yacc -d $(SRCDIR)/SyntaxParser.y -o $(BUILD)/y.tab.c
 
 $(BUILD)/lex.yy.c : $(SRCDIR)/LexicalParser.lex
 	lex -o $(BUILD)/lex.yy.c $(SRCDIR)/LexicalParser.lex
