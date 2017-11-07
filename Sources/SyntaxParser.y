@@ -71,7 +71,6 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
-	#include <string.h>
 
 	#define KNRM  "\x1B[0m"
 	#define KRED  "\x1B[31m"
@@ -81,12 +80,6 @@
 	#define KMAG  "\x1B[35m"
 	#define KCYN  "\x1B[36m"
 	#define KWHT  "\x1B[37m"
-	
-	#define OUTPUT(M,O,ARGS...) char str[100];\
-								strcpy(str, M);\
-								strcat(str, O);\
-								strcat(str, "\n");\
-								printf(str,ARGS);\
 	
 	int yylex();
 	void yyerror (char const *s);
@@ -121,19 +114,19 @@ ligne : for 												{ printf("for -> ligne\n"); }
 		| initialisation SEMI								{ printf("initialisation SEMI -> ligne\n"); }							
 		| affectation SEMI									{ printf("affectation SEMI -> ligne\n"); }								
 		| return SEMI										{ printf("return SEMI -> ligne\n"); }									
-		| evaluation SEMI									{ printf("evaluation SEMI -> ligne : %s%s%s%s\n", KRED, $1, KNRM, $2); }								
+		| evaluation SEMI									{ printf("evaluation SEMI -> ligne\n"); }								
 		;
 
-return : RETURN evaluation									{ printf("RETURN evaluation -> return : %s%s %s%s\n", $1, KRED, $2, KNRM); };							
+return : RETURN evaluation									{ printf("RETURN evaluation -> return : %s%s %s%s\n", KYEL, $1, $2, KNRM); };							
 
 //-------------------------------------------------------------------------------------------------
 //				Les variables
 //-------------------------------------------------------------------------------------------------
 
-variable : 	ID hooks 										{ sprintf($$,"%s%s", $1, $2);printf("ID hooks -> variable\n"); };									
+variable : 	ID hooks 										{ printf("ID hooks -> variable\n"); };									
 
-hooks : LHOO evaluation RHOO hooks							{ sprintf($$,"%s%s%s%s", $1, $2, $3, $4);printf("LHOO evaluation RHOO -> hooks\n"); }							
-		| 													{ $$=""; }
+hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }							
+		| {}
 		;
 		
 initialisation : TYPE suite_variable_init 					{ printf("TYPE suite_variable_init -> initialisation\n"); };			
@@ -168,41 +161,41 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : evaluation_B COMPARATOR_OR evaluation			{ sprintf($$,"%s%s%s", $1, $2, $3);printf("evaluation_B COMPARATOR_OR evaluation -> evaluation\n"); }
-			   | evaluation_B								{ sprintf($$,"%s", $1);printf("evaluation_B -> evaluation\n"); }
+evaluation : evaluation_B COMPARATOR_OR evaluation			{ printf("evaluation_B COMPARATOR_OR evaluation -> evaluation_\n"); }
+			   | evaluation_B								{ printf("evaluation_B -> evaluation\n"); }
 			   ;
 		  
-evaluation_B : evaluation_C COMPARATOR_AND evaluation_B		{ sprintf($$,"%s%s%s", $1, $2, $3);printf("evaluation_C COMPARATOR_AND evaluation_B -> evaluation_B\n"); }
-			   | evaluation_C								{ sprintf($$,"%s", $1);printf("evaluation_C -> evaluation_B\n"); }
+evaluation_B : evaluation_C COMPARATOR_AND evaluation_B		{ printf("evaluation_C COMPARATOR_AND evaluation_B -> evaluation_B\n"); }
+			   | evaluation_C								{ printf("evaluation_C -> evaluation_B\n"); }
 			   ;
 
-evaluation_C : evaluation_D COMPARATOR_EQUALITY evaluation_C { sprintf($$,"%s%s%s", $1, $2, $3);printf("evaluation_COMPARATOR_EQUALITY evaluation_C -> evaluation_C\n"); }
-			   | evaluation_D								{ sprintf($$,"%s", $1);printf("evaluation_D -> evaluation_C\n"); } 
+evaluation_C : evaluation_D COMPARATOR_EQUALITY evaluation_C { printf("evaluation_COMPARATOR_EQUALITY evaluation_C -> evaluation_C\n"); }
+			   | evaluation_D								{ printf("evaluation_D -> evaluation_C\n"); } 
 			   ;
 		  
-evaluation_D : evaluation_E COMPARATOR_SUPREMACY evaluation_D { sprintf($$,"%s%s%s", $1, $2, $3);printf("evaluation_E COMPARATOR_SUPREMACY evaluation_D -> evaluation_D\n"); }
-			   | evaluation_E								{ sprintf($$,"%s", $1);printf("evaluation_E -> evaluation_D\n"); }
+evaluation_D : evaluation_E COMPARATOR_SUPREMACY evaluation_D { printf("evaluation_E COMPARATOR_SUPREMACY evaluation_D -> evaluation_D\n"); }
+			   | evaluation_E								{ printf("evaluation_E -> evaluation_D\n"); }
 			   ;
 		  
-evaluation_E : evaluation_F OPERATOR_ADDITION evaluation_E	{ sprintf($$,"%s%s%s", $1, $2, $3);printf("evaluation_F OPERATOR_ADDITION evaluation_E -> evaluation_E\n"); }
-			   | evaluation_F								{ sprintf($$,"%s", $1);printf("evaluation_F -> evaluation_E\n"); }
+evaluation_E : evaluation_F OPERATOR_ADDITION evaluation_E	{ printf("evaluation_F OPERATOR_ADDITION evaluation_E -> evaluation_E\n"); }
+			   | evaluation_F								{ printf("evaluation_F -> evaluation_E\n"); }
 			   ;
 		  
-evaluation_F : evaluation_G OPERATOR_MULTI evaluation_F		{ sprintf($$,"%s%s%s", $1, $2, $3);printf("evaluation_G OPERATOR_MULTI evaluation_F -> evaluation_F\n"); }
-			   | evaluation_G								{ sprintf($$,"%s", $1);printf("evaluation_G -> evaluation_F\n"); }
+evaluation_F : evaluation_G OPERATOR_MULTI evaluation_F		{ printf("evaluation_G OPERATOR_MULTI evaluation_F -> evaluation_F\n"); }
+			   | evaluation_G								{ printf("evaluation_G -> evaluation_F\n"); }
 			   ;
 		  
-evaluation_G : LBRA evaluation RBRA							{ sprintf($$,"%s%s%s", $1, $2, $3);printf("LBRA evaluation RBRA -> evaluation_G\n"); }
-			   | PRINTI LBRA evaluation RBRA				{ sprintf($$,"%s%s%s%s", $1, $2, $3, $4);printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n"); }
-			   | PRINTF LBRA STRING RBRA					{ sprintf($$,"%s%s%s%s", $1, $2, $3, $4);printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); }
-			   | OPERATOR_NEGATION evaluation				{ sprintf($$,"%s%s", $1, $2);printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); }
-			   | CHIFFRE									{ sprintf($$,"%s", $1);printf("CHIFFRE -> evaluation_G\n"); }
-			   | variable_incr								{ sprintf($$,"%s", $1);printf("variable_incr -> evaluation_G\n"); }
+evaluation_G : LBRA evaluation RBRA							{ printf("LBRA evaluation RBRA -> evaluation_G\n"); }
+			   | PRINTI LBRA evaluation RBRA				{ printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n"); }
+			   | PRINTF LBRA STRING RBRA					{ printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); }
+			   | OPERATOR_NEGATION evaluation				{ printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); }
+			   | CHIFFRE									{ printf("CHIFFRE -> evaluation_G\n"); }
+			   | variable_incr								{ printf("variable_incr -> evaluation_G\n"); }
 			   ;
 
-variable_incr : OPERATOR_INCREMENT variable					{ sprintf($$,"%s%s", $1, $2);printf("OPERATOR_INCREMENT variable -> variable_incr\n"); }
-				| variable OPERATOR_INCREMENT				{ sprintf($$,"%s%s", $1, $2);printf("variable OPERATOR_INCREMENT -> variable_incr\n"); }
-				| variable 									{ sprintf($$,"%s", $1);printf("variable -> variable_incr\n"); }
+variable_incr : OPERATOR_INCREMENT variable					{ printf("OPERATOR_INCREMENT variable -> variable_incr\n"); }
+				| variable OPERATOR_INCREMENT				{ printf("variable OPERATOR_INCREMENT -> variable_incr\n"); }
+				| variable 									{ printf("variable -> variable_incr\n"); }
 				;
 			   
 %% //==============================================================================================
