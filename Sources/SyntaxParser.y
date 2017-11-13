@@ -46,7 +46,7 @@
 %type<String> instruction_preprocesseur           
 %type<String> suite_fonctions           
 %type<String> main           
-%type<String> suite_instructions           
+%type<String> suite_instructions          
 %type<String> ligne           
 %type<String> return           
 %type<String> variable           
@@ -67,10 +67,13 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	
+	#include "SymbolesTable.h"
+
 	int yylex();
 	void yyerror (char const *s);
 	
-	FILE * outputFile;
+	FILE* outputFile;
+	Node symboleTable = NULL;
 %}
 
 %left COMPARATOR_OR
@@ -248,6 +251,7 @@ int main(void)
 {
 	outputFile = fopen("output.mips","w");
 	yyparse();
+	fclose(outputFile);
 	return 0;
 }
 
