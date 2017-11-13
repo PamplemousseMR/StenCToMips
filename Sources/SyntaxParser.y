@@ -60,12 +60,6 @@
 %type<String> if
 %type<String> else
 %type<String> evaluation
-%type<String> evaluation_B
-%type<String> evaluation_C
-%type<String> evaluation_D
-%type<String> evaluation_E
-%type<String> evaluation_F
-%type<String> evaluation_G
 %type<String> variable_incr
 %type<String> chiffre
 
@@ -79,6 +73,14 @@
 	FILE * outputFile;
 %}
 
+%left COMPARATOR_OR
+%left COMPARATOR_AND		
+%left COMPARATOR_EQUALITY 
+%left COMPARATOR_SUPREMACY
+%left OPERATOR_ADDITION
+%left OPERATOR_MULTI	
+%left OPERATOR_INCREMENT
+%left OPERATOR_NEGATION			
 
 %% //==============================================================================================
 
@@ -178,88 +180,46 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-//valeur dans $t1
-evaluation : evaluation_B COMPARATOR_OR evaluation			{ 
-																printf("evaluation_B COMPARATOR_OR evaluation -> evaluation_\n"); 
+evaluation : evaluation COMPARATOR_OR evaluation			{ 
+																printf("evaluation COMPARATOR_OR evaluation -> evaluation\n"); 
 															}
-			   | evaluation_B								{ 
-																printf("evaluation_B -> evaluation\n"); 
-																fprintf(outputFile,"move $t1 $t2\n");
+			 | evaluation COMPARATOR_AND evaluation 		{ 
+																printf("evaluation COMPARATOR_AND evaluation -> evaluation\n"); 
 															}
-			   ;
-		  
-//valeur dans $t2
-evaluation_B : evaluation_C COMPARATOR_AND evaluation_B		{ 
-																printf("evaluation_C COMPARATOR_AND evaluation_B -> evaluation_B\n"); 
+			 | evaluation COMPARATOR_EQUALITY evaluation 	{ 
+																printf("evaluationOMPARATOR_EQUALITY evaluation -> evaluation\n");
 															}
-			   | evaluation_C								{ 	
-																printf("evaluation_C -> evaluation_B\n");
-																fprintf(outputFile,"move $t2 $t3\n"); 
+			 | evaluation COMPARATOR_SUPREMACY evaluation 	{ 
+																printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n"); 
 															}
-			   ;
-
-//valeur dans $t3
-evaluation_C : evaluation_D COMPARATOR_EQUALITY evaluation_C { 
-																printf("evaluation_COMPARATOR_EQUALITY evaluation_C -> evaluation_C\n");
+			 | evaluation OPERATOR_ADDITION evaluation		{ 
+																printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n"); 
 															}
-			   | evaluation_D								{ 
-																printf("evaluation_D -> evaluation_C\n");
-																fprintf(outputFile,"move $t3 $t4\n");
-															} 
-			   ;
-		  
-//valeur dans $t4
-evaluation_D : evaluation_E COMPARATOR_SUPREMACY evaluation_D { 
-																printf("evaluation_E COMPARATOR_SUPREMACY evaluation_D -> evaluation_D\n"); 
+			 | evaluation OPERATOR_MULTI evaluation			{ 
+																printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n"); 
 															}
-			   | evaluation_E								{ 
-																printf("evaluation_E -> evaluation_D\n");
-																fprintf(outputFile,"move $t4 $t5\n"); 
+			 | LBRA evaluation RBRA							{ 
+																printf("LBRA evaluation RBRA -> evaluation\n"); 
 															}
-			   ;
-		  
-//valeur dans $t5
-evaluation_E : evaluation_F OPERATOR_ADDITION evaluation_E	{ 
-																printf("evaluation_F OPERATOR_ADDITION evaluation_E -> evaluation_E\n"); 
-															}
-			   | evaluation_F								{ 
-																printf("evaluation_F -> evaluation_E\n"); 
-																fprintf(outputFile,"move $t5 $t6\n");
-															}
-			   ;
-		  
-//valeur dans $t6
-evaluation_F : evaluation_G OPERATOR_MULTI evaluation_F		{ 
-																printf("evaluation_G OPERATOR_MULTI evaluation_F -> evaluation_F\n"); 
-															}
-			   | evaluation_G								{ 
-																printf("evaluation_G -> evaluation_F\n");
-																fprintf(outputFile,"move $t6 $t7\n");
-															}
-			   ;
-
-//valeur dans $t7			   
-evaluation_G : LBRA evaluation RBRA							{ 
-																printf("LBRA evaluation RBRA -> evaluation_G\n"); 
-															}
-			   | PRINTI LBRA evaluation RBRA				{ 
-																printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n");
+			 | PRINTI LBRA evaluation RBRA					{ 
+																printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 																fprintf(outputFile,"move $a0 $t1\nli $v0 1\nsyscall\n");
 															}
-			   | PRINTF LBRA STRING RBRA					{ 	
-																printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); 
+			 | PRINTF LBRA STRING RBRA						{ 	
+																printf("PRINTF LBRA STRING RBRA -> evaluation\n"); 
 															}
-			   | OPERATOR_NEGATION evaluation				{ 
-																printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); 
+			 | OPERATOR_NEGATION evaluation					{ 
+																printf("OPERATOR_NEGATION evaluation -> evaluation\n"); 
 															}
-			   | chiffre									{
-																printf("chiffre -> evaluation_G\n");
+			 | chiffre										{
+																printf("chiffre -> evaluation\n");
 																fprintf(outputFile,"li $t7 %s\n",$1);
 															}
-			   | variable_incr								{ 
-																printf("variable_incr -> evaluation_G\n"); 
+			 | variable_incr								{ 
+																printf("variable_incr -> evaluation\n"); 
 															}
-			   ;
+			 ;
+
 
 variable_incr : OPERATOR_INCREMENT variable					{ 
 																printf("OPERATOR_INCREMENT variable -> variable_incr\n");
