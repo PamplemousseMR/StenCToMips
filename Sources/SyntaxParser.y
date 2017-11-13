@@ -71,15 +71,6 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
-
-	#define KNRM  "\x1B[0m"
-	#define KRED  "\x1B[31m"
-	#define KGRN  "\x1B[32m"
-	#define KYEL  "\x1B[33m"
-	#define KBLU  "\x1B[34m"
-	#define KMAG  "\x1B[35m"
-	#define KCYN  "\x1B[36m"
-	#define KWHT  "\x1B[37m"
 	
 	int yylex();
 	void yyerror (char const *s);
@@ -97,7 +88,7 @@ suite_instructions_preprocesseurs : instruction_preprocesseur suite_instructions
 								    | 						{}
 								    ;
 									
-instruction_preprocesseur : DEFINE ID CHIFFRE ENDLINE		{ printf("DEFINE ID CHIFFRE ENDLINE -> instruction_preprocesseur\n"); }; 
+instruction_preprocesseur : DEFINE ID chiffre ENDLINE		{ printf("DEFINE ID chiffre ENDLINE -> instruction_preprocesseur\n"); }; 
 
 suite_fonctions : main										{ printf("main -> suite_fonctions\n"); } ; 								
 
@@ -117,26 +108,48 @@ ligne : for 												{ printf("for -> ligne\n"); }
 		| evaluation SEMI									{ printf("evaluation SEMI -> ligne\n"); }								
 		;
 
-return : RETURN evaluation									{ printf("RETURN evaluation -> return : %s%s %s%s\n", KYEL, $1, $2, KNRM); };							
+return : RETURN evaluation									{ printf("RETURN evaluation -> return\n"); };							
 
 //-------------------------------------------------------------------------------------------------
 //				Les variables
 //-------------------------------------------------------------------------------------------------
 
+stencil : ID LEMB CHIFFRE COMMA CHIFFRE REMB				{ printf("ID LEMB CHIFFRE COMA CHIFFRE REMB -> stencil\n"); };
+
 variable : 	ID hooks 										{ printf("ID hooks -> variable\n"); };									
 
-hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }							
+hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }	
 		| {}
 		;
 		
-initialisation : TYPE suite_variable_init 					{ printf("TYPE suite_variable_init -> initialisation\n"); };			
+initialisation : TYPE suite_variable_init 					{ printf("TYPE suite_variable_init -> initialisation\n"); }
+				 | STENCIL suite_stencil_init				{ printf("STENCIL suite_stencil_init -> initialisation\n"); }
+				 ;			
 
 suite_variable_init : variable_init COMMA suite_variable_init {printf("variable_init COMA suite_variable_init -> suite_variable_init\n"); } 
 					  | variable_init						{ printf("variable_init -> suite_variable_init\n"); }					
 					  ;
+
+suite_stencil_init : stencil_init COMMA suite_stencil_init  {printf("stencil_init COMA suite_stencil_init -> suite_stencil_init\n"); } 
+					 | stencil_init							{ printf("stencil_init -> suite_stencil_init\n"); }					
+					 ;
 					  
-variable_init : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> variable_init\n"); }			
+variable_init : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> variable_init\n"); }	
+				| variable EQUALS LEMB suite_chiffre REMB	{ printf("variable EQUALS LEMB suite_int REMB -> variable_init\n"); }	
 				| variable									{ printf("variable -> variable_init\n"); }								
+				;
+
+stencil_init :  stencil EQUALS LEMB suite_suite_chiffre REMB { printf("stencil EQUALS LEMB suite_suite_chiffre REMB -> stencil_init\n"); }
+				| stencil EQUALS LEMB suite_chiffre REMB 	{ printf("stencil EQUALS LEMB suite_chiffre REMB -> stencil_init\n"); }
+				| stencil 									{ printf("stencil -> stencil_init\n"); }
+				;
+
+suite_suite_chiffre : LEMB suite_chiffre REMB COMMA suite_suite_chiffre { printf("LEMB suite_chiffre REMB COMMA suite_suite_chiffre -> suite_suite_chiffre\n"); }
+					  | LEMB suite_chiffre REMB				{ printf("LEMB suite_chiffre REMB -> suite_suite_chiffre\n"); }
+					  ;
+
+suite_chiffre : chiffre COMMA suite_chiffre					{ printf("chiffre COMMA suite_chiffre -> suite_chiffre\n"); }	
+				| chiffre 									{ printf("chiffre -> suite_chiffre\n"); }	
 				;
 
 affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> affectation\n"); }				
@@ -147,7 +160,7 @@ affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluatio
 //				Les instructions conditionnelles
 //-------------------------------------------------------------------------------------------------
 
-for : FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne	{ printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); };					//not finish
+for : FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne	{ printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); };
 	
 while : WHILE LBRA evaluation RBRA ligne 								{ printf("WHILE LBRA evaluation RBA ligne -> while\n"); };				
 
@@ -189,9 +202,14 @@ evaluation_G : LBRA evaluation RBRA							{ printf("LBRA evaluation RBRA -> eval
 			   | PRINTI LBRA evaluation RBRA				{ printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n"); }
 			   | PRINTF LBRA STRING RBRA					{ printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); }
 			   | OPERATOR_NEGATION evaluation				{ printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); }
-			   | CHIFFRE									{ printf("CHIFFRE -> evaluation_G\n"); }
+			   | chiffre									{ printf("chiffre -> evaluation_G\n"); }
 			   | variable_incr								{ printf("variable_incr -> evaluation_G\n"); }
+			   | variable OPERATOR_STENCIL variable 		{ printf("variable OPERATOR_STENCIL variable -> evaluation_G\n"); }
 			   ;
+
+chiffre : CHIFFRE 											{ printf("CHIFFRE -> chiffre\n"); }
+		  | OPERATOR_ADDITION CHIFFRE 						{ printf("OPERATOR_ADDITION CHIFFRE -> chiffre\n"); }
+		  ;
 
 variable_incr : OPERATOR_INCREMENT variable					{ printf("OPERATOR_INCREMENT variable -> variable_incr\n"); }
 				| variable OPERATOR_INCREMENT				{ printf("variable OPERATOR_INCREMENT -> variable_incr\n"); }
@@ -204,4 +222,9 @@ int main(void)
 {
   yyparse();
   return 0;
+}
+
+void yyerror (char const *s)
+{
+	printf("error : %s %d\n",s, yychar);
 }
