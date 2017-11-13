@@ -83,7 +83,10 @@
 	
 	int yylex();
 	void yyerror (char const *s);
+	
+	FILE * outputFile;
 %}
+
 
 %% //==============================================================================================
 
@@ -161,47 +164,105 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : evaluation_B COMPARATOR_OR evaluation			{ printf("evaluation_B COMPARATOR_OR evaluation -> evaluation_\n"); }
-			   | evaluation_B								{ printf("evaluation_B -> evaluation\n"); }
+//valeur dans $t1
+evaluation : evaluation_B COMPARATOR_OR evaluation			{ 
+																printf("evaluation_B COMPARATOR_OR evaluation -> evaluation_\n"); 
+															}
+			   | evaluation_B								{ 
+																printf("evaluation_B -> evaluation\n"); 
+																fprintf(outputFile,"move $t1 $t2\n");
+															}
 			   ;
 		  
-evaluation_B : evaluation_C COMPARATOR_AND evaluation_B		{ printf("evaluation_C COMPARATOR_AND evaluation_B -> evaluation_B\n"); }
-			   | evaluation_C								{ printf("evaluation_C -> evaluation_B\n"); }
+//valeur dans $t2
+evaluation_B : evaluation_C COMPARATOR_AND evaluation_B		{ 
+																printf("evaluation_C COMPARATOR_AND evaluation_B -> evaluation_B\n"); 
+															}
+			   | evaluation_C								{ 	
+																printf("evaluation_C -> evaluation_B\n");
+																fprintf(outputFile,"move $t2 $t3\n"); 
+															}
 			   ;
 
-evaluation_C : evaluation_D COMPARATOR_EQUALITY evaluation_C { printf("evaluation_COMPARATOR_EQUALITY evaluation_C -> evaluation_C\n"); }
-			   | evaluation_D								{ printf("evaluation_D -> evaluation_C\n"); } 
+//valeur dans $t3
+evaluation_C : evaluation_D COMPARATOR_EQUALITY evaluation_C { 
+																printf("evaluation_COMPARATOR_EQUALITY evaluation_C -> evaluation_C\n");
+															}
+			   | evaluation_D								{ 
+																printf("evaluation_D -> evaluation_C\n");
+																fprintf(outputFile,"move $t3 $t4\n");
+															} 
 			   ;
 		  
-evaluation_D : evaluation_E COMPARATOR_SUPREMACY evaluation_D { printf("evaluation_E COMPARATOR_SUPREMACY evaluation_D -> evaluation_D\n"); }
-			   | evaluation_E								{ printf("evaluation_E -> evaluation_D\n"); }
+//valeur dans $t4
+evaluation_D : evaluation_E COMPARATOR_SUPREMACY evaluation_D { 
+																printf("evaluation_E COMPARATOR_SUPREMACY evaluation_D -> evaluation_D\n"); 
+															}
+			   | evaluation_E								{ 
+																printf("evaluation_E -> evaluation_D\n");
+																fprintf(outputFile,"move $t4 $t5\n"); 
+															}
 			   ;
 		  
-evaluation_E : evaluation_F OPERATOR_ADDITION evaluation_E	{ printf("evaluation_F OPERATOR_ADDITION evaluation_E -> evaluation_E\n"); }
-			   | evaluation_F								{ printf("evaluation_F -> evaluation_E\n"); }
+//valeur dans $t5
+evaluation_E : evaluation_F OPERATOR_ADDITION evaluation_E	{ 
+																printf("evaluation_F OPERATOR_ADDITION evaluation_E -> evaluation_E\n"); 
+															}
+			   | evaluation_F								{ 
+																printf("evaluation_F -> evaluation_E\n"); 
+																fprintf(outputFile,"move $t5 $t6\n");
+															}
 			   ;
 		  
-evaluation_F : evaluation_G OPERATOR_MULTI evaluation_F		{ printf("evaluation_G OPERATOR_MULTI evaluation_F -> evaluation_F\n"); }
-			   | evaluation_G								{ printf("evaluation_G -> evaluation_F\n"); }
-			   ;
-		  
-evaluation_G : LBRA evaluation RBRA							{ printf("LBRA evaluation RBRA -> evaluation_G\n"); }
-			   | PRINTI LBRA evaluation RBRA				{ printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n"); }
-			   | PRINTF LBRA STRING RBRA					{ printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); }
-			   | OPERATOR_NEGATION evaluation				{ printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); }
-			   | CHIFFRE									{ printf("CHIFFRE -> evaluation_G\n"); }
-			   | variable_incr								{ printf("variable_incr -> evaluation_G\n"); }
+//valeur dans $t6
+evaluation_F : evaluation_G OPERATOR_MULTI evaluation_F		{ 
+																printf("evaluation_G OPERATOR_MULTI evaluation_F -> evaluation_F\n"); 
+															}
+			   | evaluation_G								{ 
+																printf("evaluation_G -> evaluation_F\n");
+																fprintf(outputFile,"move $t6 $t7\n");
+															}
 			   ;
 
-variable_incr : OPERATOR_INCREMENT variable					{ printf("OPERATOR_INCREMENT variable -> variable_incr\n"); }
-				| variable OPERATOR_INCREMENT				{ printf("variable OPERATOR_INCREMENT -> variable_incr\n"); }
-				| variable 									{ printf("variable -> variable_incr\n"); }
+//valeur dans $t7			   
+evaluation_G : LBRA evaluation RBRA							{ 
+																printf("LBRA evaluation RBRA -> evaluation_G\n"); 
+															}
+			   | PRINTI LBRA evaluation RBRA				{ 
+																printf("PRINTI LBRA evaluation RBRA -> evaluation_G\n");
+																fprintf(outputFile,"move $a0 $t1\nli $v0 1\nsyscall\n");
+															}
+			   | PRINTF LBRA STRING RBRA					{ 	
+																printf("PRINTF LBRA STRING RBRA -> evaluation_G\n"); 
+															}
+			   | OPERATOR_NEGATION evaluation				{ 
+																printf("OPERATOR_NEGATION evaluation -> evaluation_G\n"); 
+															}
+			   | CHIFFRE									{
+																printf("CHIFFRE -> evaluation_G\n");
+																fprintf(outputFile,"li $t7 %s\n",$1);
+															}
+			   | variable_incr								{ 
+																printf("variable_incr -> evaluation_G\n"); 
+															}
+			   ;
+
+variable_incr : OPERATOR_INCREMENT variable					{ 
+																printf("OPERATOR_INCREMENT variable -> variable_incr\n");
+															}
+				| variable OPERATOR_INCREMENT				{ 
+																printf("variable OPERATOR_INCREMENT -> variable_incr\n"); 
+															}
+				| variable 									{ 
+																printf("variable -> variable_incr\n"); 
+															}
 				;
 			   
 %% //==============================================================================================
 
 int main(void) 
 {
-  yyparse();
-  return 0;
+	outputFile = fopen("output.mips","w");
+	yyparse();
+	return 0;
 }

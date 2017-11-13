@@ -6,3 +6,5 @@ Sources/lex\.yy\.c
 Build/
 
 YACCFOREVER\.prog
+
+output.mips

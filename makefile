@@ -17,5 +17,5 @@ debug : $(BUILD)/y.tab.c
 	gcc $(BUILD)/y.tab.c $(BUILD)/lex.yy.c -ly -ll -o $(EXEC)
 
 clean :
-	rm $(EXEC) $(BUILD)/*
+	rm $(EXEC) $(BUILD)/* output.mips
 	
