@@ -7,8 +7,8 @@ int main()
 	int image[HEIGHT][WIDTH]; // Image originale en niveaux de gris.
 	int sobel[HEIGHT][WIDTH]; // Image transformée.
 
-//  stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 }}; 
-//  stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 }}; 
+	stencil gx{1,2} = {{ 1, 0, -1 }, { 2, 0, 2 }, { -1, 0, -1 }}; 
+	stencil gy{1,2} = {{ 1, 2, 1 }, { 0, 0, 0 }, { 1, 2, 1 }};
 
 	if(1)
 		if(1)
@@ -21,8 +21,7 @@ int main()
 	{
 		for (j = 1; j < WIDTH - 1; ++j) 
 		{
-//			sobel[i][j] = 	sqrt((pow(gx $ image[i][j], 2) +
-//							pow(gy $ image[i][j], 2)) / 4.);
+			sobel[i][j] = 	(((gx $ image[i][j] - 2) + (gy $ image[i][j] * 2)) / 4);
 			i++;
 		}
 		printf("toto tata titi ");
