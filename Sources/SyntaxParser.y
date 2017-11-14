@@ -85,11 +85,11 @@
 %left OPERATOR_INCREMENT
 %left OPERATOR_NEGATION			
 
-%% //==============================================================================================
+%%
 
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 //				La structure d'un programme 
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 
 programme : suite_instructions_preprocesseurs suite_fonctions { printf("suite_instructions_preprocesseurs suite_fonctions -> programme\n"); }; 
 
@@ -119,9 +119,9 @@ ligne : for 												{ printf("for -> ligne\n"); }
 
 return : RETURN evaluation									{ printf("RETURN evaluation -> return\n"); };							
 
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 //				Les variables
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 
 stencil : ID LEMB CHIFFRE COMMA CHIFFRE REMB				{ printf("ID LEMB CHIFFRE COMA CHIFFRE REMB -> stencil\n"); };
 
@@ -165,9 +165,9 @@ affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluatio
 			  | variable AFFECT evaluation					{ printf("variable AFFECT evaluation -> affectation\n"); }				
 			  ;
 
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 //				Les instructions conditionnelles
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 
 for : FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne	{ printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); };
 	
@@ -179,99 +179,134 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }
 	   | {}
 	   ;
 
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 //				Le retour des valeurs 
-//-------------------------------------------------------------------------------------------------
+//=================================================================================================
 
-evaluation : evaluation COMPARATOR_OR { fprintf(outputFile,"move $t7 $t0\n"); } evaluation			
-															{ 
-																printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
-															}
-			 | evaluation COMPARATOR_AND { fprintf(outputFile,"move $t6 $t0\n"); } evaluation 		
-															{ 															
-																printf("evaluation COMPARATOR_AND evaluation -> evaluation\n"); 
-															}
-			 | evaluation COMPARATOR_EQUALITY { fprintf(outputFile,"move $t5 $t0\n"); } evaluation 	
-															{ 
-																printf("evaluationOMPARATOR_EQUALITY evaluation -> evaluation\n");
-															}
-			 | evaluation COMPARATOR_SUPREMACY { fprintf(outputFile,"move $t4 $t0\n"); } evaluation 	
-															{ 
-																printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n"); 
-															}
-			 | evaluation  OPERATOR_ADDITION { fprintf(outputFile,"move $t3 $t0\n"); } evaluation		
-															{ 
-																printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
-																if($2[0] == '+'){//addition
-																	fprintf(outputFile,"add $t0 $t3 $t0\n");
-																}else{//substraction
-																	fprintf(outputFile,"sub $t0 $t3 $t0\n");
-																}
-															}
-			 | evaluation  OPERATOR_MULTI { fprintf(outputFile,"move $t2 $t0\n"); } evaluation			
-															{ 
-																printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n"); 
-																if($2[0] == '*'){//multiplication
-																	fprintf(outputFile,"mul $t0 $t2 $t0\n");
-																}else{//division
-																	fprintf(outputFile,"div $t0 $t2 $t0\n");
-																}
-															}
-			 | LBRA evaluation RBRA							{ 
-																printf("LBRA evaluation RBRA -> evaluation\n"); 
-															}
-			 | PRINTI LBRA evaluation RBRA					{ 
-																printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
-																fprintf(outputFile,"move $a0 $t0\nli $v0 1\nsyscall\n");
-															}
-			 | PRINTF LBRA STRING RBRA						{ 	
-																printf("PRINTF LBRA STRING RBRA -> evaluation\n"); 
-															}
-			 | OPERATOR_NEGATION evaluation					{ 
-																printf("OPERATOR_NEGATION evaluation -> evaluation\n");
-																fprintf(outputFile,"beq $0 $t0 OPPE_NEG\n");
-																fprintf(outputFile,"li $t0 0\nj OPPE_NEG_FIN\n;");
-																fprintf(outputFile,"OPPE_NEG :\nli$t0 1\nOPPE_NEG_FIN :\n");
-															}
-			 | chiffre										{
-																printf("chiffre -> evaluation\n");
-																// chiffre (avec le + ou -) dans chiffre ($1)
-																fprintf(outputFile,"li $t0 %s\n",$1);
-															}
-			 | variable_incr								{ 
-																printf("variable_incr -> evaluation\n"); 
-																// mips fait dans varible_incr
-															}
-			 ;
+evaluation : 
+// ---------------------------------------------------------------- OR 
+evaluation COMPARATOR_OR { 
+	fprintf(outputFile,"move $t9 $t0\n"); 
+} evaluation { 
+	printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
+}
+// ---------------------------------------------------------------- AND
+| evaluation COMPARATOR_AND { 
+	fprintf(outputFile,"move $t8 $t0\n"); 
+} evaluation { 															
+	printf("evaluation COMPARATOR_AND evaluation -> evaluation\n"); 
+}
+// ---------------------------------------------------------------- EQUALITY
+| evaluation COMPARATOR_EQUALITY { 
+	fprintf(outputFile,"move $t7 $t0\n");
+} evaluation { 
+	printf("evaluationOMPARATOR_EQUALITY evaluation -> evaluation\n");
+}
+// ---------------------------------------------------------------- SUPREMACY
+| evaluation COMPARATOR_SUPREMACY { 
+	fprintf(outputFile,"move $t6 $t0\n"); 
+} evaluation {
+	printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n"); 
+}
+// ---------------------------------------------------------------- ADDITION 		DONE
+| evaluation  OPERATOR_ADDITION { 
+	fprintf(outputFile,"move $t5 $t0\n"); 
+} evaluation { 
+	printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
+	if($2[0] == '+'){
+		fprintf(outputFile,"add $t0 $t5 $t0\n");
+	}else{
+		fprintf(outputFile,"sub $t0 $t5 $t0\n");
+	}
+}
+// ---------------------------------------------------------------- MULTI 			DONE
+| evaluation  OPERATOR_MULTI { 
+	fprintf(outputFile,"move $t4 $t0\n"); 
+} evaluation { 
+	printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n"); 
+	if($2[0] == '*'){
+		fprintf(outputFile,"mul $t0 $t4 $t0\n");
+	}else{
+		fprintf(outputFile,"div $t0 $t4 $t0\n");
+	}
+}
+// ---------------------------------------------------------------- LBRA RBRA
+| LBRA {
+	fprintf(outputFile,"subi $sp $sp %d\n",4*9); 
+	for(int i=1 ; i<=9 ; ++i)
+	{
+		fprintf(outputFile,"sw $t%d %d($sp)\n",i,i*4); 
+	}
+} evaluation RBRA{ 
+	printf("LBRA evaluation RBRA -> evaluation\n"); 
+	for(int i=9 ; i<=9 ; ++i)
+	{
+		fprintf(outputFile,"lw $t%d %d($sp)\n",i,i*4); 
+	}
+	fprintf(outputFile,"addi $sp $sp %d\n",4*9); 
+}
+// ---------------------------------------------------------------- PRINTI			DONE
+| PRINTI LBRA evaluation RBRA { 
+	printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
+	fprintf(outputFile,"move $a0 $t0\nli $v0 1\nsyscall\n");
+}
+// ---------------------------------------------------------------- PRINTF
+| PRINTF LBRA STRING RBRA { 	
+	printf("PRINTF LBRA STRING RBRA -> evaluation\n"); 
+}
+// ---------------------------------------------------------------- NEGATION 		DONE
+| OPERATOR_NEGATION evaluation { 
+	printf("OPERATOR_NEGATION evaluation -> evaluation\n");
+	fprintf(outputFile,"beq $0 $t0 OPPE_NEG\n");
+	fprintf(outputFile,"li $t0 0\nj OPPE_NEG_FIN\n");
+	fprintf(outputFile,"OPPE_NEG :\nli $t0 1\nOPPE_NEG_FIN :\n");
+}
+// ---------------------------------------------------------------- CHIFFRE 		DONE
+| chiffre {
+	printf("chiffre -> evaluation\n");
+	fprintf(outputFile,"li $t0 %s\n",$1);
+}
+// ---------------------------------------------------------------- INCR
+| variable_incr	{ 
+	printf("variable_incr -> evaluation\n"); 
+}
+;
 
 
-variable_incr : OPERATOR_INCREMENT variable					{ 
-																printf("OPERATOR_INCREMENT variable -> variable_incr\n");
-																// pour ++
-																// addi $variable 1
-																// move $t0 $variable
-															}
-				| variable OPERATOR_INCREMENT				{ 
-																printf("variable OPERATOR_INCREMENT -> variable_incr\n"); 
-																// pour ++
-																// move $t0 $variable
-																// addi $varibale 1
-															}
-				| variable 									{ 
-																printf("variable -> variable_incr\n");
-																// move $t0 $variable
-															}
-				;
+variable_incr : 
+// ---------------------------------------------------------------- INCR
+OPERATOR_INCREMENT variable	{ 
+	printf("OPERATOR_INCREMENT variable -> variable_incr\n");
+	// pour ++
+	// addi $variable 1
+	// move $t0 $variable
+}
+// ---------------------------------------------------------------- INCR
+| variable OPERATOR_INCREMENT { 
+	printf("variable OPERATOR_INCREMENT -> variable_incr\n"); 
+	// pour ++
+	// move $t0 $variable
+	// addi $varibale 1
+}
+// ---------------------------------------------------------------- variable
+| variable { 
+	printf("variable -> variable_incr\n");
+	// move $t0 $variable
+}
+;
 
-chiffre : CHIFFRE 											{ 
-																printf("CHIFFRE -> chiffre\n"); 
-																sprintf($$,"%s",$1);
-															}
-		  | OPERATOR_ADDITION CHIFFRE 						{ 
-																printf("OPERATOR_ADDITION CHIFFRE -> chiffre\n");
-																sprintf($$,"%s%s",$1,$2); 
-															}
-		  ;
+chiffre : 
+// ---------------------------------------------------------------- CHIFFRE 	DONE
+CHIFFRE { 
+	printf("CHIFFRE -> chiffre\n"); 
+	sprintf($$,"%s",$1);
+}
+// ---------------------------------------------------------------- OPERATOR 	DONE
+| OPERATOR_ADDITION CHIFFRE { 
+	printf("OPERATOR_ADDITION CHIFFRE -> chiffre\n");
+	sprintf($$,"%s%s",$1,$2); 
+}
+;
 			   
 %% //==============================================================================================
 
@@ -280,17 +315,23 @@ int main(void)
 	
 	symboleTable = mallocList();
 	outputFile = fopen("output.mips","w");
+
 	fprintf(outputFile,".data\n.text\n.globl main\n\nmain :\n");
+
 	yyparse();
+
 	fprintf(outputFile,"\nExit :\nla $v0 10\nsyscall\n");
+
 	fclose(outputFile);
 	freeList(symboleTable);
+
 	return 0;
 }
 
 void yyerror (char const *s)
 {
 	printf("error : %s %d\n",s, yychar);
+
 	fclose(outputFile);
 	freeList(symboleTable);
 }
