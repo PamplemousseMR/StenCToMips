@@ -73,7 +73,7 @@
 	void yyerror (char const *s);
 	
 	FILE* outputFile;
-	Node symboleTable = NULL;
+	List symboleTable;
 %}
 
 %left COMPARATOR_OR
@@ -249,9 +249,11 @@ chiffre : CHIFFRE 											{
 
 int main(void) 
 {
+	symboleTable = mallocList();
 	outputFile = fopen("output.mips","w");
 	yyparse();
 	fclose(outputFile);
+	freeList(symboleTable);
 	return 0;
 }
 

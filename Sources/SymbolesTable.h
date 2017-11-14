@@ -11,4 +11,19 @@ typedef struct s_node{
 	struct s_node* next;
 }*Node;
 
+typedef Node* List;
+
+
+List mallocList();
+
+void printList(List l);
+
+void freeList(List l);
+
+void addNode(List l, char* c, bool b);
+
+void removeNode(List l,char* c);
+
+Node getNodeById(List l, char* c);
+
 #endif
