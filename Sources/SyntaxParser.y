@@ -2,60 +2,60 @@
 
 %union {
 
-  char* String;
-  
+	char* String;
+
 }
 
-%token<String> DEFINE				
-%token<String> ENDLINE				
-%token<String> FOR					
-%token<String> WHILE				
-%token<String> IF					
-%token<String> ELSE				
-%token<String> RETURN				
-%token<String> MAIN				
-%token<String> PRINTF				
-%token<String> PRINTI				
-%token<String> STENCIL				
-%token<String> TYPE				
-%token<String> ID					
-%token<String> CHIFFRE				
-%token<String> OPERATOR_NEGATION	
-%token<String> OPERATOR_INCREMENT	
-%token<String> OPERATOR_MULTI		
-%token<String> OPERATOR_ADDITION	
-%token<String> COMPARATOR_SUPREMACY 
-%token<String> COMPARATOR_EQUALITY 
-%token<String> COMPARATOR_AND		
-%token<String> COMPARATOR_OR		
-%token<String> EQUALS				
-%token<String> AFFECT				
-%token<String> OPERATOR_STENCIL	
-%token<String> LBRA				
-%token<String> RBRA				
-%token<String> LHOO				
-%token<String> RHOO				
-%token<String> LEMB				
-%token<String> REMB				
-%token<String> COMMA				
-%token<String> SEMI				
-%token<String> STRING				
+%token<String> DEFINE
+%token<String> ENDLINE
+%token<String> FOR
+%token<String> WHILE
+%token<String> IF
+%token<String> ELSE
+%token<String> RETURN
+%token<String> MAIN
+%token<String> PRINTF
+%token<String> PRINTI
+%token<String> STENCIL
+%token<String> TYPE
+%token<String> ID
+%token<String> CHIFFRE
+%token<String> OPERATOR_NEGATION
+%token<String> OPERATOR_INCREMENT
+%token<String> OPERATOR_MULTI
+%token<String> OPERATOR_ADDITION
+%token<String> COMPARATOR_SUPREMACY
+%token<String> COMPARATOR_EQUALITY
+%token<String> COMPARATOR_AND
+%token<String> COMPARATOR_OR
+%token<String> EQUALS
+%token<String> AFFECT
+%token<String> OPERATOR_STENCIL
+%token<String> LBRA
+%token<String> RBRA
+%token<String> LHOO
+%token<String> RHOO
+%token<String> LEMB
+%token<String> REMB
+%token<String> COMMA
+%token<String> SEMI
+%token<String> STRING
 
-%type<String> programme           
-%type<String> suite_instructions_preprocesseurs           
-%type<String> instruction_preprocesseur           
-%type<String> suite_fonctions           
-%type<String> main           
-%type<String> suite_instructions          
-%type<String> ligne           
-%type<String> return           
-%type<String> variable           
-%type<String> hooks           
-%type<String> initialisation           
-%type<String> suite_variable_init           
-%type<String> variable_init           
-%type<String> affectation           
-%type<String> for           
+%type<String> programme
+%type<String> suite_instructions_preprocesseurs
+%type<String> instruction_preprocesseur
+%type<String> suite_fonctions
+%type<String> main
+%type<String> suite_instructions
+%type<String> ligne
+%type<String> return
+%type<String> variable
+%type<String> hooks
+%type<String> initialisation
+%type<String> suite_variable_init
+%type<String> variable_init
+%type<String> affectation
+%type<String> for
 %type<String> while
 %type<String> if
 %type<String> else
@@ -67,7 +67,7 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
-	
+
 	#include "SymbolesTable.h"
 
 	unsigned long long labelCounter = 0;
@@ -75,151 +75,353 @@
 
 	int yylex();
 	void yyerror (char const *s);
-	
+
 	FILE* outputFile;
 	List symboleTable;
 %}
 
 %left COMPARATOR_OR
-%left COMPARATOR_AND		
-%left COMPARATOR_EQUALITY 
+%left COMPARATOR_AND
+%left COMPARATOR_EQUALITY
 %left COMPARATOR_SUPREMACY
 %left OPERATOR_ADDITION
-%left OPERATOR_MULTI	
+%left OPERATOR_MULTI
 %left OPERATOR_INCREMENT
-%left OPERATOR_NEGATION			
+%left OPERATOR_NEGATION
 
 %%
 
+
+
 //=================================================================================================
-//				La structure d'un programme 
+//				La structure d'un programme
 //=================================================================================================
 
-programme : suite_instructions_preprocesseurs suite_fonctions { printf("suite_instructions_preprocesseurs suite_fonctions -> programme\n"); }; 
 
-suite_instructions_preprocesseurs : instruction_preprocesseur suite_instructions_preprocesseurs { printf("instruction_preprocesseur suite_instructions_preprocesseurs -> suite_instructions_preprocesseurs\n"); } 
-								    | 						{}
-								    ;
-									
-instruction_preprocesseur : DEFINE ID chiffre ENDLINE		{ printf("DEFINE ID chiffre ENDLINE -> instruction_preprocesseur\n"); }; 
+programme :
+// ------------------------------------------------------------------
+suite_instructions_preprocesseurs suite_fonctions {
+	printf("suite_instructions_preprocesseurs suite_fonctions -> programme\n");
+}
+;
 
-suite_fonctions : main										{ printf("main -> suite_fonctions\n"); } ; 								
 
-main : TYPE MAIN LBRA RBRA LEMB suite_instructions REMB 	{ printf("TYPE MAIN LBRA RBRA LEMB suite_instructions REMB -> main\n"); }; 
+//__________________________________________________________________________________
 
-suite_instructions : ligne suite_instructions				{ printf("ligne suite_instructions  -> suite_instructions\n"); }		
-					| 										{}							
-					;
+suite_instructions_preprocesseurs :
+// ------------------------------------------------------------------
+instruction_preprocesseur suite_instructions_preprocesseurs {
+	printf("instruction_preprocesseur suite_instructions_preprocesseurs -> suite_instructions_preprocesseurs\n");
+}
+// ------------------------------------------------------------------
+| {
+}
+;
 
-ligne : for 												{ printf("for -> ligne\n"); }											
-		| while												{ printf("while -> ligne\n"); }											
-		| if 												{ printf("if -> ligne\n"); }											
-		| LEMB suite_instructions REMB 						{ printf("LEMB suite_instructions REMB -> ligne\n"); }					
-		| initialisation SEMI								{ printf("initialisation SEMI -> ligne\n"); }							
-		| affectation SEMI									{ printf("affectation SEMI -> ligne\n"); }								
-		| return SEMI										{ printf("return SEMI -> ligne\n"); }									
-		| evaluation SEMI									{ printf("evaluation SEMI -> ligne\n"); }								
-		;
 
-return : RETURN evaluation									{ printf("RETURN evaluation -> return\n"); };							
+//__________________________________________________________________________________
+
+instruction_preprocesseur :
+// ------------------------------------------------------------------
+DEFINE ID chiffre ENDLINE {
+	printf("DEFINE ID chiffre ENDLINE -> instruction_preprocesseur\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+suite_fonctions :
+// ------------------------------------------------------------------
+main {
+	printf("main -> suite_fonctions\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+main :
+// ------------------------------------------------------------------
+TYPE MAIN LBRA RBRA LEMB suite_instructions REMB {
+	printf("TYPE MAIN LBRA RBRA LEMB suite_instructions REMB -> main\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+suite_instructions :
+// ------------------------------------------------------------------
+ligne suite_instructions {
+	printf("ligne suite_instructions -> suite_instructions\n");
+}
+// ------------------------------------------------------------------
+| {
+}
+;
+
+
+//__________________________________________________________________________________
+
+ligne :
+// ------------------------------------------------------------------
+for {
+	printf("for -> ligne\n");
+}
+// ------------------------------------------------------------------
+| while {
+	printf("while -> ligne\n");
+}
+// ------------------------------------------------------------------
+| if {
+	printf("if -> ligne\n");
+}
+// ------------------------------------------------------------------
+| LEMB suite_instructions REMB {
+	printf("LEMB suite_instructions REMB -> ligne\n");
+}
+// ------------------------------------------------------------------
+| initialisation SEMI {
+	printf("initialisation SEMI -> ligne\n");
+}
+// ------------------------------------------------------------------
+| affectation SEMI {
+	printf("affectation SEMI -> ligne\n");
+}
+// ------------------------------------------------------------------
+| return SEMI {
+	printf("return SEMI -> ligne\n");
+}
+// ------------------------------------------------------------------
+| evaluation SEMI {
+	printf("evaluation SEMI -> ligne\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+return :
+// ------------------------------------------------------------------
+RETURN evaluation {
+	printf("RETURN evaluation -> return\n");
+}
+;
+
+
 
 //=================================================================================================
 //				Les variables
 //=================================================================================================
 
-stencil : ID LEMB CHIFFRE COMMA CHIFFRE REMB				{ printf("ID LEMB CHIFFRE COMA CHIFFRE REMB -> stencil\n"); };
 
-variable : 	ID hooks 										{ printf("ID hooks -> variable\n"); };									
+stencil :
+// ------------------------------------------------------------------
+ID LEMB CHIFFRE COMMA CHIFFRE REMB {
+	printf("ID LEMB CHIFFRE COMA CHIFFRE REMB -> stencil\n");
+}
 
-hooks : LHOO evaluation RHOO hooks							{ printf("LHOO evaluation RHOO -> hooks\n"); }	
-		| {}
-		;
-		
-initialisation : TYPE suite_variable_init 					{ printf("TYPE suite_variable_init -> initialisation\n"); }
-				 | STENCIL suite_stencil_init				{ printf("STENCIL suite_stencil_init -> initialisation\n"); }
-				 ;			
 
-suite_variable_init : variable_init COMMA suite_variable_init {printf("variable_init COMA suite_variable_init -> suite_variable_init\n"); } 
-					  | variable_init						{ printf("variable_init -> suite_variable_init\n"); }					
-					  ;
+//__________________________________________________________________________________
 
-suite_stencil_init : stencil_init COMMA suite_stencil_init  {printf("stencil_init COMA suite_stencil_init -> suite_stencil_init\n"); } 
-					 | stencil_init							{ printf("stencil_init -> suite_stencil_init\n"); }					
-					 ;
-					  
-variable_init : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> variable_init\n"); }	
-				| variable EQUALS LEMB suite_chiffre REMB	{ printf("variable EQUALS LEMB suite_int REMB -> variable_init\n"); }	
-				| variable									{ printf("variable -> variable_init\n"); }								
-				;
+variable :
+// ------------------------------------------------------------------
+ID hooks {
+	printf("ID hooks -> variable\n");
+}
+;
 
-stencil_init :  stencil EQUALS LEMB suite_suite_chiffre REMB { printf("stencil EQUALS LEMB suite_suite_chiffre REMB -> stencil_init\n"); }
-				| stencil EQUALS LEMB suite_chiffre REMB 	{ printf("stencil EQUALS LEMB suite_chiffre REMB -> stencil_init\n"); }
-				| stencil 									{ printf("stencil -> stencil_init\n"); }
-				;
 
-suite_suite_chiffre : LEMB suite_chiffre REMB COMMA suite_suite_chiffre { printf("LEMB suite_chiffre REMB COMMA suite_suite_chiffre -> suite_suite_chiffre\n"); }
-					  | LEMB suite_chiffre REMB				{ printf("LEMB suite_chiffre REMB -> suite_suite_chiffre\n"); }
-					  ;
+//__________________________________________________________________________________
 
-suite_chiffre : chiffre COMMA suite_chiffre					{ printf("chiffre COMMA suite_chiffre -> suite_chiffre\n"); }	
-				| chiffre 									{ printf("chiffre -> suite_chiffre\n"); }	
-				;
+hooks :
+// ------------------------------------------------------------------
+LHOO evaluation RHOO hooks {
+	printf("LHOO evaluation RHOO -> hooks\n");
+}
+// ------------------------------------------------------------------
+| {
+}
+;
 
-affectation : variable EQUALS evaluation					{ printf("variable EQUALS evaluation -> affectation\n"); }				
-			  | variable AFFECT evaluation					{ printf("variable AFFECT evaluation -> affectation\n"); }				
-			  ;
+
+//__________________________________________________________________________________
+
+initialisation :
+// ------------------------------------------------------------------
+TYPE suite_variable_init {
+	printf("TYPE suite_variable_init -> initialisation\n");
+}
+// ------------------------------------------------------------------
+| STENCIL suite_stencil_init {
+	printf("STENCIL suite_stencil_init -> initialisation\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+suite_variable_init :
+// ------------------------------------------------------------------
+variable_init COMMA suite_variable_init {printf("variable_init COMA suite_variable_init -> suite_variable_init\n");
+}
+// ------------------------------------------------------------------
+| variable_init {
+	printf("variable_init -> suite_variable_init\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+suite_stencil_init :
+// ------------------------------------------------------------------
+stencil_init COMMA suite_stencil_init {printf("stencil_init COMA suite_stencil_init -> suite_stencil_init\n");
+}
+// ------------------------------------------------------------------
+| stencil_init {
+	printf("stencil_init -> suite_stencil_init\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+variable_init :
+// ------------------------------------------------------------------
+variable EQUALS evaluation {
+	printf("variable EQUALS evaluation -> variable_init\n");
+}
+// ------------------------------------------------------------------
+| variable EQUALS LEMB suite_chiffre REMB {
+	printf("variable EQUALS LEMB suite_int REMB -> variable_init\n");
+}
+// ------------------------------------------------------------------
+| variable {
+	printf("variable -> variable_init\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+stencil_init :
+// ------------------------------------------------------------------
+stencil EQUALS LEMB suite_suite_chiffre REMB {
+	printf("stencil EQUALS LEMB suite_suite_chiffre REMB -> stencil_init\n");
+}
+// ------------------------------------------------------------------
+| stencil EQUALS LEMB suite_chiffre REMB {
+	printf("stencil EQUALS LEMB suite_chiffre REMB -> stencil_init\n");
+}
+// ------------------------------------------------------------------
+| stencil {
+	printf("stencil -> stencil_init\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+suite_suite_chiffre :
+// ------------------------------------------------------------------
+LEMB suite_chiffre REMB COMMA suite_suite_chiffre {
+	printf("LEMB suite_chiffre REMB COMMA suite_suite_chiffre -> suite_suite_chiffre\n");
+}
+// ------------------------------------------------------------------
+| LEMB suite_chiffre REMB {
+	printf("LEMB suite_chiffre REMB -> suite_suite_chiffre\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+suite_chiffre :
+// ------------------------------------------------------------------
+chiffre COMMA suite_chiffre {
+	printf("chiffre COMMA suite_chiffre -> suite_chiffre\n");
+}
+// ------------------------------------------------------------------
+| chiffre {
+	printf("chiffre -> suite_chiffre\n");
+}
+;
+
+
+//__________________________________________________________________________________
+
+affectation :
+// ------------------------------------------------------------------
+variable EQUALS evaluation {
+	printf("variable EQUALS evaluation -> affectation\n");
+}
+// ------------------------------------------------------------------
+| variable AFFECT evaluation {
+	printf("variable AFFECT evaluation -> affectation\n");
+}
+;
+
+
 
 //=================================================================================================
 //				Les instructions conditionnelles
 //=================================================================================================
 
-for : 
+
+for :
 // ------------------------------------------------------------------
-FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne { 
-	printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n"); 
+FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
+	printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 }
 ;
 
+
 //__________________________________________________________________________________
 
-while : 
+while :
 // ------------------------------------------------------------------
-WHILE LBRA evaluation RBRA ligne { 
-	printf("WHILE LBRA evaluation RBA ligne -> while\n"); 
+WHILE LBRA evaluation RBRA ligne {
+	printf("WHILE LBRA evaluation RBA ligne -> while\n");
 }
 ;
 
+
 //__________________________________________________________________________________
 
-if : 
+if :
 // ------------------------------------------------------------------
-IF LBRA evaluation RBRA ligne else{ 
-	printf("IF LBRA evaluation RBRA ligne else -> if\n"); 
+IF LBRA evaluation RBRA ligne else {
+	printf("IF LBRA evaluation RBRA ligne else -> if\n");
 }
-;				
+;
+
 
 //__________________________________________________________________________________
 
-else : 
+else :
 // ------------------------------------------------------------------
-ELSE ligne { 
-	printf("ELSE ligne -> else\n"); 
-}	
-// ------------------------------------------------------------------							
+ELSE ligne {
+	printf("ELSE ligne -> else\n");
+}
+// ------------------------------------------------------------------
 | {
 }
 ;
 
+
+
 //=================================================================================================
-//				Le retour des valeurs 
+//				Le retour des valeurs
 //=================================================================================================
 
 
-evaluation : 
-// ------------------------------------------------------------------ OR  		DONE
-evaluation COMPARATOR_OR { 
-	fprintf(outputFile,"move $t9 $t0\n"); 
-} evaluation { 
+evaluation :
+// ------------------------------------------------------------------ OR		DONE
+evaluation COMPARATOR_OR {
+	fprintf(outputFile,"move $t9 $t0\n");
+} evaluation {
 	printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 
 	fprintf(outputFile,"beq $0 $t9 OPPE_BOOL_%llu\n",labelCounter);
@@ -240,9 +442,9 @@ evaluation COMPARATOR_OR {
 	++labelCounter;
 }
 // ------------------------------------------------------------------ AND 		DONE
-| evaluation COMPARATOR_AND { 
-	fprintf(outputFile,"move $t8 $t0\n"); 
-} evaluation { 															
+| evaluation COMPARATOR_AND {
+	fprintf(outputFile,"move $t8 $t0\n");
+} evaluation {
 	printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 
 	fprintf(outputFile,"beq $0 $t8 OPPE_BOOL_%llu\n",labelCounter);
@@ -263,11 +465,11 @@ evaluation COMPARATOR_OR {
 	++labelCounter;
 }
 // ------------------------------------------------------------------ EQUALITY 		DONE
-| evaluation COMPARATOR_EQUALITY { 
+| evaluation COMPARATOR_EQUALITY {
 	fprintf(outputFile,"move $t7 $t0\n");
-} evaluation { 
+} evaluation {
 	char inst[4];
-	printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n"); 
+	printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n");
 	if(!strcmp($2,"==")){
 		strcpy(inst,"beq");
 	}else if(!strcmp($2,"!=")){
@@ -279,11 +481,11 @@ evaluation COMPARATOR_OR {
 	++labelCounter;
 }
 // ------------------------------------------------------------------ SUPREMACY 		DONE
-| evaluation COMPARATOR_SUPREMACY { 
-	fprintf(outputFile,"move $t6 $t0\n"); 
+| evaluation COMPARATOR_SUPREMACY {
+	fprintf(outputFile,"move $t6 $t0\n");
 } evaluation {
 	char inst[4];
-	printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n"); 
+	printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n");
 	if(!strcmp($2,"<")){
 		strcpy(inst,"blt");
 	}else if(!strcmp($2,"<=")){
@@ -299,9 +501,9 @@ evaluation COMPARATOR_OR {
 	++labelCounter;
 }
 // ------------------------------------------------------------------ ADDITION 		DONE
-| evaluation  OPERATOR_ADDITION { 
-	fprintf(outputFile,"move $t5 $t0\n"); 
-} evaluation { 
+| evaluation OPERATOR_ADDITION {
+	fprintf(outputFile,"move $t5 $t0\n");
+} evaluation {
 	printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 	if($2[0] == '+'){
 		fprintf(outputFile,"add $t0 $t5 $t0\n");
@@ -310,10 +512,10 @@ evaluation COMPARATOR_OR {
 	}
 }
 // ------------------------------------------------------------------ MULTI 			DONE
-| evaluation  OPERATOR_MULTI { 
-	fprintf(outputFile,"move $t4 $t0\n"); 
-} evaluation { 
-	printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n"); 
+| evaluation OPERATOR_MULTI {
+	fprintf(outputFile,"move $t4 $t0\n");
+} evaluation {
+	printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 	if($2[0] == '*'){
 		fprintf(outputFile,"mul $t0 $t4 $t0\n");
 	}else{
@@ -323,31 +525,31 @@ evaluation COMPARATOR_OR {
 // ------------------------------------------------------------------ LBRA RBRA		DONE
 | LBRA {
 	int i;
-	fprintf(outputFile,"subi $sp $sp %d\n",4*9); 
+	fprintf(outputFile,"subi $sp $sp %d\n",4*9);
 	for(i=1 ; i<=9 ; ++i)
 	{
-		fprintf(outputFile,"sw $t%d %d($sp)\n",i,i*4); 
+		fprintf(outputFile,"sw $t%d %d($sp)\n",i,i*4);
 	}
-} evaluation RBRA{ 
+} evaluation RBRA{
 	int i;
-	printf("LBRA evaluation RBRA -> evaluation\n"); 
+	printf("LBRA evaluation RBRA -> evaluation\n");
 	for(i=1 ; i<=9 ; ++i)
 	{
-		fprintf(outputFile,"lw $t%d %d($sp)\n",i,i*4); 
+		fprintf(outputFile,"lw $t%d %d($sp)\n",i,i*4);
 	}
-	fprintf(outputFile,"addi $sp $sp %d\n",4*9); 
+	fprintf(outputFile,"addi $sp $sp %d\n",4*9);
 }
 // ------------------------------------------------------------------ PRINTI			DONE
-| PRINTI LBRA evaluation RBRA { 
+| PRINTI LBRA evaluation RBRA {
 	printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 	fprintf(outputFile,"move $a0 $t0\nli $v0 1\nsyscall\n");
 }
 // ------------------------------------------------------------------ PRINTF
-| PRINTF LBRA STRING RBRA { 	
-	printf("PRINTF LBRA STRING RBRA -> evaluation\n"); 
+| PRINTF LBRA STRING RBRA {
+	printf("PRINTF LBRA STRING RBRA -> evaluation\n");
 }
 // ------------------------------------------------------------------ NEGATION 		DONE
-| OPERATOR_NEGATION evaluation { 
+| OPERATOR_NEGATION evaluation {
 	printf("OPERATOR_NEGATION evaluation -> evaluation\n");
 	fprintf(outputFile,"beq $0 $t0 OPPE_NEG_%llu\n",labelCounter);
 	fprintf(outputFile,"li $t0 0\nj OPPE_NEG_%llu_FIN\n",labelCounter);
@@ -360,55 +562,59 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"li $t0 %s\n",$1);
 }
 // ------------------------------------------------------------------ INCR
-| variable_incr	{ 
-	printf("variable_incr -> evaluation\n"); 
+| variable_incr	{
+	printf("variable_incr -> evaluation\n");
 }
 ;
 
+
 //__________________________________________________________________________________
 
-variable_incr : 
+variable_incr :
 // ------------------------------------------------------------------ INCR
-OPERATOR_INCREMENT variable	{ 
+OPERATOR_INCREMENT variable	{
 	printf("OPERATOR_INCREMENT variable -> variable_incr\n");
-	// pour ++
-	// addi $variable 1
-	// move $t0 $variable
+// pour ++
+// addi $variable 1
+// move $t0 $variable
 }
 // ------------------------------------------------------------------ INCR
-| variable OPERATOR_INCREMENT { 
-	printf("variable OPERATOR_INCREMENT -> variable_incr\n"); 
-	// pour ++
-	// move $t0 $variable
-	// addi $varibale 1
+| variable OPERATOR_INCREMENT {
+	printf("variable OPERATOR_INCREMENT -> variable_incr\n");
+// pour ++
+// move $t0 $variable
+// addi $varibale 1
 }
 // ------------------------------------------------------------------ variable
-| variable { 
+| variable {
 	printf("variable -> variable_incr\n");
-	// move $t0 $variable
+// move $t0 $variable
 }
 ;
 
+
 //__________________________________________________________________________________
 
-chiffre : 
+chiffre :
 // ------------------------------------------------------------------ CHIFFRE 	DONE
-CHIFFRE { 
-	printf("CHIFFRE -> chiffre\n"); 
+CHIFFRE {
+	printf("CHIFFRE -> chiffre\n");
 	sprintf($$,"%s",$1);
 }
 // ------------------------------------------------------------------ OPERATOR 	DONE
-| OPERATOR_ADDITION CHIFFRE { 
+| OPERATOR_ADDITION CHIFFRE {
 	printf("OPERATOR_ADDITION CHIFFRE -> chiffre\n");
-	sprintf($$,"%s%s",$1,$2); 
+	sprintf($$,"%s%s",$1,$2);
 }
 ;
-			   
-%% //==============================================================================================
 
-int main(void) 
+
+
+%%//==============================================================================================
+
+int main(void)
 {
-	
+
 	symboleTable = mallocList();
 	outputFile = fopen("output.mips","w");
 
