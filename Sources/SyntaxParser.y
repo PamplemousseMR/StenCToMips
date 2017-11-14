@@ -235,22 +235,31 @@ evaluation : evaluation COMPARATOR_OR { fprintf(outputFile,"move $t7 $t0\n"); } 
 															}
 			 | chiffre										{
 																printf("chiffre -> evaluation\n");
+																// chiffre (avec le + ou -) dans chiffre ($1)
 																fprintf(outputFile,"li $t0 %s\n",$1);
 															}
 			 | variable_incr								{ 
 																printf("variable_incr -> evaluation\n"); 
+																// mips fait dans varible_incr
 															}
 			 ;
 
 
 variable_incr : OPERATOR_INCREMENT variable					{ 
 																printf("OPERATOR_INCREMENT variable -> variable_incr\n");
+																// pour ++
+																// addi $variable 1
+																// move $t0 $variable
 															}
 				| variable OPERATOR_INCREMENT				{ 
 																printf("variable OPERATOR_INCREMENT -> variable_incr\n"); 
+																// pour ++
+																// move $t0 $variable
+																// addi $varibale 1
 															}
 				| variable 									{ 
-																printf("variable -> variable_incr\n"); 
+																printf("variable -> variable_incr\n");
+																// move $t0 $variable
 															}
 				;
 
