@@ -183,40 +183,59 @@ else : ELSE ligne														{ printf("ELSE ligne -> else\n"); }
 //				Le retour des valeurs 
 //-------------------------------------------------------------------------------------------------
 
-evaluation : evaluation COMPARATOR_OR evaluation			{ 
-																printf("evaluation COMPARATOR_OR evaluation -> evaluation\n"); 
+evaluation : evaluation COMPARATOR_OR { fprintf(outputFile,"move $t7 $t0\n"); } evaluation			
+															{ 
+																printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 															}
-			 | evaluation COMPARATOR_AND evaluation 		{ 
+			 | evaluation COMPARATOR_AND { fprintf(outputFile,"move $t6 $t0\n"); } evaluation 		
+															{ 															
 																printf("evaluation COMPARATOR_AND evaluation -> evaluation\n"); 
 															}
-			 | evaluation COMPARATOR_EQUALITY evaluation 	{ 
+			 | evaluation COMPARATOR_EQUALITY { fprintf(outputFile,"move $t5 $t0\n"); } evaluation 	
+															{ 
 																printf("evaluationOMPARATOR_EQUALITY evaluation -> evaluation\n");
 															}
-			 | evaluation COMPARATOR_SUPREMACY evaluation 	{ 
+			 | evaluation COMPARATOR_SUPREMACY { fprintf(outputFile,"move $t4 $t0\n"); } evaluation 	
+															{ 
 																printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n"); 
 															}
-			 | evaluation OPERATOR_ADDITION evaluation		{ 
-																printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n"); 
+			 | evaluation  OPERATOR_ADDITION { fprintf(outputFile,"move $t3 $t0\n"); } evaluation		
+															{ 
+																printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
+																if($2[0] == '+'){//addition
+																	fprintf(outputFile,"add $t0 $t3 $t0\n");
+																}else{//substraction
+																	fprintf(outputFile,"sub $t0 $t3 $t0\n");
+																}
 															}
-			 | evaluation OPERATOR_MULTI evaluation			{ 
+			 | evaluation  OPERATOR_MULTI { fprintf(outputFile,"move $t2 $t0\n"); } evaluation			
+															{ 
 																printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n"); 
+																if($2[0] == '*'){//multiplication
+																	fprintf(outputFile,"mul $t0 $t2 $t0\n");
+																}else{//division
+																	fprintf(outputFile,"div $t0 $t2 $t0\n");
+																}
 															}
 			 | LBRA evaluation RBRA							{ 
 																printf("LBRA evaluation RBRA -> evaluation\n"); 
 															}
 			 | PRINTI LBRA evaluation RBRA					{ 
 																printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
-																fprintf(outputFile,"move $a0 $t1\nli $v0 1\nsyscall\n");
+																fprintf(outputFile,"move $a0 $t0\nli $v0 1\nsyscall\n");
 															}
 			 | PRINTF LBRA STRING RBRA						{ 	
 																printf("PRINTF LBRA STRING RBRA -> evaluation\n"); 
 															}
 			 | OPERATOR_NEGATION evaluation					{ 
-																printf("OPERATOR_NEGATION evaluation -> evaluation\n"); 
+																printf("OPERATOR_NEGATION evaluation -> evaluation\n");
+																fprintf(outputFile,"beq $0 $t0 OPPE_NEG\n");
+																fprintf(outputFile,"li $t0 0\nj OPPE_NEG_FIN\n;");
+																fprintf(outputFile,"OPPE_NEG :\nli$t0 1\nOPPE_NEG_FIN :\n");
 															}
 			 | chiffre										{
 																printf("chiffre -> evaluation\n");
-																fprintf(outputFile,"li $t7 %s\n",$1);
+																fprintf(outputFile,"li $t0 %s\n",$1);
 															}
 			 | variable_incr								{ 
 																printf("variable_incr -> evaluation\n"); 
@@ -249,9 +268,12 @@ chiffre : CHIFFRE 											{
 
 int main(void) 
 {
+	
 	symboleTable = mallocList();
 	outputFile = fopen("output.mips","w");
+	fprintf(outputFile,".data\n.text\n.globl main\n\nmain :\n");
 	yyparse();
+	fprintf(outputFile,"\nExit :\nla $v0 10\nsyscall\n");
 	fclose(outputFile);
 	freeList(symboleTable);
 	return 0;
@@ -260,4 +282,6 @@ int main(void)
 void yyerror (char const *s)
 {
 	printf("error : %s %d\n",s, yychar);
+	fclose(outputFile);
+	freeList(symboleTable);
 }
