@@ -69,6 +69,8 @@
 	
 	#include "SymbolesTable.h"
 
+	unsigned long long labelCompter = 0;
+
 	int yylex();
 	void yyerror (char const *s);
 	
@@ -230,16 +232,18 @@ evaluation COMPARATOR_OR {
 		fprintf(outputFile,"div $t0 $t4 $t0\n");
 	}
 }
-// ---------------------------------------------------------------- LBRA RBRA
+// ---------------------------------------------------------------- LBRA RBRA		DONE
 | LBRA {
+	int i;
 	fprintf(outputFile,"subi $sp $sp %d\n",4*9); 
-	for(int i=1 ; i<=9 ; ++i)
+	for(i=1 ; i<=9 ; ++i)
 	{
 		fprintf(outputFile,"sw $t%d %d($sp)\n",i,i*4); 
 	}
 } evaluation RBRA{ 
+	int i;
 	printf("LBRA evaluation RBRA -> evaluation\n"); 
-	for(int i=9 ; i<=9 ; ++i)
+	for(i=1 ; i<=9 ; ++i)
 	{
 		fprintf(outputFile,"lw $t%d %d($sp)\n",i,i*4); 
 	}
@@ -257,9 +261,10 @@ evaluation COMPARATOR_OR {
 // ---------------------------------------------------------------- NEGATION 		DONE
 | OPERATOR_NEGATION evaluation { 
 	printf("OPERATOR_NEGATION evaluation -> evaluation\n");
-	fprintf(outputFile,"beq $0 $t0 OPPE_NEG\n");
-	fprintf(outputFile,"li $t0 0\nj OPPE_NEG_FIN\n");
-	fprintf(outputFile,"OPPE_NEG :\nli $t0 1\nOPPE_NEG_FIN :\n");
+	fprintf(outputFile,"beq $0 $t0 OPPE_NEG%llu\n",labelCompter);
+	fprintf(outputFile,"li $t0 0\nj OPPE_NEG_FIN%llu\n",labelCompter);
+	fprintf(outputFile,"OPPE_NEG%llu :\nli $t0 1\nOPPE_NEG_FIN%llu :\n",labelCompter,labelCompter);
+	++labelCompter;
 }
 // ---------------------------------------------------------------- CHIFFRE 		DONE
 | chiffre {
