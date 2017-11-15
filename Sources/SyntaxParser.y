@@ -602,10 +602,7 @@ int main(void)
 void yyerror (char const *s)
 {
 	printf("error : %s %d\n",s, yychar);
-<<<<<<< Updated upstream
-=======
 
 	// fclose(outputFile);
 	// freeList(symboleTable);
->>>>>>> Stashed changes
 }
