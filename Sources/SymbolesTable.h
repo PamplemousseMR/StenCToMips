@@ -7,7 +7,9 @@ typedef enum bool{false,true} bool;
 
 typedef struct s_node{
 	char id[BUFFER_SIZE];
+	char mipsId[BUFFER_SIZE];
 	bool init;
+	unsigned long long creationLabelCounter;
 	struct s_node* next;
 }*Node;
 
@@ -20,7 +22,7 @@ void printList(List l);
 
 void freeList(List l);
 
-void addNode(List l, char* c, bool b);
+void addNode(List l, char* c);
 
 void removeNode(List l,char* c);
 

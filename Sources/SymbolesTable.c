@@ -4,6 +4,9 @@
 
 #include "SymbolesTable.h"
 
+extern unsigned long long labelCounter;
+extern unsigned long long variableCounter;
+
 List mallocList(){
 	List l = (List)malloc(sizeof(struct s_node*));
 	*l = NULL;
@@ -12,11 +15,8 @@ List mallocList(){
 
 void printNodesBis(Node n){
 	if(n == NULL) 
-	{	
-		printf("\n");
 		return;
-	}
-	printf("\t Node %s %d",n->id,n->init);
+	printf("\t Node %s %s %d %llu",n->id,n->mipsId,n->init,n->creationLabelCounter);
 	printNodesBis(n->next);
 }
 
@@ -36,22 +36,24 @@ void freeList(List l){
 	l = NULL;
 }
 
-Node addNodeBis(Node n, char* c, bool b){
+Node addNodeBis(Node n, char* c){
 	if(n == NULL){
 		Node result = (Node)malloc(sizeof(struct s_node));
 		strncpy(result->id,c,BUFFER_SIZE);
+		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
 		result->init = false;
+		result->creationLabelCounter = labelCounter;
 		result->next = NULL;
 		return result;
 	}else {
 		if(strcmp(n->id,c))
-			n->next = addNodeBis(n->next, c, b);
+			n->next = addNodeBis(n->next, c);
 		return n;
 	}
 }
 
-void addNode(List l, char* c, bool b){
-	*l = addNodeBis(*l,c,b);
+void addNode(List l, char* c){
+	*l = addNodeBis(*l,c);
 }
 
 Node removeNodeBis(Node n, char* c){
