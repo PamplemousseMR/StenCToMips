@@ -579,6 +579,12 @@ CHIFFRE {
 int main(void)
 {
 	symboleTable = mallocList();
+		addNode(symboleTable,"a"); 
+		addNode(symboleTable,"b"); 
+		addNode(symboleTable,"c"); 
+		addNode(symboleTable,"d");
+		printList(symboleTable);
+	
 	outputFile = fopen("output.mips","w");
 
 	fprintf(outputFile,".data\n.text\n.globl main\n\nmain :\n");
@@ -596,4 +602,10 @@ int main(void)
 void yyerror (char const *s)
 {
 	printf("error : %s %d\n",s, yychar);
+<<<<<<< Updated upstream
+=======
+
+	// fclose(outputFile);
+	// freeList(symboleTable);
+>>>>>>> Stashed changes
 }
