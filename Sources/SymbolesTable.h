@@ -15,9 +15,9 @@ typedef struct s_node{
 
 typedef Node* List;
 
-
 List mallocList();
 void freeList(List);
+
 Node addNode(List, char*);
 Node getNodeById(List, char*);
 void removeNode(List, char*);
