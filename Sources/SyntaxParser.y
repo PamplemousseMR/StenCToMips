@@ -42,17 +42,17 @@
 %token<String> STRING
 
 %type<String> programme
-%type<String> suite_instructions_preprocesseurs
-%type<String> instruction_preprocesseur
-%type<String> suite_fonctions
+%type<String> preprocessor_instructions_serie
+%type<String> preprocessor_instruction
+%type<String> functions_serie
 %type<String> main
-%type<String> suite_instructions
+%type<String> instructions_serie
 %type<String> ligne
 %type<String> return
 %type<String> variable
 %type<String> hooks
 %type<String> initialisation
-%type<String> suite_variable_init
+%type<String> variables_init_serie
 %type<String> variable_init
 %type<String> affectation
 %type<String> for
@@ -97,17 +97,17 @@
 
 programme :
 // ------------------------------------------------------------------
-suite_instructions_preprocesseurs suite_fonctions {
-	printf("suite_instructions_preprocesseurs suite_fonctions -> programme\n");
+preprocessor_instructions_serie functions_serie {
+	printf("preprocessor_instructions_serie functions_serie -> programme\n");
 }
 ;
 
 //__________________________________________________________________________________
 
-suite_instructions_preprocesseurs :
+preprocessor_instructions_serie :
 // ------------------------------------------------------------------
-instruction_preprocesseur suite_instructions_preprocesseurs {
-	printf("instruction_preprocesseur suite_instructions_preprocesseurs -> suite_instructions_preprocesseurs\n");
+preprocessor_instruction preprocessor_instructions_serie {
+	printf("preprocessor_instruction preprocessor_instructions_serie -> preprocessor_instructions_serie\n");
 }
 // ------------------------------------------------------------------
 | {
@@ -116,19 +116,19 @@ instruction_preprocesseur suite_instructions_preprocesseurs {
 
 //__________________________________________________________________________________
 
-instruction_preprocesseur :
+preprocessor_instruction :
 // ------------------------------------------------------------------
 DEFINE ID chiffre ENDLINE {
-	printf("DEFINE ID chiffre ENDLINE -> instruction_preprocesseur\n");
+	printf("DEFINE ID chiffre ENDLINE -> preprocessor_instruction\n");
 }
 ;
 
 //__________________________________________________________________________________
 
-suite_fonctions :
+functions_serie :
 // ------------------------------------------------------------------
 main {
-	printf("main -> suite_fonctions\n");
+	printf("main -> functions_serie\n");
 }
 ;
 
@@ -136,17 +136,17 @@ main {
 
 main :
 // ------------------------------------------------------------------
-TYPE MAIN LBRA RBRA LEMB suite_instructions REMB {
-	printf("TYPE MAIN LBRA RBRA LEMB suite_instructions REMB -> main\n");
+TYPE MAIN LBRA RBRA LEMB instructions_serie REMB {
+	printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 }
 ;
 
 //__________________________________________________________________________________
 
-suite_instructions :
+instructions_serie :
 // ------------------------------------------------------------------
-ligne suite_instructions {
-	printf("ligne suite_instructions -> suite_instructions\n");
+ligne instructions_serie {
+	printf("ligne instructions_serie -> instructions_serie\n");
 }
 // ------------------------------------------------------------------
 | {
@@ -169,8 +169,8 @@ for {
 	printf("if -> ligne\n");
 }
 // ------------------------------------------------------------------
-| LEMB suite_instructions REMB {
-	printf("LEMB suite_instructions REMB -> ligne\n");
+| LEMB instructions_serie REMB {
+	printf("LEMB instructions_serie REMB -> ligne\n");
 }
 // ------------------------------------------------------------------
 | initialisation SEMI {
@@ -234,8 +234,8 @@ LHOO evaluation RHOO hooks {
 
 initialisation :
 // ------------------------------------------------------------------
-TYPE suite_variable_init {
-	printf("TYPE suite_variable_init -> initialisation\n");
+TYPE variables_init_serie {
+	printf("TYPE variables_init_serie -> initialisation\n");
 }
 // ------------------------------------------------------------------
 | STENCIL suite_stencil_init {
@@ -245,13 +245,13 @@ TYPE suite_variable_init {
 
 //__________________________________________________________________________________
 
-suite_variable_init :
+variables_init_serie :
 // ------------------------------------------------------------------
-variable_init COMMA suite_variable_init {printf("variable_init COMA suite_variable_init -> suite_variable_init\n");
+variable_init COMMA variables_init_serie {printf("variable_init COMA variables_init_serie -> variables_init_serie\n");
 }
 // ------------------------------------------------------------------
 | variable_init {
-	printf("variable_init -> suite_variable_init\n");
+	printf("variable_init -> variables_init_serie\n");
 }
 ;
 
@@ -386,7 +386,7 @@ ELSE ligne {
 //=================================================================================================
 
 evaluation :
-// ------------------------------------------------------------------ OR		DONE
+// ------------------------------------------------------------------ DONE
 evaluation COMPARATOR_OR {
 	fprintf(outputFile,"move $t9 $t0\n");
 } evaluation {
@@ -409,7 +409,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_OR_%llu :\nli $t0 0\nCOMP_OR_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ AND 		DONE
+// ------------------------------------------------------------------ DONE
 | evaluation COMPARATOR_AND {
 	fprintf(outputFile,"move $t8 $t0\n");
 } evaluation {
@@ -432,7 +432,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_AND_%llu :\nli $t0 1\nCOMP_AND_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ EQUALITY 		DONE
+// ------------------------------------------------------------------ DONE
 | evaluation COMPARATOR_EQUALITY {
 	fprintf(outputFile,"move $t7 $t0\n");
 } evaluation {
@@ -448,7 +448,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_EQUALITY_%llu :\nli $t0 1\nCOMP_EQUALITY_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ SUPREMACY 		DONE
+// ------------------------------------------------------------------ DONE
 | evaluation COMPARATOR_SUPREMACY {
 	fprintf(outputFile,"move $t6 $t0\n");
 } evaluation {
@@ -468,7 +468,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_SUPREMACY_%llu :\nli $t0 1\nCOMP_SUPREMACY_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ ADDITION 		DONE
+// ------------------------------------------------------------------ DONE
 | evaluation OPERATOR_ADDITION {
 	fprintf(outputFile,"move $t5 $t0\n");
 } evaluation {
@@ -479,7 +479,7 @@ evaluation COMPARATOR_OR {
 		fprintf(outputFile,"sub $t0 $t5 $t0\n");
 	}
 }
-// ------------------------------------------------------------------ MULTI 			DONE
+// ------------------------------------------------------------------ DONE
 | evaluation OPERATOR_MULTI {
 	fprintf(outputFile,"move $t4 $t0\n");
 } evaluation {
@@ -490,7 +490,7 @@ evaluation COMPARATOR_OR {
 		fprintf(outputFile,"div $t0 $t4 $t0\n");
 	}
 }
-// ------------------------------------------------------------------ LBRA RBRA		DONE
+// ------------------------------------------------------------------ DONE
 | LBRA {
 	int i;
 	fprintf(outputFile,"subi $sp $sp %d\n",4*9);
@@ -507,16 +507,16 @@ evaluation COMPARATOR_OR {
 	}
 	fprintf(outputFile,"addi $sp $sp %d\n",4*9);
 }
-// ------------------------------------------------------------------ PRINTI			DONE
+// ------------------------------------------------------------------ DONE
 | PRINTI LBRA evaluation RBRA {
 	printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 	fprintf(outputFile,"move $a0 $t0\nli $v0 1\nsyscall\n");
 }
-// ------------------------------------------------------------------ PRINTF
+// ------------------------------------------------------------------
 | PRINTF LBRA STRING RBRA {
 	printf("PRINTF LBRA STRING RBRA -> evaluation\n");
 }
-// ------------------------------------------------------------------ NEGATION 		DONE
+// ------------------------------------------------------------------ DONE
 | OPERATOR_NEGATION evaluation {
 	printf("OPERATOR_NEGATION evaluation -> evaluation\n");
 	fprintf(outputFile,"beq $0 $t0 OPPE_NEG_%llu\n",labelCounter);
@@ -524,12 +524,12 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"OPPE_NEG_%llu :\nli $t0 1\nOPPE_NEG_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ CHIFFRE 		DONE
+// ------------------------------------------------------------------ DONE
 | chiffre {
 	printf("chiffre -> evaluation\n");
 	fprintf(outputFile,"li $t0 %s\n",$1);
 }
-// ------------------------------------------------------------------ INCR
+// ------------------------------------------------------------------
 | variable_incr	{
 	printf("variable_incr -> evaluation\n");
 }
@@ -538,21 +538,21 @@ evaluation COMPARATOR_OR {
 //__________________________________________________________________________________
 
 variable_incr :
-// ------------------------------------------------------------------ INCR
+// ------------------------------------------------------------------ 
 OPERATOR_INCREMENT variable	{
 	printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 // pour ++
 // addi $variable 1
 // move $t0 $variable
 }
-// ------------------------------------------------------------------ INCR
+// ------------------------------------------------------------------
 | variable OPERATOR_INCREMENT {
 	printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 // pour ++
 // move $t0 $variable
 // addi $varibale 1
 }
-// ------------------------------------------------------------------ variable
+// ------------------------------------------------------------------
 | variable {
 	printf("variable -> variable_incr\n");
 // move $t0 $variable
@@ -562,12 +562,12 @@ OPERATOR_INCREMENT variable	{
 //__________________________________________________________________________________
 
 chiffre :
-// ------------------------------------------------------------------ CHIFFRE 	DONE
+// ------------------------------------------------------------------ DONE
 CHIFFRE {
 	printf("CHIFFRE -> chiffre\n");
 	sprintf($$,"%s",$1);
 }
-// ------------------------------------------------------------------ OPERATOR 	DONE
+// ------------------------------------------------------------------ DONE
 | OPERATOR_ADDITION CHIFFRE {
 	printf("OPERATOR_ADDITION CHIFFRE -> chiffre\n");
 	sprintf($$,"%s%s",$1,$2);
@@ -578,7 +578,6 @@ CHIFFRE {
 
 int main(void)
 {
-
 	symboleTable = mallocList();
 	outputFile = fopen("output.mips","w");
 
@@ -591,13 +590,10 @@ int main(void)
 	fclose(outputFile);
 	freeList(symboleTable);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 void yyerror (char const *s)
 {
 	printf("error : %s %d\n",s, yychar);
-
-	fclose(outputFile);
-	freeList(symboleTable);
 }
