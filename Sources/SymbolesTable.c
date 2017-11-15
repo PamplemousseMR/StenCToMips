@@ -52,8 +52,9 @@ Node addNodeBis(Node n, char* c){
 	}
 }
 
-void addNode(List l, char* c){
+Node addNode(List l, char* c){
 	*l = addNodeBis(*l,c);
+	return getNodeById(l,c);
 }
 
 Node removeNodeBis(Node n, char* c){
@@ -68,8 +69,24 @@ Node removeNodeBis(Node n, char* c){
 	}
 }
 
-void removeNode(List l,char* c){
-	*l = removeNodeBis(*l,c);
+void removeNode(List l, char* c){
+	*l = removeNodeBis(*l, c);
+}
+
+Node removeAllNodeGreaterThanBis(Node n,unsigned int i){
+	if(n == NULL) return NULL;
+	n->next = removeAllNodeGreaterThanBis(n->next,i);
+	if(n->creationLabelCounter >= i){
+		Node tmp = n->next;
+		free(n);
+		return tmp;
+	}else{
+		return n;
+	}
+}
+
+void removeAllNodeGreaterThan(List l, int i){
+	*l = removeAllNodeGreaterThanBis(*l, i); 
 }
 
 Node getNodeByIdBis(Node n, char* c){

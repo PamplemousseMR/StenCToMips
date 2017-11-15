@@ -579,11 +579,6 @@ CHIFFRE {
 int main(void)
 {
 	symboleTable = mallocList();
-		addNode(symboleTable,"a"); 
-		addNode(symboleTable,"b"); 
-		addNode(symboleTable,"c"); 
-		addNode(symboleTable,"d");
-		printList(symboleTable);
 	
 	outputFile = fopen("output.mips","w");
 
