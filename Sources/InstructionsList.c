@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "InstructionsSerie.h"
+#include "InstructionsList.h"
 
 Instruction instructionMalloc(char* c, int ind)
 {
@@ -12,7 +12,7 @@ Instruction instructionMalloc(char* c, int ind)
 	i->next = NULL;
 }
 
-void instrucitonFree(InstructionList i)
+void instrucitonFree(InstructionsList i)
 {
 	if((*i)->next != NULL)
 	{
@@ -21,7 +21,7 @@ void instrucitonFree(InstructionList i)
 	free((*i));
 }
 
-void instructionPushBack(InstructionList i, char* c, int ind)
+void instructionPushBack(InstructionsList i, char* c, int ind)
 {
 	Instruction end = (*i);
 	while(end->next != NULL)
@@ -33,14 +33,14 @@ void instructionPushBack(InstructionList i, char* c, int ind)
 	end->next = newI;
 }
 
-void instructionPushForward(InstructionList i, char* c, int ind)
+void instructionPushForward(InstructionsList i, char* c, int ind)
 {
 	Instruction newI = instructionMalloc(c, ind);
 	newI->next = (*i);
 	(*i) = newI;
 }
 
-void instructionConcat(InstructionList i1, InstructionList i2)
+void instructionConcat(InstructionsList i1, InstructionsList i2)
 {
 	Instruction end = (*i1);
 	while(end->next != NULL)
@@ -50,7 +50,7 @@ void instructionConcat(InstructionList i1, InstructionList i2)
 	end->next = (*i2);
 }
 
-void instructionIncr(InstructionList i, int ind)
+void instructionIncr(InstructionsList i, int ind)
 {
 	if((*i)->next != NULL)
 	{
@@ -59,7 +59,7 @@ void instructionIncr(InstructionList i, int ind)
 	(*i)->indentation += ind;
 }
 
-/*static void instructionPrint(InstructionList i)
+/*static void instructionPrint(InstructionsList i)
 {
 	printf("ins : %s %d\n",(*i)->code,(*i)->indentation);
 	if((*i)->next != NULL)
@@ -71,7 +71,7 @@ void instructionIncr(InstructionList i, int ind)
 int main()
 {
 	Instruction root = instructionMalloc("first", 0);
-	InstructionList list = &root;
+	InstructionsList list = &root;
 
 	instructionPrint(list);
 	printf("\n");
@@ -93,7 +93,7 @@ int main()
 	printf("\n");
 
 	Instruction root2 = instructionMalloc("first2", 0);
-	InstructionList list2 = &root2;
+	InstructionsList list2 = &root2;
 
 	instructionPushBack(list2,"second2",1);
 	instructionPushBack(list2,"third2",1);

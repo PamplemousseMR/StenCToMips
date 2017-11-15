@@ -1,10 +1,35 @@
-%start programme
+%code requires {
+    #include "InstructionsList.h"
+}
+
+%{
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	#include "InstructionsList.h"
+	#include "SymbolesTable.h"
+
+	unsigned long long labelCounter = 0;
+	unsigned long long variableCounter = 0;
+
+	int yylex();
+	void yyerror (char const *s);
+
+	FILE* outputFile;
+	List symboleTable;
+	InstructionsList rootTree; 
+%}
 
 %union {
 
 	char* String;
+	Instruction* tree;
 
 }
+
+
+%start programme
 
 %token<String> DEFINE
 %token<String> ENDLINE
@@ -62,23 +87,6 @@
 %type<String> evaluation
 %type<String> variable_incr
 %type<String> chiffre
-
-%{
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-
-	#include "SymbolesTable.h"
-
-	unsigned long long labelCounter = 0;
-	unsigned long long variableCounter = 0;
-
-	int yylex();
-	void yyerror (char const *s);
-
-	FILE* outputFile;
-	List symboleTable;
-%}
 
 %left COMPARATOR_OR
 %left COMPARATOR_AND
@@ -579,6 +587,7 @@ CHIFFRE {
 int main(void)
 {
 	symboleTable = mallocList();
+	*rootTree = instructionMalloc(".data",0);
 	
 	outputFile = fopen("output.mips","w");
 
@@ -590,6 +599,7 @@ int main(void)
 
 	fclose(outputFile);
 	freeList(symboleTable);
+	instrucitonFree(rootTree);
 
 	return EXIT_SUCCESS;
 }
