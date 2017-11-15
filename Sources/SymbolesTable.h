@@ -17,17 +17,11 @@ typedef Node* List;
 
 
 List mallocList();
-
-void printList(List);
-
 void freeList(List);
-
 Node addNode(List, char*);
-
+Node getNodeById(List, char*);
 void removeNode(List, char*);
-
 void removeAllNodeGreaterThan(List, int);
 
-Node getNodeById(List, char*);
 
 #endif

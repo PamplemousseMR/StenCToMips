@@ -576,6 +576,17 @@ CHIFFRE {
 
 %%//==============================================================================================
 
+static void printNodesBis(Node n){
+	if(n == NULL) 
+		return;
+	printf("\t Node %s %s %d %llu",n->id,n->mipsId,n->init,n->creationLabelCounter);
+	printNodesBis(n->next);
+}
+
+static void printList(List l){	
+	printNodesBis(*l);
+}
+
 int main(void)
 {
 	symboleTable = mallocList();

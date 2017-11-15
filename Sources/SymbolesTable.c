@@ -13,17 +13,6 @@ List mallocList(){
 	return l;
 }
 
-void printNodesBis(Node n){
-	if(n == NULL) 
-		return;
-	printf("\t Node %s %s %d %llu",n->id,n->mipsId,n->init,n->creationLabelCounter);
-	printNodesBis(n->next);
-}
-
-void printList(List l){	
-	printNodesBis(*l);
-}
-
 void freeNodeBis(Node n){
 	if(n != NULL) 
 		freeNodeBis(n->next);
@@ -57,6 +46,16 @@ Node addNode(List l, char* c){
 	return getNodeById(l,c);
 }
 
+Node getNodeByIdBis(Node n, char* c){
+	if(n == NULL) return NULL;
+	if(!strcmp(n->id,c)) return n;
+	return getNodeByIdBis(n->next,c);
+}
+
+Node getNodeById(List l, char* c){
+	return getNodeByIdBis(*l, c);
+}
+
 Node removeNodeBis(Node n, char* c){
 	if(n == NULL) return NULL;
 	if(!strcmp(n->id,c)){
@@ -87,16 +86,6 @@ Node removeAllNodeGreaterThanBis(Node n,unsigned int i){
 
 void removeAllNodeGreaterThan(List l, int i){
 	*l = removeAllNodeGreaterThanBis(*l, i); 
-}
-
-Node getNodeByIdBis(Node n, char* c){
-	if(n == NULL) return NULL;
-	if(!strcmp(n->id,c)) return n;
-	return getNodeByIdBis(n->next,c);
-}
-
-Node getNodeById(List l, char* c){
-	return getNodeByIdBis(*l, c);
 }
 
 /*
