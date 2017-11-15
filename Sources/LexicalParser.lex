@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "y.tab.h"
+#include "SyntaxParser.h"
 
 #ifdef _DEBUG
 #define OUTPUT(args...) printf(args)
