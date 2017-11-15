@@ -10,6 +10,7 @@ Instruction instructionMalloc(char* c, int ind)
 	strncpy(i->code,c,BUFFER_SIZE);
 	i->indentation = ind;
 	i->next = NULL;
+	return i;
 }
 
 void instrucitonFree(InstructionsList i)
@@ -59,7 +60,7 @@ void instructionIncr(InstructionsList i, int ind)
 	(*i)->indentation += ind;
 }
 
-/*static void instructionPrint(InstructionsList i)
+void instructionPrint(InstructionsList i)
 {
 	printf("ins : %s %d\n",(*i)->code,(*i)->indentation);
 	if((*i)->next != NULL)
@@ -67,7 +68,7 @@ void instructionIncr(InstructionsList i, int ind)
 		instructionPrint(&((*i)->next));
 	}
 }
-
+/*
 int main()
 {
 	Instruction root = instructionMalloc("first", 0);

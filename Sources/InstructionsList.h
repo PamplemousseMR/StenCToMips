@@ -20,4 +20,5 @@ void instructionPushForward(InstructionsList, char*, int);
 void instructionConcat(InstructionsList, InstructionsList); //1met B a la suite de A (A->next....->next = B)
 void instructionIncr(InstructionsList, int);	//incrémente de n tout les nbIndentation de la liste
 
+void instructionPrint(InstructionsList);
 #endif
