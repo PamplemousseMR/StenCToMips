@@ -587,7 +587,8 @@ CHIFFRE {
 int main(void)
 {
 	symboleTable = mallocList();
-	*rootTree = instructionMalloc(".data",0);
+	Instruction firstInst = instructionMalloc(".data",0);
+	rootTree = &firstInst;
 	
 	outputFile = fopen("output.mips","w");
 
@@ -599,6 +600,7 @@ int main(void)
 
 	fclose(outputFile);
 	freeList(symboleTable);
+	instructionPrint(rootTree);
 	instrucitonFree(rootTree);
 
 	return EXIT_SUCCESS;
