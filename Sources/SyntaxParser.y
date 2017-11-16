@@ -8,8 +8,13 @@
 	#include <string.h>
 
 	#include "InstructionsList.h"
-	#include "SymbolesTable.h"
+	#include "SymbolesTable.h"\
 
+	#ifdef DEBUG
+	#define printf(args...) printf(args);
+	#else
+	#define printf(...)
+	#endif
 
 	#define PUSH_BACK(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
 													instructionPushBack(dest,instructionTempo,indent)
