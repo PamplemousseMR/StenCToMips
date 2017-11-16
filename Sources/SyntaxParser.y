@@ -18,13 +18,15 @@
 
 	FILE* outputFile;
 	List symboleTable;
-	InstructionsList rootTree; 
+	InstructionsList rootTree;
+	char instructionTempo[BUFFER_SIZE];
+	
 %}
 
 %union {
 
 	char* String;
-	Instruction* tree;
+	InstructionsList tree;
 
 }
 
@@ -66,27 +68,27 @@
 %token<String> SEMI
 %token<String> STRING
 
-%type<String> programme
-%type<String> preprocessor_instructions_serie
-%type<String> preprocessor_instruction
-%type<String> functions_serie
-%type<String> main
-%type<String> instructions_serie
-%type<String> ligne
-%type<String> return
-%type<String> variable
-%type<String> hooks
-%type<String> initialisation
-%type<String> variables_init_serie
-%type<String> variable_init
-%type<String> affectation
-%type<String> for
-%type<String> while
-%type<String> if
-%type<String> else
-%type<String> evaluation
-%type<String> variable_incr
-%type<String> chiffre
+%type<tree> programme
+%type<tree> preprocessor_instructions_serie
+%type<tree> preprocessor_instruction
+%type<tree> functions_serie
+%type<tree> main
+%type<tree> instructions_serie
+%type<tree> ligne
+%type<tree> return
+%type<tree> variable
+%type<tree> hooks
+%type<tree> initialisation
+%type<tree> variables_init_serie
+%type<tree> variable_init
+%type<tree> affectation
+%type<tree> for
+%type<tree> while
+%type<tree> if
+%type<tree> else
+%type<tree> evaluation
+%type<tree> variable_incr
+%type<String> chiffre 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMPARATOR_OR
 %left COMPARATOR_AND
@@ -195,6 +197,7 @@ for {
 // ------------------------------------------------------------------
 | evaluation SEMI {
 	printf("evaluation SEMI -> ligne\n");
+	instructionPrint($1);
 }
 ;
 
@@ -398,6 +401,7 @@ evaluation :
 evaluation COMPARATOR_OR {
 	fprintf(outputFile,"move $t9 $t0\n");
 } evaluation {
+	instructionListMalloc(&$$); // pour evité les core dumpt
 	printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 
 	fprintf(outputFile,"beq $0 $t9 OPPE_BOOL_%llu\n",labelCounter);
@@ -421,6 +425,7 @@ evaluation COMPARATOR_OR {
 | evaluation COMPARATOR_AND {
 	fprintf(outputFile,"move $t8 $t0\n");
 } evaluation {
+	instructionListMalloc(&$$); // pour evité les core dumpt
 	printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 
 	fprintf(outputFile,"beq $0 $t8 OPPE_BOOL_%llu\n",labelCounter);
@@ -444,6 +449,7 @@ evaluation COMPARATOR_OR {
 | evaluation COMPARATOR_EQUALITY {
 	fprintf(outputFile,"move $t7 $t0\n");
 } evaluation {
+	instructionListMalloc(&$$); // pour evité les core dumpt
 	char inst[4];
 	printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n");
 	if(!strcmp($2,"==")){
@@ -460,6 +466,7 @@ evaluation COMPARATOR_OR {
 | evaluation COMPARATOR_SUPREMACY {
 	fprintf(outputFile,"move $t6 $t0\n");
 } evaluation {
+	instructionListMalloc(&$$); // pour evité les core dumpt
 	char inst[4];
 	printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n");
 	if(!strcmp($2,"<")){
@@ -480,6 +487,7 @@ evaluation COMPARATOR_OR {
 | evaluation OPERATOR_ADDITION {
 	fprintf(outputFile,"move $t5 $t0\n");
 } evaluation {
+	instructionListMalloc(&$$); // pour evité les core dumpt
 	printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 	if($2[0] == '+'){
 		fprintf(outputFile,"add $t0 $t5 $t0\n");
@@ -491,11 +499,17 @@ evaluation COMPARATOR_OR {
 | evaluation OPERATOR_MULTI {
 	fprintf(outputFile,"move $t4 $t0\n");
 } evaluation {
+	$$ = $1;
+	instructionPushForward($4,"move $t4 $t0",1);
+	instructionConcat($$,$4);
+	instructionListFree($4);
 	printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 	if($2[0] == '*'){
 		fprintf(outputFile,"mul $t0 $t4 $t0\n");
+		instructionPushBack($$,"mul $t0 $t4 $t0",1);
 	}else{
 		fprintf(outputFile,"div $t0 $t4 $t0\n");
+		instructionPushBack($$,"div $t0 $t4 $t0",1);
 	}
 }
 // ------------------------------------------------------------------ DONE
@@ -508,20 +522,40 @@ evaluation COMPARATOR_OR {
 	}
 } evaluation RBRA{
 	int i;
+	instructionListMalloc(&$$);
+	snprintf(instructionTempo,BUFFER_SIZE,"subi $sp $sp %d",4*9);
+	instructionPushBack($$,instructionTempo,1);
+	for(i=1 ; i<=9 ; ++i)
+	{
+		snprintf(instructionTempo,BUFFER_SIZE,"sw $t%d %d($sp)",i,i*4);
+		instructionPushBack($$,instructionTempo,1);
+	}
+	instructionIncr($3,1);
+	instructionConcat($$,$3);
+	instructionListFree($3);
 	printf("LBRA evaluation RBRA -> evaluation\n");
 	for(i=1 ; i<=9 ; ++i)
 	{
 		fprintf(outputFile,"lw $t%d %d($sp)\n",i,i*4);
+		snprintf(instructionTempo,BUFFER_SIZE,"lw $t%d %d($sp)",i,i*4);
+		instructionPushBack($$,instructionTempo,1);
 	}
 	fprintf(outputFile,"addi $sp $sp %d\n",4*9);
+	snprintf(instructionTempo,BUFFER_SIZE,"addi $sp $sp %d",4*9);
+	instructionPushBack($$,instructionTempo,1);
 }
 // ------------------------------------------------------------------ DONE
 | PRINTI LBRA evaluation RBRA {
 	printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
+	$$ = $3;
+	instructionPushBack($$,"move $a0 $t0",1);
+	instructionPushBack($$,"li $v0 1",1);
+	instructionPushBack($$,"syscall",1);
 	fprintf(outputFile,"move $a0 $t0\nli $v0 1\nsyscall\n");
 }
 // ------------------------------------------------------------------
 | PRINTF LBRA STRING RBRA {
+	instructionListMalloc(&$$); // pour evité les core dumpt
 	printf("PRINTF LBRA STRING RBRA -> evaluation\n");
 }
 // ------------------------------------------------------------------ DONE
@@ -530,15 +564,30 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"beq $0 $t0 OPPE_NEG_%llu\n",labelCounter);
 	fprintf(outputFile,"li $t0 0\nj OPPE_NEG_%llu_FIN\n",labelCounter);
 	fprintf(outputFile,"OPPE_NEG_%llu :\nli $t0 1\nOPPE_NEG_%llu_FIN :\n",labelCounter,labelCounter);
+	$$ = $2;
+	snprintf(instructionTempo,BUFFER_SIZE,"beq $0 $t0 OPPE_NEG_%llu",labelCounter);
+	instructionPushBack($$,instructionTempo,1);
+	instructionPushBack($$,"li $t0 0",1);
+	snprintf(instructionTempo,BUFFER_SIZE,"j OPPE_NEG_%llu_FIN",labelCounter);
+	instructionPushBack($$,instructionTempo,1);
+	snprintf(instructionTempo,BUFFER_SIZE,"OPPE_NEG_%llu :",labelCounter);
+	instructionPushBack($$,instructionTempo,1);
+	instructionPushBack($$,"li $t0 1",1);
+	snprintf(instructionTempo,BUFFER_SIZE,"OPPE_NEG_%llu_FIN :",labelCounter);
+	instructionPushBack($$,instructionTempo,1);
 	++labelCounter;
 }
 // ------------------------------------------------------------------ DONE
 | chiffre {
 	printf("chiffre -> evaluation\n");
+	snprintf(instructionTempo,BUFFER_SIZE,"li $t0 %s",$1);
+	instructionListMalloc(&$$);
+	instructionPushBack($$,instructionTempo,1);
 	fprintf(outputFile,"li $t0 %s\n",$1);
 }
 // ------------------------------------------------------------------
 | variable_incr	{
+	instructionListMalloc(&$$); // pour evité les core dumpt sera surement $$ = $1
 	printf("variable_incr -> evaluation\n");
 }
 ;
@@ -584,6 +633,10 @@ CHIFFRE {
 
 %%//==============================================================================================
 
+void instructionFirstUsing(InstructionsList l, char* c, int i){
+	*l = (Instruction)instructionMalloc(c, i);
+}
+
 int main(void)
 {
 	symboleTable = mallocList();
@@ -597,11 +650,11 @@ int main(void)
 	yyparse();
 
 	fprintf(outputFile,"\nExit :\nla $v0 10\nsyscall\n");
-
+	
 	fclose(outputFile);
 	freeList(symboleTable);
 	instructionPrint(rootTree);
-	instrucitonFree(rootTree);
+	instructionFree(rootTree);
 
 	return EXIT_SUCCESS;
 }
