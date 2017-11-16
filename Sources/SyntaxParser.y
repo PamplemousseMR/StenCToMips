@@ -11,10 +11,10 @@
 	#include "SymbolesTable.h"
 
 
-	#define PUSH_BACK(dest, indent, code, args...) snprintf(instructionTempo,BUFFER_SIZE,code,args);\
+	#define PUSH_BACK(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
 													instructionPushBack(dest,instructionTempo,indent)
 
-	#define PUSH_FORWARD(dest, indent, code, args...) snprintf(instructionTempo,BUFFER_SIZE,code,args);\
+	#define PUSH_FORWARD(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
 														instructionPushForward(dest,instructionTempo,indent)
 
 	unsigned long long labelCounter = 0;
@@ -404,11 +404,22 @@ ELSE ligne {
 //=================================================================================================
 
 evaluation :
-// ------------------------------------------------------------------ 
+// ------------------------------------------------------------------ DONE
 evaluation COMPARATOR_OR {
 	fprintf(outputFile,"move $t9 $t0\n");
 } evaluation {
-	instructionListMalloc(&$$); // pour evité les core dumpt
+	$$ = $1;
+	PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); 	//si $t0 != 0 => TRUE
+	instructionConcat($$,$4);
+	instructionListFree($4);
+	PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); 	//si $t0 != 0 => TRUE
+	PUSH_BACK($$,1,"li $t0 0");	
+	PUSH_BACK($$,1,"j COMP_OR_%llu_FIN",labelCounter);
+	PUSH_BACK($$,1,"COMP_OR_%llu_RETURN_TRUE :",labelCounter);
+	PUSH_BACK($$,1,"li $t0 1");	
+	PUSH_BACK($$,1,"COMP_OR_%llu_FIN :",labelCounter);	
+	++labelCounter;
+	
 	printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 
 	fprintf(outputFile,"beq $0 $t9 OPPE_BOOL_%llu\n",labelCounter);
@@ -428,11 +439,22 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_OR_%llu :\nli $t0 0\nCOMP_OR_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ 
+// ------------------------------------------------------------------ DONE
 | evaluation COMPARATOR_AND {
 	fprintf(outputFile,"move $t8 $t0\n");
 } evaluation {
-	instructionListMalloc(&$$); // pour evité les core dumpt
+	$$ = $1;
+	PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); 	//si $t0 != 0 => TRUE
+	instructionConcat($$,$4);
+	instructionListFree($4);
+	PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); 	//si $t0 != 0 => TRUE
+	PUSH_BACK($$,1,"li $t0 1");	
+	PUSH_BACK($$,1,"j COMP_AND_%llu_FIN",labelCounter);
+	PUSH_BACK($$,1,"COMP_AND_%llu_RETURN_FALSE :",labelCounter);
+	PUSH_BACK($$,1,"li $t0 0");	
+	PUSH_BACK($$,1,"COMP_AND_%llu_FIN :",labelCounter);
+	++labelCounter;	
+	
 	printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 
 	fprintf(outputFile,"beq $0 $t8 OPPE_BOOL_%llu\n",labelCounter);
@@ -452,7 +474,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_AND_%llu :\nli $t0 1\nCOMP_AND_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ 
+// ------------------------------------------------------------------ DONE 
 | evaluation COMPARATOR_EQUALITY {
 	fprintf(outputFile,"move $t7 $t0\n");
 } evaluation {
@@ -464,12 +486,26 @@ evaluation COMPARATOR_OR {
 	}else if(!strcmp($2,"!=")){
 		strcpy(inst,"bne");
 	}
+	
+	$$ = $1;
+	PUSH_BACK($$,1,"move $t7 $t0");
+	instructionConcat($$,$4);
+	instructionListFree($4);
+	PUSH_BACK($$,1,"%s $t7 $t0 COMP_EQUALITY_%llu_RETURN_TRUE\n",inst,labelCounter);
+	PUSH_BACK($$,1,"li $t0 0");
+	PUSH_BACK($$,1,"j COMP_EQUALITY_%llu_FIN\n",labelCounter);
+	PUSH_BACK($$,1,"COMP_EQUALITY_%llu_RETURN_TRUE :",labelCounter);
+	PUSH_BACK($$,1,"li $t0 1");	
+	PUSH_BACK($$,1,"COMP_EQUALITY_%llu_FIN :",labelCounter);
+	++labelCounter;
+	
+	
 	fprintf(outputFile,"%s $t7 $t0 COMP_EQUALITY_%llu\n",inst,labelCounter);
 	fprintf(outputFile,"li $t0 0\nj COMP_EQUALITY_%llu_FIN\n",labelCounter);
 	fprintf(outputFile,"COMP_EQUALITY_%llu :\nli $t0 1\nCOMP_EQUALITY_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ 
+// ------------------------------------------------------------------ DONE 
 | evaluation COMPARATOR_SUPREMACY {
 	fprintf(outputFile,"move $t6 $t0\n");
 } evaluation {
@@ -485,21 +521,39 @@ evaluation COMPARATOR_OR {
 	}else if(!strcmp($2,">=")){
 		strcpy(inst,"bge");
 	}
+	
+	$$ = $1;
+	PUSH_BACK($$,1,"move $t6 $t0");
+	instructionConcat($$,$4);
+	instructionListFree($4);
+	PUSH_BACK($$,1,"%s $t6 $t0 COMP_SUPREMACY_%llu_RETURN_TRUE\n",inst,labelCounter);
+	PUSH_BACK($$,1,"li $t0 0");
+	PUSH_BACK($$,1,"j COMP_SUPREMACY_%llu_FIN\n",labelCounter);
+	PUSH_BACK($$,1,"COMP_SUPREMACY_%llu_RETURN_TRUE :",labelCounter);
+	PUSH_BACK($$,1,"li $t0 1");	
+	PUSH_BACK($$,1,"COMP_SUPREMACY_%llu_FIN :",labelCounter);
+	++labelCounter;
+	
 	fprintf(outputFile,"%s $t6 $t0 COMP_SUPREMACY_%llu\n",inst,labelCounter);
 	fprintf(outputFile,"li $t0 0\nj COMP_SUPREMACY_%llu_FIN\n",labelCounter);
 	fprintf(outputFile,"COMP_SUPREMACY_%llu :\nli $t0 1\nCOMP_SUPREMACY_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ 
+// ------------------------------------------------------------------ DONE
 | evaluation OPERATOR_ADDITION {
 	fprintf(outputFile,"move $t5 $t0\n");
 } evaluation {
-	instructionListMalloc(&$$); // pour evité les core dumpt
+	$$ = $1;
+	PUSH_FORWARD($4,1,"move $t5 $t0");
+	instructionConcat($$,$4);
+	instructionListFree($4);
 	printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 	if($2[0] == '+'){
 		fprintf(outputFile,"add $t0 $t5 $t0\n");
+		PUSH_BACK($$,1,"add $t0 $t5 $t0");
 	}else{
 		fprintf(outputFile,"sub $t0 $t5 $t0\n");
+		PUSH_BACK($$,1,"sub $t0 $t5 $t0");
 	}
 }
 // ------------------------------------------------------------------ DONE
@@ -507,16 +561,16 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"move $t4 $t0\n");
 } evaluation {
 	$$ = $1;
-	instructionPushForward($4,"move $t4 $t0",1);
+	PUSH_FORWARD($4,1,"move $t4 $t0");
 	instructionConcat($$,$4);
 	instructionListFree($4);
 	printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 	if($2[0] == '*'){
 		fprintf(outputFile,"mul $t0 $t4 $t0\n");
-		instructionPushBack($$,"mul $t0 $t4 $t0",1);
+		PUSH_BACK($$,1,"mul $t0 $t4 $t0");
 	}else{
 		fprintf(outputFile,"div $t0 $t4 $t0\n");
-		instructionPushBack($$,"div $t0 $t4 $t0",1);
+		PUSH_BACK($$,1,"div $t0 $t4 $t0");
 	}
 }
 // ------------------------------------------------------------------ DONE
