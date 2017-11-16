@@ -21,6 +21,9 @@
 
 	#define PUSH_FORWARD(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
 														instructionPushForward(dest,instructionTempo,indent)
+														
+	#define CONCAT_FREE(first, second) instructionConcat(first, second);\
+								instructionListFree(second);													
 
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
@@ -415,8 +418,7 @@ evaluation COMPARATOR_OR evaluation {
 
 	$$ = $1;
 	PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); 	//si $t0 != 0 => TRUE
-	instructionConcat($$,$3);
-	instructionListFree($3);
+	CONCAT_FREE($$,$3);
 	PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); 	//si $t0 != 0 => TRUE
 	PUSH_BACK($$,1,"li $t0 0");	
 	PUSH_BACK($$,1,"j COMP_OR_%llu_FIN",labelCounter);
@@ -430,10 +432,9 @@ evaluation COMPARATOR_OR evaluation {
 	printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 	
 	$$ = $1;
-	PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); 	//si $t0 != 0 => TRUE
-	instructionConcat($$,$3);
-	instructionListFree($3);
-	PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); 	//si $t0 != 0 => TRUE
+	PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); 	//si $t0 == 0 => FALSE
+	CONCAT_FREE($$,$3);
+	PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); 	//si $t0 == 0 => FALSE
 	PUSH_BACK($$,1,"li $t0 1");	
 	PUSH_BACK($$,1,"j COMP_AND_%llu_FIN",labelCounter);
 	PUSH_BACK($$,1,"COMP_AND_%llu_RETURN_FALSE :",labelCounter);
@@ -447,8 +448,7 @@ evaluation COMPARATOR_OR evaluation {
 
 	$$ = $1;
 	PUSH_BACK($$,1,"move $t7 $t0");
-	instructionConcat($$,$3);
-	instructionListFree($3);
+	CONCAT_FREE($$,$3);
 	char inst[4];
 	if(!strcmp($2,"==")){
 		strcpy(inst,"beq");
@@ -470,8 +470,7 @@ evaluation COMPARATOR_OR evaluation {
 
 	$$ = $1;
 	PUSH_BACK($$,1,"move $t6 $t0");
-	instructionConcat($$,$3);
-	instructionListFree($3);
+	CONCAT_FREE($$,$3);
 	if(!strcmp($2,"<")){
 		strcpy(inst,"blt");
 	}else if(!strcmp($2,"<=")){
@@ -495,8 +494,7 @@ evaluation COMPARATOR_OR evaluation {
 
 	$$ = $1;
 	PUSH_FORWARD($3,1,"move $t5 $t0");
-	instructionConcat($$,$3);
-	instructionListFree($3);
+	CONCAT_FREE($$,$3);
 	if($2[0] == '+'){
 		PUSH_BACK($$,1,"add $t0 $t5 $t0");
 	}else{
@@ -509,8 +507,7 @@ evaluation COMPARATOR_OR evaluation {
 	
 	$$ = $1;
 	PUSH_FORWARD($3,1,"move $t4 $t0");
-	instructionConcat($$,$3);
-	instructionListFree($3);
+	CONCAT_FREE($$,$3);
 	if($2[0] == '*'){
 		PUSH_BACK($$,1,"mul $t0 $t4 $t0");
 	}else{
@@ -529,8 +526,7 @@ evaluation COMPARATOR_OR evaluation {
 		PUSH_BACK($$,1,"sw $t%d %d($sp)",i,i*4);
 	}
 	instructionIncr($2,1);
-	instructionConcat($$,$2);
-	instructionListFree($2);
+	CONCAT_FREE($$,$2);
 	for(i=1 ; i<=9 ; ++i)
 	{
 		PUSH_BACK($$,1,"lw $t%d %d($sp)",i,i*4);
@@ -542,9 +538,9 @@ evaluation COMPARATOR_OR evaluation {
 	printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 	
 	$$ = $3;
-	instructionPushBack($$,"move $a0 $t0",1);
-	instructionPushBack($$,"li $v0 1",1);
-	instructionPushBack($$,"syscall",1);
+	PUSH_BACK($$,1,"move $a0 $t0");
+	PUSH_BACK($$,1,"li $v0 1");
+	PUSH_BACK($$,1,"syscall");
 }
 // ------------------------------------------------------------------
 | PRINTF LBRA STRING RBRA {
@@ -558,10 +554,10 @@ evaluation COMPARATOR_OR evaluation {
 	
 	$$ = $2;
 	PUSH_BACK($$,1,"beq $0 $t0 OPPE_NEG_%llu",labelCounter);
-	instructionPushBack($$,"li $t0 0",1);
+	PUSH_BACK($$,1,"li $t0 0");
 	PUSH_BACK($$,1,"j OPPE_NEG_%llu_FIN",labelCounter);
 	PUSH_BACK($$,1,"OPPE_NEG_%llu :",labelCounter);
-	instructionPushBack($$,"li $t0 1",1);
+	PUSH_BACK($$,1,"li $t0 1");
 	PUSH_BACK($$,1,"OPPE_NEG_%llu_FIN :",labelCounter);
 	++labelCounter;
 }
@@ -621,19 +617,14 @@ CHIFFRE {
 
 %%//==============================================================================================
 
-void instructionFirstUsing(InstructionsList l, char* c, int i){
-	*l = (Instruction)instructionMalloc(c, i);
-}
-
 int main(void)
 {
 	symboleTable = mallocList();
-	Instruction firstInst = instructionMalloc(".data",0);
-	rootTree = &firstInst;
-	
-	outputFile = fopen("output.mips","w");
+	instructionListMalloc(&rootTree);
 
 	yyparse();
+	
+	outputFile = fopen("output.mips","w");
 	
 	fclose(outputFile);
 	freeList(symboleTable);
