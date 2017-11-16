@@ -13,25 +13,29 @@ Instruction instructionMalloc(char* c, int ind)
 	return i;
 }
 
-void instrucitonFree(InstructionsList i)
+void instructionFree(InstructionsList i)
 {
-	if((*i)->next != NULL)
+	if((*i) != NULL)
 	{
-		instrucitonFree(&((*i)->next));
+		instructionFree(&((*i)->next));
+		free((*i));
 	}
-	free((*i));
 }
 
 void instructionPushBack(InstructionsList i, char* c, int ind)
-{
-	Instruction end = (*i);
-	while(end->next != NULL)
-	{
-		end = end->next; 
-	}
-
+{	
 	Instruction newI = instructionMalloc(c, ind);
-	end->next = newI;
+	Instruction end = (*i);
+	if(end == NULL){
+		(*i) = newI;
+	}else{
+		while(end->next != NULL)
+		{
+			end = end->next; 
+		}
+
+		end->next = newI;
+	}
 }
 
 void instructionPushForward(InstructionsList i, char* c, int ind)
@@ -43,31 +47,52 @@ void instructionPushForward(InstructionsList i, char* c, int ind)
 
 void instructionConcat(InstructionsList i1, InstructionsList i2)
 {
+	
 	Instruction end = (*i1);
-	while(end->next != NULL)
-	{
-		end = end->next; 
+	if(end == NULL){
+		(*i1) = (*i2);
+	}else{
+		while(end->next != NULL)
+		{
+			end = end->next; 
+		}
+
+		end->next = (*i2);
 	}
-	end->next = (*i2);
 }
 
 void instructionIncr(InstructionsList i, int ind)
 {
-	if((*i)->next != NULL)
+	if((*i) != NULL)
 	{
+		(*i)->indentation += ind;
 		instructionIncr(&((*i)->next),ind);
-	}
-	(*i)->indentation += ind;
+	}	
 }
 
 void instructionPrint(InstructionsList i)
 {
-	printf("ins : %s %d\n",(*i)->code,(*i)->indentation);
-	if((*i)->next != NULL)
+	int ind;
+	if((*i) != NULL)
 	{
+		printf("ins : ");
+		// printf("ins : %s %d\n",(*i)->code,(*i)->indentation);
+		for(ind = (*i)->indentation;ind > 0; ind--)
+			printf("\t");
+		printf("%s\n",(*i)->code);
 		instructionPrint(&((*i)->next));
 	}
 }
+
+void instructionListMalloc(InstructionsList* i){
+	*i = (InstructionsList)malloc(sizeof(struct s_instruction**));
+	**i = NULL;
+}
+
+void instructionListFree(InstructionsList i){
+	free(i);
+}
+
 /*
 int main()
 {
@@ -108,8 +133,8 @@ int main()
 	instructionPrint(list);
 	printf("\n");
 
-	instrucitonFree(list);
-	instrucitonFree(list2);
+	instructionFree(list);
+	instructionFree(list2);
 
 	return EXIT_SUCCESS;
 }*/

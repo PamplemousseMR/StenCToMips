@@ -13,7 +13,7 @@ typedef struct s_instruction
 typedef Instruction* InstructionsList;
 
 Instruction instructionMalloc(char*, int);
-void instrucitonFree(InstructionsList);
+void instructionFree(InstructionsList);
 
 void instructionPushBack(InstructionsList, char*, int);
 void instructionPushForward(InstructionsList, char*, int);
@@ -21,4 +21,8 @@ void instructionConcat(InstructionsList, InstructionsList); //1met B a la suite 
 void instructionIncr(InstructionsList, int);	//incrémente de n tout les nbIndentation de la liste
 
 void instructionPrint(InstructionsList);
+
+//tempo de test!
+void instructionListMalloc(InstructionsList*);
+void instructionListFree(InstructionsList);
 #endif
