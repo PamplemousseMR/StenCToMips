@@ -70,17 +70,16 @@ void instructionIncr(InstructionsList i, int ind)
 	}	
 }
 
-void instructionPrint(InstructionsList i)
+void instructionPrintFILE(InstructionsList i,FILE * f)
 {
 	int ind;
 	if((*i) != NULL)
 	{
-		printf("ins : ");
 		// printf("ins : %s %d\n",(*i)->code,(*i)->indentation);
 		for(ind = (*i)->indentation;ind > 0; ind--)
-			printf("\t");
-		printf("%s\n",(*i)->code);
-		instructionPrint(&((*i)->next));
+			fprintf(f,"\t");
+		fprintf(f,"%s\n",(*i)->code);
+		instructionPrintFILE(&((*i)->next),f);
 	}
 }
 
