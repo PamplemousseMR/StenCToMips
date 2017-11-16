@@ -10,6 +10,13 @@
 	#include "InstructionsList.h"
 	#include "SymbolesTable.h"
 
+
+	#define PUSH_BACK(dest, indent, code, args...) snprintf(instructionTempo,BUFFER_SIZE,code,args);\
+													instructionPushBack(dest,instructionTempo,indent)
+
+	#define PUSH_FORWARD(dest, indent, code, args...) snprintf(instructionTempo,BUFFER_SIZE,code,args);\
+														instructionPushForward(dest,instructionTempo,indent)
+
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
 
@@ -523,12 +530,10 @@ evaluation COMPARATOR_OR {
 } evaluation RBRA{
 	int i;
 	instructionListMalloc(&$$);
-	snprintf(instructionTempo,BUFFER_SIZE,"subi $sp $sp %d",4*9);
-	instructionPushBack($$,instructionTempo,1);
+	PUSH_BACK($$,1,"subi $sp $sp %d",4*9);
 	for(i=1 ; i<=9 ; ++i)
 	{
-		snprintf(instructionTempo,BUFFER_SIZE,"sw $t%d %d($sp)",i,i*4);
-		instructionPushBack($$,instructionTempo,1);
+		PUSH_BACK($$,1,"sw $t%d %d($sp)",i,i*4);
 	}
 	instructionIncr($3,1);
 	instructionConcat($$,$3);
@@ -537,12 +542,10 @@ evaluation COMPARATOR_OR {
 	for(i=1 ; i<=9 ; ++i)
 	{
 		fprintf(outputFile,"lw $t%d %d($sp)\n",i,i*4);
-		snprintf(instructionTempo,BUFFER_SIZE,"lw $t%d %d($sp)",i,i*4);
-		instructionPushBack($$,instructionTempo,1);
+		PUSH_BACK($$,1,"lw $t%d %d($sp)",i,i*4);
 	}
 	fprintf(outputFile,"addi $sp $sp %d\n",4*9);
-	snprintf(instructionTempo,BUFFER_SIZE,"addi $sp $sp %d",4*9);
-	instructionPushBack($$,instructionTempo,1);
+	PUSH_BACK($$,1,"addi $sp $sp %d",4*9);
 }
 // ------------------------------------------------------------------ DONE
 | PRINTI LBRA evaluation RBRA {
@@ -565,24 +568,19 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"li $t0 0\nj OPPE_NEG_%llu_FIN\n",labelCounter);
 	fprintf(outputFile,"OPPE_NEG_%llu :\nli $t0 1\nOPPE_NEG_%llu_FIN :\n",labelCounter,labelCounter);
 	$$ = $2;
-	snprintf(instructionTempo,BUFFER_SIZE,"beq $0 $t0 OPPE_NEG_%llu",labelCounter);
-	instructionPushBack($$,instructionTempo,1);
+	PUSH_BACK($$,1,"beq $0 $t0 OPPE_NEG_%llu",labelCounter);
 	instructionPushBack($$,"li $t0 0",1);
-	snprintf(instructionTempo,BUFFER_SIZE,"j OPPE_NEG_%llu_FIN",labelCounter);
-	instructionPushBack($$,instructionTempo,1);
-	snprintf(instructionTempo,BUFFER_SIZE,"OPPE_NEG_%llu :",labelCounter);
-	instructionPushBack($$,instructionTempo,1);
+	PUSH_BACK($$,1,"j OPPE_NEG_%llu_FIN",labelCounter);
+	PUSH_BACK($$,1,"OPPE_NEG_%llu :",labelCounter);
 	instructionPushBack($$,"li $t0 1",1);
-	snprintf(instructionTempo,BUFFER_SIZE,"OPPE_NEG_%llu_FIN :",labelCounter);
-	instructionPushBack($$,instructionTempo,1);
+	PUSH_BACK($$,1,"OPPE_NEG_%llu_FIN :",labelCounter);
 	++labelCounter;
 }
 // ------------------------------------------------------------------ DONE
 | chiffre {
 	printf("chiffre -> evaluation\n");
-	snprintf(instructionTempo,BUFFER_SIZE,"li $t0 %s",$1);
 	instructionListMalloc(&$$);
-	instructionPushBack($$,instructionTempo,1);
+	PUSH_BACK($$,1,"li $t0 %s",$1);
 	fprintf(outputFile,"li $t0 %s\n",$1);
 }
 // ------------------------------------------------------------------
