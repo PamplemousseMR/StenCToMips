@@ -397,7 +397,7 @@ ELSE ligne {
 //=================================================================================================
 
 evaluation :
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ 
 evaluation COMPARATOR_OR {
 	fprintf(outputFile,"move $t9 $t0\n");
 } evaluation {
@@ -421,7 +421,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_OR_%llu :\nli $t0 0\nCOMP_OR_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ 
 | evaluation COMPARATOR_AND {
 	fprintf(outputFile,"move $t8 $t0\n");
 } evaluation {
@@ -445,7 +445,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_AND_%llu :\nli $t0 1\nCOMP_AND_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ 
 | evaluation COMPARATOR_EQUALITY {
 	fprintf(outputFile,"move $t7 $t0\n");
 } evaluation {
@@ -462,7 +462,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_EQUALITY_%llu :\nli $t0 1\nCOMP_EQUALITY_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ 
 | evaluation COMPARATOR_SUPREMACY {
 	fprintf(outputFile,"move $t6 $t0\n");
 } evaluation {
@@ -483,7 +483,7 @@ evaluation COMPARATOR_OR {
 	fprintf(outputFile,"COMP_SUPREMACY_%llu :\nli $t0 1\nCOMP_SUPREMACY_%llu_FIN :\n",labelCounter,labelCounter);
 	++labelCounter;
 }
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ 
 | evaluation OPERATOR_ADDITION {
 	fprintf(outputFile,"move $t5 $t0\n");
 } evaluation {
@@ -520,7 +520,7 @@ evaluation COMPARATOR_OR {
 	{
 		fprintf(outputFile,"sw $t%d %d($sp)\n",i,i*4);
 	}
-} evaluation RBRA{
+} evaluation RBRA {
 	int i;
 	instructionListMalloc(&$$);
 	snprintf(instructionTempo,BUFFER_SIZE,"subi $sp $sp %d",4*9);
