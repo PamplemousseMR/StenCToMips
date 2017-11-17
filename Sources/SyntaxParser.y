@@ -8,7 +8,7 @@
 	#include <string.h>
 
 	#include "InstructionsList.h"
-	#include "SymbolesTable.h"\
+	#include "SymbolsTable.h"\
 
 	#ifdef DEBUG
 	#define printf(args...) printf(args);
@@ -16,14 +16,13 @@
 	#define printf(...)
 	#endif
 
-	#define PUSH_BACK(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
-													instructionPushBack(dest,instructionTempo,indent)
+	#define PUSH_BACK(dest, indent, code...) 	snprintf(instructionTempo,BUFFER_SIZE,code);\
+												instructionPushBack(dest,instructionTempo,indent)
 
 	#define PUSH_FORWARD(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
-														instructionPushForward(dest,instructionTempo,indent)
+												instructionPushForward(dest,instructionTempo,indent)
 														
-	#define CONCAT_FREE(first, second) instructionConcat(first, second);\
-								instructionListFree(second);													
+	#define CONCAT_FREE(first, second) 	instructionConcat(first, second);
 
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
@@ -32,7 +31,7 @@
 	void yyerror (char const *s);
 
 	FILE* outputFile;
-	List symboleTable;
+	SymbolsTable symboleTable;
 	InstructionsList rootTree;
 	char instructionTempo[BUFFER_SIZE];
 	
@@ -42,7 +41,6 @@
 
 	char* String;
 	InstructionsList tree;
-	Node var;
 	
 }
 
@@ -158,10 +156,10 @@ preprocessor_instruction :
 	DEFINE ID chiffre ENDLINE {
 		printf("DEFINE ID chiffre ENDLINE -> preprocessor_instruction\n");
 		
-		if(getNodeById(symboleTable,$2) != NULL){
+		if(symbolsTableGetSymbolById(symboleTable,$2) != NULL){
 			yyerror("variable existe deja !"); 				//Stoppant ?
 		}
-		Node result = addNodeConst(symboleTable,$2,atoi($3));
+		symbolsTableAddSymbolConst(symboleTable,$2,atoi($3));
 	}
 	;
 
@@ -354,10 +352,10 @@ variable_init :
 	ID hooks_init EQUALS evaluation {
 		printf("ID hooks_init EQUALS evaluation -> variable_init\n");
 		
-		if(getNodeById(symboleTable,$1) != NULL){
+		if(symbolsTableGetSymbolById(symboleTable,$1) != NULL){
 			yyerror("variable existe deja !"); 				//Stoppant ?
 		}
-		Node result = addNode(symboleTable,$1);
+		Symbol result = symbolsTableAddSymbol(symboleTable,$1);
 		result->init = true;
 		$$ = $4;
 		PUSH_BACK($$,1,"ls $t0 %s",result->mipsId);
@@ -367,10 +365,10 @@ variable_init :
 	| ID hooks_init {
 		printf("ID hooks_init -> variable_init\n");
 		
-		if(getNodeById(symboleTable,$1) != NULL){
+		if(symbolsTableGetSymbolById(symboleTable,$1) != NULL){
 			yyerror("variable existe deja !"); 				
 		}
-		addNode(symboleTable,$1);
+		symbolsTableAddSymbol(symboleTable,$1);
 		instructionListMalloc(&$$);
 	}
 	;
@@ -382,8 +380,8 @@ hooks_init :
 	LHOO ID RHOO hooks_init {
 		printf("LHOO ID RHOO -> hooks_init\n");
 		
-		Node node1;
-		if((node1 = getNodeById(symboleTable,$1)) == NULL || !node1->constante){
+		Symbol node1;
+		if((node1 = symbolsTableGetSymbolById(symboleTable,$1)) == NULL || !node1->constante){
 			yyerror("définition de tableau non constant !");
 		}
 		//que renvoyer ?   une structure ? (avec nb dimention nb ligne nb colonne ...) surement une liste(encore ??) vu que ça s'enchaine !
@@ -708,17 +706,17 @@ chiffre :
 
 int main(void)
 {
-	symboleTable = mallocList();
+	symbolsTableMalloc(&symboleTable);
 	instructionListMalloc(&rootTree);
 	
 	yyparse();
 	
 	outputFile = fopen("output.mips","w");
-	instructionPrintFILE(rootTree,outputFile);
+	instructionListPrintFILE(rootTree,outputFile);
 	
 	fclose(outputFile);
-	freeList(symboleTable);
-	instructionFree(rootTree);
+	symbolsTableFree(symboleTable);
+	instructionListFree(rootTree);
 
 	return EXIT_SUCCESS;
 }

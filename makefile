@@ -3,7 +3,7 @@ SRCDIR = Sources
 CCFORCEDFLAGS = -I Sources/ -c -o
 CCFLAGS = -O3
 BUILD = Build
-OBJS = $(BUILD)/SyntaxParser.o $(BUILD)/LexicalParser.o $(BUILD)/SymbolesTable.o $(BUILD)/InstructionsList.o
+OBJS = $(BUILD)/SyntaxParser.o $(BUILD)/LexicalParser.o $(BUILD)/SymbolsTable.o $(BUILD)/InstructionsList.o
 GCC = gcc 
 
 $(EXEC) : $(OBJS)
@@ -17,7 +17,7 @@ $(BUILD)/LexicalParser.o : $(SRCDIR)/LexicalParser.lex
 	lex -o $(BUILD)/LexicalParser.c $<
 	$(GCC) $(CCFLAGS) $(CCFORCEDFLAGS) $@ $(BUILD)/LexicalParser.c
 
-$(BUILD)/SymbolesTable.o : $(SRCDIR)/SymbolesTable.c $(SRCDIR)/SymbolesTable.h
+$(BUILD)/SymbolsTable.o : $(SRCDIR)/SymbolsTable.c $(SRCDIR)/SymbolsTable.h
 	$(GCC) $(CCFLAGS) $(CCFORCEDFLAGS)$@ $< 
 
 $(BUILD)/InstructionsList.o : $(SRCDIR)/InstructionsList.c $(SRCDIR)/InstructionsList.h
@@ -27,5 +27,5 @@ debug: CCFLAGS = -DDEBUG -Wall -Wextra
 debug: $(EXEC)
 
 clean :
-	rm $(EXEC) $(BUILD)/* output.mips
+	rm $(EXEC) $(BUILD)/*
 	
