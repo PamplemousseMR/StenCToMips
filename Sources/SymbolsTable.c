@@ -27,27 +27,28 @@ void symbolsTableFree(SymbolsTable l){
 	l = NULL;
 }
 
-Symbol symbolsTableAddSymbolBis(Symbol n, char* c){
+Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init, bool array){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		strncpy(result->id,c,BUFFER_SIZE);
 		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",result->mipsId);
 		instructionPushBack(rootTree,temp,1);
-		result->init = false;
+		result->init = init;
 		result->constante = false;
+		result->array = array;
 		result->creationLabelCounter = labelCounter;
 		result->next = NULL;
 		return result;
 	}else {
 		if(strcmp(n->id,c))
-			n->next = symbolsTableAddSymbolBis(n->next, c);
+			n->next = symbolsTableAddSymbolBis(n->next, c, init, array);
 		return n;
 	}
 }
 
-Symbol symbolsTableAddSymbol(SymbolsTable l, char* c){
-	*l = symbolsTableAddSymbolBis(*l,c);
+Symbol symbolsTableAddSymbol(SymbolsTable l, char* c, bool init, bool array){
+	*l = symbolsTableAddSymbolBis(*l, c, init, array);
 	return symbolsTableGetSymbolById(l,c);
 }
 
@@ -59,6 +60,7 @@ Symbol symbolsTableAddSymbolConstBis(Symbol n, char* c, int i){
 		snprintf(temp,BUFFER_SIZE,"%s: .word %d",result->mipsId,i);
 		instructionPushBack(rootTree,temp,1);
 		result->constante = true;
+		result->init = true;
 		result->value_constante = i;
 		result->creationLabelCounter = labelCounter;
 		result->next = NULL;

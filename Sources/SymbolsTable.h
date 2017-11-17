@@ -10,6 +10,7 @@ typedef struct s_symbol{
 	char mipsId[BUFFER_SIZE];
 	bool init;
 	bool constante;
+	bool array;
 	int value_constante;
 	unsigned long long creationLabelCounter;
 	struct s_symbol* next;
@@ -20,7 +21,7 @@ typedef Symbol* SymbolsTable;
 void symbolsTableMalloc(SymbolsTable*);
 void symbolsTableFree(SymbolsTable);
 
-Symbol symbolsTableAddSymbol(SymbolsTable, char*);
+Symbol symbolsTableAddSymbol(SymbolsTable, char*, bool, bool);
 Symbol symbolsTableAddSymbolConst(SymbolsTable, char*, int);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);
 void symbolsTableRemoveSymbol(SymbolsTable, char*);
