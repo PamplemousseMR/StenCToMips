@@ -3,9 +3,12 @@
 #include <string.h>
 
 #include "SymbolesTable.h"
+#include "InstructionsList.h"
 
 extern unsigned long long labelCounter;
 extern unsigned long long variableCounter;
+extern InstructionsList rootTree;
+char temp[BUFFER_SIZE];
 
 List mallocList(){
 	List l = (List)malloc(sizeof(struct s_node*));
@@ -30,7 +33,11 @@ Node addNodeBis(Node n, char* c){
 		Node result = (Node)malloc(sizeof(struct s_node));
 		strncpy(result->id,c,BUFFER_SIZE);
 		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		//TODO WRITE ON rootTree the new variable;
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0",result->mipsId);
+		instructionPushBack(rootTree,temp,1);
 		result->init = false;
+		result->constante = false;
 		result->creationLabelCounter = labelCounter;
 		result->next = NULL;
 		return result;

@@ -9,6 +9,7 @@ typedef struct s_node{
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
 	bool init;
+	bool constante;
 	unsigned long long creationLabelCounter;
 	struct s_node* next;
 }*Node;

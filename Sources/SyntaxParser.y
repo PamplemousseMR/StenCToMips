@@ -42,7 +42,8 @@
 
 	char* String;
 	InstructionsList tree;
-
+	Node var;
+	
 }
 
 
@@ -91,11 +92,12 @@
 %type<tree> instructions_serie
 %type<tree> ligne
 %type<tree> return
-%type<tree> variable
+%type<tree> variable				// voir ce qu'il va renvoyer peut etre un tree 
 %type<tree> hooks
 %type<tree> initialisation
 %type<tree> variables_init_serie
 %type<tree> variable_init
+%type<tree> hooks_init			
 %type<tree> affectation
 %type<tree> for
 %type<tree> while
@@ -226,11 +228,11 @@ ligne :
 		$$ = $2;
 		instructionIncr($$,1);
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| initialisation SEMI {
 		printf("initialisation SEMI -> ligne\n");
 		
-		instructionListMalloc(&$$); // pour evité les core dumped
+		$$ = $1;
 	}
 // ------------------------------------------------------------------
 	| affectation SEMI {
@@ -295,25 +297,35 @@ hooks :
 //__________________________________________________________________________________
 
 initialisation :
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	TYPE variables_init_serie {
 		printf("TYPE variables_init_serie -> initialisation\n");
+		
+		$$ = $2;
 	}
 // ------------------------------------------------------------------
 	| STENCIL suite_stencil_init {
 		printf("STENCIL suite_stencil_init -> initialisation\n");
+		
+		instructionListMalloc(&$$);
 	}
 	;
 
 //__________________________________________________________________________________
 
 variables_init_serie :
-// ------------------------------------------------------------------
-	variable_init COMMA variables_init_serie {printf("variable_init COMA variables_init_serie -> variables_init_serie\n");
+// ------------------------------------------------------------------ DONE
+	variable_init COMMA variables_init_serie {
+		printf("variable_init COMA variables_init_serie -> variables_init_serie\n");
+		
+		$$ = $1;
+		CONCAT_FREE($$,$3);
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| variable_init {
 		printf("variable_init -> variables_init_serie\n");
+		
+		$$ = $1;
 	}
 	;
 
@@ -321,7 +333,8 @@ variables_init_serie :
 
 suite_stencil_init :
 // ------------------------------------------------------------------
-	stencil_init COMMA suite_stencil_init {printf("stencil_init COMA suite_stencil_init -> suite_stencil_init\n");
+	stencil_init COMMA suite_stencil_init {
+		printf("stencil_init COMA suite_stencil_init -> suite_stencil_init\n");
 	}
 // ------------------------------------------------------------------
 	| stencil_init {
@@ -332,17 +345,51 @@ suite_stencil_init :
 //__________________________________________________________________________________
 
 variable_init :
-// ------------------------------------------------------------------
-	variable EQUALS evaluation {
-		printf("variable EQUALS evaluation -> variable_init\n");
+// ------------------------------------------------------------------ DONE EXEPT TABLE
+	ID hooks_init EQUALS evaluation {
+		printf("ID hooks_init EQUALS evaluation -> variable_init\n");
+		
+		if(getNodeById(symboleTable,$1) != NULL){
+			yyerror("variable existe deja !"); 				//Stoppant ?
+		}
+		Node result = addNode(symboleTable,$1);
+		$$ = $4;
+		PUSH_BACK($$,1,"ls $t0 %s",result->mipsId);
+		
+	}
+// ------------------------------------------------------------------ DONE EXEPT TABLE
+	| ID hooks_init {
+		printf("ID hooks_init -> variable_init\n");
+		
+		if(getNodeById(symboleTable,$1) != NULL){
+			yyerror("variable existe deja !"); 				
+		}
+		addNode(symboleTable,$1);
+		instructionListMalloc(&$$);
+	}
+	;
+	
+//__________________________________________________________________________________
+
+hooks_init :
+// ------------------------------------------------------------------ 
+	LHOO ID RHOO hooks_init {
+		printf("LHOO ID RHOO -> hooks_init\n");
+		
+		Node node1;
+		if((node1 = getNodeById(symboleTable,$1)) == NULL || !node1->constante){
+			yyerror("définition de tableau non constant !");
+		}
+		//que renvoyer ?   une structure ? (avec nb dimention nb ligne nb colonne ...) surement une liste(encore ??) vu que ça s'enchaine !
 	}
 // ------------------------------------------------------------------
-	| variable EQUALS LEMB suite_chiffre REMB {
-		printf("variable EQUALS LEMB suite_int REMB -> variable_init\n");
+	LHOO CHIFFRE RHOO hooks_init {
+		printf("LHOO CHIFFRE RHOO -> hooks_init\n");
+		
+		// que renvoyer . cf 6ligne plus haut 
 	}
-// ------------------------------------------------------------------
-	| variable {
-		printf("variable -> variable_init\n");
+// ------------------------------------------------------------------ DONE
+	| {
 	}
 	;
 
@@ -657,7 +704,7 @@ int main(void)
 {
 	symboleTable = mallocList();
 	instructionListMalloc(&rootTree);
-
+	
 	yyparse();
 	
 	outputFile = fopen("output.mips","w");
