@@ -22,8 +22,6 @@
 	#define PUSH_FORWARD(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
 												instructionPushForward(dest,instructionTempo,indent)
 														
-	#define CONCAT_FREE(first, second) 	instructionConcat(first, second);
-
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
 
@@ -31,7 +29,7 @@
 	void yyerror (char const *s);
 
 	FILE* outputFile;
-	SymbolsTable symboleTable;
+	SymbolsTable symbolsTable;
 	InstructionsList rootTree;
 	char instructionTempo[BUFFER_SIZE];
 	
@@ -129,7 +127,7 @@ programme :
 		PUSH_BACK(rootTree,0,".text");
 		PUSH_BACK(rootTree,0,".golbl __main\n\n#####\n");
 		
-		CONCAT_FREE(rootTree,$2);
+		instructionConcat(rootTree,$2);
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\nExit :");
 		PUSH_BACK(rootTree,1,"li $v0 10");
@@ -156,10 +154,10 @@ preprocessor_instruction :
 	DEFINE ID chiffre ENDLINE {
 		printf("DEFINE ID chiffre ENDLINE -> preprocessor_instruction\n");
 		
-		if(symbolsTableGetSymbolById(symboleTable,$2) != NULL){
+		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
 			yyerror("variable existe deja !"); 				//Stoppant ?
 		}
-		symbolsTableAddSymbolConst(symboleTable,$2,atoi($3));
+		symbolsTableAddSymbolConst(symbolsTable,$2,atoi($3));
 	}
 	;
 
@@ -195,7 +193,7 @@ instructions_serie :
 		printf("ligne instructions_serie -> instructions_serie\n");
 		
 		$$ = $1;
-		CONCAT_FREE($$,$2);
+		instructionConcat($$,$2);
 	}
 // ------------------------------------------------------------------ DONE
 	| {
@@ -322,7 +320,7 @@ variables_init_serie :
 		printf("variable_init COMA variables_init_serie -> variables_init_serie\n");
 		
 		$$ = $1;
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 	}
 // ------------------------------------------------------------------ DONE
 	| variable_init {
@@ -352,10 +350,10 @@ variable_init :
 	ID hooks_init EQUALS evaluation {
 		printf("ID hooks_init EQUALS evaluation -> variable_init\n");
 		
-		if(symbolsTableGetSymbolById(symboleTable,$1) != NULL){
+		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			yyerror("variable existe deja !"); 				//Stoppant ?
 		}
-		Symbol result = symbolsTableAddSymbol(symboleTable,$1);
+		Symbol result = symbolsTableAddSymbol(symbolsTable,$1);
 		result->init = true;
 		$$ = $4;
 		PUSH_BACK($$,1,"ls $t0 %s",result->mipsId);
@@ -365,10 +363,10 @@ variable_init :
 	| ID hooks_init {
 		printf("ID hooks_init -> variable_init\n");
 		
-		if(symbolsTableGetSymbolById(symboleTable,$1) != NULL){
+		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			yyerror("variable existe deja !"); 				
 		}
-		symbolsTableAddSymbol(symboleTable,$1);
+		symbolsTableAddSymbol(symbolsTable,$1);
 		instructionListMalloc(&$$);
 	}
 	;
@@ -381,7 +379,7 @@ hooks_init :
 		printf("LHOO ID RHOO -> hooks_init\n");
 		
 		Symbol node1;
-		if((node1 = symbolsTableGetSymbolById(symboleTable,$1)) == NULL || !node1->constante){
+		if((node1 = symbolsTableGetSymbolById(symbolsTable,$1)) == NULL || !node1->constante){
 			yyerror("définition de tableau non constant !");
 		}
 		//que renvoyer ?   une structure ? (avec nb dimention nb ligne nb colonne ...) surement une liste(encore ??) vu que ça s'enchaine !
@@ -505,7 +503,7 @@ evaluation :
 
 		$$ = $1;
 		PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 		PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
 		PUSH_BACK($$,1,"li $t0 0");	
 		PUSH_BACK($$,1,"j COMP_OR_%llu_FIN",labelCounter);
@@ -520,7 +518,7 @@ evaluation :
 		
 		$$ = $1;
 		PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 		PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
 		PUSH_BACK($$,1,"li $t0 1");	
 		PUSH_BACK($$,1,"j COMP_AND_%llu_FIN",labelCounter);
@@ -535,7 +533,7 @@ evaluation :
 
 		$$ = $1;
 		PUSH_BACK($$,1,"move $t7 $t0");
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 		char inst[4];
 		if(!strcmp($2,"==")){
 			strcpy(inst,"beq");
@@ -557,7 +555,7 @@ evaluation :
 
 		$$ = $1;
 		PUSH_BACK($$,1,"move $t6 $t0");
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 		if(!strcmp($2,"<")){
 			strcpy(inst,"blt");
 		}else if(!strcmp($2,"<=")){
@@ -581,7 +579,7 @@ evaluation :
 
 		$$ = $1;
 		PUSH_FORWARD($3,1,"move $t5 $t0");
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 		if($2[0] == '+'){
 			PUSH_BACK($$,1,"add $t0 $t5 $t0");
 		}else{
@@ -594,7 +592,7 @@ evaluation :
 		
 		$$ = $1;
 		PUSH_FORWARD($3,1,"move $t4 $t0");
-		CONCAT_FREE($$,$3);
+		instructionConcat($$,$3);
 		if($2[0] == '*'){
 			PUSH_BACK($$,1,"mul $t0 $t4 $t0");
 		}else{
@@ -613,7 +611,7 @@ evaluation :
 			PUSH_BACK($$,1,"sw $t%d %d($sp)",i,i*4);
 		}
 		instructionIncr($2,1);
-		CONCAT_FREE($$,$2);
+		instructionConcat($$,$2);
 		for(i=1 ; i<=9 ; ++i)
 		{
 			PUSH_BACK($$,1,"lw $t%d %d($sp)",i,i*4);
@@ -704,19 +702,28 @@ chiffre :
 
 %%//==============================================================================================
 
+void clearProg()
+{
+	if(outputFile!=NULL)fclose(outputFile);
+	if(symbolsTable!=NULL)symbolsTableFree(symbolsTable);
+	if(rootTree!=NULL)instructionListFree(rootTree);
+}
+
 int main(void)
 {
-	symbolsTableMalloc(&symboleTable);
+	if(atexit(clearProg) != 0)
+    {
+        perror("[main] Probleme lors de l'enregistrement ");
+        exit(EXIT_FAILURE);
+    }
+
+	symbolsTableMalloc(&symbolsTable);
 	instructionListMalloc(&rootTree);
 	
 	yyparse();
 	
 	outputFile = fopen("output.mips","w");
-	instructionListPrintFILE(rootTree,outputFile);
-	
-	fclose(outputFile);
-	symbolsTableFree(symboleTable);
-	instructionListFree(rootTree);
+	instructionListPrintFILE(rootTree,outputFile);	
 
 	return EXIT_SUCCESS;
 }
@@ -724,4 +731,5 @@ int main(void)
 void yyerror (char const *s)
 {
 	printf("error : %s %d\n",s, yychar);
+	exit(EXIT_FAILURE);
 }
