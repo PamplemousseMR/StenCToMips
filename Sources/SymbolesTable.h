@@ -10,6 +10,7 @@ typedef struct s_node{
 	char mipsId[BUFFER_SIZE];
 	bool init;
 	bool constante;
+	int value_constante;
 	unsigned long long creationLabelCounter;
 	struct s_node* next;
 }*Node;
@@ -20,6 +21,7 @@ List mallocList();
 void freeList(List);
 
 Node addNode(List, char*);
+Node addNodeConst(List, char*, int);
 Node getNodeById(List, char*);
 void removeNode(List, char*);
 void removeAllNodeGreaterThan(List, int);

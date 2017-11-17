@@ -53,6 +53,31 @@ Node addNode(List l, char* c){
 	return getNodeById(l,c);
 }
 
+Node addNodeConstBis(Node n, char* c, int i){
+	if(n == NULL){
+		Node result = (Node)malloc(sizeof(struct s_node));
+		strncpy(result->id,c,BUFFER_SIZE);
+		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		//TODO WRITE ON rootTree the new variable;
+		snprintf(temp,BUFFER_SIZE,"%s: .word %d",result->mipsId,i);
+		instructionPushBack(rootTree,temp,1);
+		result->constante = true;
+		result->value_constante = i;
+		result->creationLabelCounter = labelCounter;
+		result->next = NULL;
+		return result;
+	}else {
+		if(strcmp(n->id,c))
+			n->next = addNodeConstBis(n->next, c, i);
+		return n;
+	}
+}
+
+Node addNodeConst(List l, char* c, int i){
+	*l = addNodeConstBis(*l,c,i);
+	return getNodeById(l,c);
+}
+
 Node getNodeByIdBis(Node n, char* c){
 	if(n == NULL) return NULL;
 	if(!strcmp(n->id,c)) return n;

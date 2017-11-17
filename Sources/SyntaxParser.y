@@ -157,6 +157,11 @@ preprocessor_instruction :
 // ------------------------------------------------------------------
 	DEFINE ID chiffre ENDLINE {
 		printf("DEFINE ID chiffre ENDLINE -> preprocessor_instruction\n");
+		
+		if(getNodeById(symboleTable,$2) != NULL){
+			yyerror("variable existe deja !"); 				//Stoppant ?
+		}
+		Node result = addNodeConst(symboleTable,$2,atoi($3));
 	}
 	;
 
