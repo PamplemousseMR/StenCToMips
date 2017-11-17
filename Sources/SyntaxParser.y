@@ -85,8 +85,8 @@
 %token<String> STRING
 
 %type<tree> programme
-%type<tree> preprocessor_instructions_serie
-%type<tree> preprocessor_instruction
+//%type<tree> preprocessor_instructions_serie		//ne renvoie rien car ecriture dans rootTree 
+//%type<tree> preprocessor_instruction				//via créetion de variable constante dans la table symbole
 %type<tree> functions_serie
 %type<tree> main
 %type<tree> instructions_serie
@@ -358,6 +358,7 @@ variable_init :
 			yyerror("variable existe deja !"); 				//Stoppant ?
 		}
 		Node result = addNode(symboleTable,$1);
+		result->init = true;
 		$$ = $4;
 		PUSH_BACK($$,1,"ls $t0 %s",result->mipsId);
 		

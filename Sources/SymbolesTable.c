@@ -33,7 +33,6 @@ Node addNodeBis(Node n, char* c){
 		Node result = (Node)malloc(sizeof(struct s_node));
 		strncpy(result->id,c,BUFFER_SIZE);
 		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
-		//TODO WRITE ON rootTree the new variable;
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",result->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		result->init = false;
@@ -58,7 +57,6 @@ Node addNodeConstBis(Node n, char* c, int i){
 		Node result = (Node)malloc(sizeof(struct s_node));
 		strncpy(result->id,c,BUFFER_SIZE);
 		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
-		//TODO WRITE ON rootTree the new variable;
 		snprintf(temp,BUFFER_SIZE,"%s: .word %d",result->mipsId,i);
 		instructionPushBack(rootTree,temp,1);
 		result->constante = true;
