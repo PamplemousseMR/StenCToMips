@@ -383,7 +383,7 @@ hooks_init :
 		//que renvoyer ?   une structure ? (avec nb dimention nb ligne nb colonne ...) surement une liste(encore ??) vu que ça s'enchaine !
 	}
 // ------------------------------------------------------------------
-	LHOO CHIFFRE RHOO hooks_init {
+	| LHOO CHIFFRE RHOO hooks_init {
 		printf("LHOO CHIFFRE RHOO -> hooks_init\n");
 		
 		// que renvoyer . cf 6ligne plus haut 
