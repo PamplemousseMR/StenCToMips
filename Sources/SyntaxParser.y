@@ -496,7 +496,7 @@ affectation :
 		$$ = $3;
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
 	}
-// ------------------------------------------------------------------ DONE MODULO TODO
+// ------------------------------------------------------------------ DONE
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
@@ -515,7 +515,9 @@ affectation :
 		}else if(!strcmp($2,"/=")){
 			PUSH_BACK($$,1,"div $t0 $t3 $t0");
 		}else if(!strcmp($2,"%=")){
-			PUSH_BACK($$,1,"sub $t0 $t3 $t0");
+			PUSH_BACK($$,1,"div $t2 $t3 $t0");
+			PUSH_BACK($$,1,"mul $t2 $t2 $t0");
+			PUSH_BACK($$,1,"sub $t0 $t3 $t2");
 		}
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
 	}
@@ -665,8 +667,12 @@ evaluation :
 		instructionConcat($$,$3);
 		if($2[0] == '*'){
 			PUSH_BACK($$,1,"mul $t0 $t4 $t0");
-		}else{
+		}else if($2[0] == '/') {
 			PUSH_BACK($$,1,"div $t0 $t4 $t0");
+		}else{
+			PUSH_BACK($$,1,"div $t3 $t4 $t0");
+			PUSH_BACK($$,1,"mul $t3 $t3 $t0");
+			PUSH_BACK($$,1,"sub $t0 $t4 $t3");
 		}
 	}
 // ------------------------------------------------------------------ DONE

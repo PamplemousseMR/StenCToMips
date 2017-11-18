@@ -33,7 +33,36 @@ int main()
 	printi(e);
 	printf("\n");
 
+	int mo = 5;
+	mo %= 2; 
+	printi(mo);
+	printf("\n");
+	mo = 9;
+	mo %= 2;
+	printi(mo);
+	printf("\n");
+	mo = 10;
+	mo %= 2;
+	printi(mo);
+	printf("\n");
+	mo = 10;
+	mo %= 4;
+	printi(mo);
+	printf("\n");
+	mo = -10;
+	mo %= 4;
+	printi(mo);
+	printf("\n");
 
+	printf("\n");
+	printi(5%2);
+	printf("\n");
+	printi(11%3);
+	printf("\n");
+	printi(10%5);
+	printf("\n");
+	printi(-10%3);
+	printf("\n");
 	// must throw error
 	/* 
 	c = 2;		// const
