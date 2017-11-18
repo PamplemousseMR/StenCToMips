@@ -63,12 +63,21 @@ int main()
 	printf("\n");
 	printi(-10%3);
 	printf("\n");
+	//must work
+	/*
+	int tab[3] = {1,2,3};
+	int tabb[2][2] = {{1,2},{1,2}};
+	int jj=1, ii[2], kk[2][2] = {{1,2},{1,2}};
+	*/
 	// must throw error
 	/* 
-	c = 2;		// const
-	d++;		// const
-	printi(e);	// non initailise
-	printi(h);	// existe pas
-	printf(LOL); // int et pas string
+	tab = 10;
+	tabb[1] = 5;
+	printi(kk);
+	c = 2;
+	d++;
+	printi(e);
+	printi(h);
+	printf(LOL);
 	*/
 }

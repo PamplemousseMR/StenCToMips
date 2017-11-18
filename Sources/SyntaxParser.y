@@ -28,6 +28,8 @@
 
 	#define INSTRUCTION_SIZE 50
 
+	extern int yylineno;
+
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
 	bool constantZone = false;
@@ -50,7 +52,6 @@
 	bool constant;
 	
 }
-
 
 %start programme
 
@@ -101,7 +102,6 @@
 %type<Instruction> initialisation
 %type<Instruction> variables_init_serie
 %type<Instruction> variable_init
-%type<Instruction> hooks_init			
 %type<Instruction> affectation
 %type<Instruction> for
 %type<Instruction> while
@@ -245,24 +245,27 @@ ligne :
 		printf("initialisation SEMI -> ligne\n");
 		
 		$$ = $1;
+		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 // ------------------------------------------------------------------ DONE
 	| affectation SEMI {
 		printf("affectation SEMI -> ligne\n");
 		
-		$$ = $1; // pour evité les core dumped
+		$$ = $1;
+		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 // ------------------------------------------------------------------
 	| return SEMI {
 		printf("return SEMI -> ligne\n");
 		
-		instructionListMalloc(&$$); // pour evité les core dumped
+		instructionListMalloc(&$$);
 	}
 // ------------------------------------------------------------------ DONE
 	| evaluation SEMI {
 		printf("evaluation SEMI -> ligne\n");
 		
 		$$ = $1;
+		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 	;
 
@@ -297,7 +300,7 @@ stencil :
 //__________________________________________________________________________________
 
 variable :
-// ------------------------------------------------------------------ DONE HOOK TODO
+// ------------------------------------------------------------------ DONE TODO check if array
 	ID hooks {
 		printf("ID hooks -> variable\n");
 
@@ -391,9 +394,9 @@ stencil_init_serie :
 //__________________________________________________________________________________ 
 
 variable_init :
-// ------------------------------------------------------------------ DONE HOOK TODO et evaluation sur tableau ????
-	ID hooks_init EQUALS evaluation {
-		printf("ID hooks_init EQUALS evaluation -> variable_init\n");
+// ------------------------------------------------------------------ DONE
+	ID EQUALS evaluation {
+		printf("ID EQUALS evaluation -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
@@ -402,38 +405,27 @@ variable_init :
 		if(constantZone == true){
 			result->constante = true;
 		}
-		$$ = $4;
+		$$ = $3;
 		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
 		
 	}
-// ------------------------------------------------------------------
-	| ID hooks_init {
-		printf("ID hooks_init -> variable_init\n");
+	// ------------------------------------------------------------------
+	| ID hooks EQUALS LEMB suite_suite_chiffre REMB {
+		printf("ID hooks EQUALS LEMB suite_suite_chiffre REMB -> variable_init\n");
 		
-		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 	
-		}
-		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,false);
-		if(constantZone == true){
-			result->constante = true;
-		}
 		instructionListMalloc(&$$);
 	}
-	;
-	
-//__________________________________________________________________________________
-
-hooks_init :
-// ------------------------------------------------------------------ 
-	LHOO ID RHOO hooks_init {
-		printf("LHOO ID RHOO -> hooks_init\n");
+	// ------------------------------------------------------------------
+	| ID hooks EQUALS LEMB suite_chiffre REMB {
+		printf("ID hooks EQUALS LEMB suite_chiffre REMB -> variable_init\n");
+		
+		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------
-	| LHOO CHIFFRE RHOO hooks_init {
-		printf("LHOO CHIFFRE RHOO -> hooks_init\n");
-	}
-// ------------------------------------------------------------------
-	| {
+	// ------------------------------------------------------------------
+	| ID hooks {
+		printf("ID hooks -> variable_init\n");
+		
+		instructionListMalloc(&$$);
 	}
 	;
 
@@ -485,7 +477,7 @@ suite_chiffre :
 //=================================================================================================
 
 affectation :
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ DONE TODO check if array
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
@@ -496,7 +488,7 @@ affectation :
 		$$ = $3;
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
 	}
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ DONE TODO check if array
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
@@ -687,8 +679,8 @@ evaluation :
 			PUSH_BACK($$,1,"sw $t%d %d($sp)",i,i*4);
 		}
 		instructionIncr($2,1);
-		PUSH_FORWARD($2,1,"#{");
-		PUSH_BACK($2,1,"#}");
+		PUSH_FORWARD($2,1,"#(");
+		PUSH_BACK($2,1,"#)");
 		instructionConcat($$,$2);
 		for(i=1 ; i<=9 ; ++i)
 		{
@@ -747,7 +739,7 @@ evaluation :
 //__________________________________________________________________________________
 
 variable_incr :
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ DONE TODO check if array
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
@@ -767,7 +759,7 @@ variable_incr :
 		}
 		PUSH_BACK($$,1,"sw $t0 %s",$2->mipsId);
 	}
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ DONE TODO check if array
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
@@ -796,7 +788,7 @@ variable_incr :
 	// move $t0 $variable
 	// addi $varibale 1
 	}
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ DONE TODO check if array
 	| variable {
 		printf("variable -> variable_incr\n");
 
@@ -854,6 +846,6 @@ int main(void)
 
 void yyerror (char const *s)
 {
-	printf("error : %s\n",s);
+	printf("error : %s at line %d\n",s,yylineno);
 	exit(EXIT_FAILURE);
 }

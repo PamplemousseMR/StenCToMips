@@ -18,6 +18,8 @@ int state = STATE_NORMAL;
 
 %}
 
+%option yylineno
+
 DEFINE				(#define)[ ]
 ENDLINE				(\n)
 FOR					(for)
