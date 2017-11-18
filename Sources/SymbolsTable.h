@@ -12,9 +12,6 @@ typedef struct s_symbol{
 	bool init;
 	bool constante;
 	bool step;
-	bool array;
-	int value_constante;
-	unsigned long long creationLabelCounter;
 	struct s_symbol* next;
 }*Symbol;
 
@@ -23,7 +20,7 @@ typedef Symbol* SymbolsTable;
 void symbolsTableMalloc(SymbolsTable*);
 void symbolsTableFree(SymbolsTable);
 
-Symbol symbolsTableAddSymbol(SymbolsTable, char*, bool, bool);
+Symbol symbolsTableAddSymbol(SymbolsTable, char*, bool);
 Symbol symbolsTableAddSymbolConst(SymbolsTable, char*, int);
 void symbolsTableAddStep(SymbolsTable);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);

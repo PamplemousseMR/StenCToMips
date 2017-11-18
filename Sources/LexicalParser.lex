@@ -30,6 +30,7 @@ PRINTF				(printf)
 PRINTI				(printi)
 STENCIL				(stencil)
 TYPE				(int)
+CONST 				(const)[ ]
 ID					[a-zA-Z_][0-9a-zA-Z_]*
 CHIFFRE				([0-9]+[0-9]*)
 OPERATOR_NEGATION	(!)
@@ -156,6 +157,14 @@ UNKNOW				.
 	printf("\t\tTYPE : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return TYPE;
+
+}
+
+{CONST} {
+
+	printf("\t\tCONST : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return CONST;
 
 }
 

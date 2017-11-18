@@ -1,12 +1,45 @@
+#define LOL 12
+
 int main() 
 {
-	/*i + 5 * 7 /3 || 6 ;
-	(5+7)*6;
-	int tab[5] = { 42, 21, 7, 314, 127 };
-	stencil s{2,1} = { 1, 1, 1, 1, 1 };
-	stencil s1{2,2} = { {1, 1, 1, 1, 1 }, {1, 1, 1, 1, 1}};
-	stencil s2{2,2} = { {1, 1, 1, 1, 1 }, {1, 1, 1, 1, 1}}, s3{2,1} = { 1, 1, 1, 1, 1 };
-	return 5+8;
-	5+5+5+5+5+5+5*/
-	printi(0 || (5-5));
+	int a = 0;
+	printi(a++);
+	printf("\n");
+	printi(a--);
+	printf("\n");
+	printi(--a);
+	printf("\n");
+	printi(++a);
+	printf("\n");
+
+	{
+		int b = 5+8*1+(4*3+(5-6));
+		printf("b = ");
+		printi(b);
+		printf("\n");
+	}
+
+	int b = 5+8*9+(5*3+(5-6));
+	printf("b = ");
+	printi(b);
+	printf("\n");
+	
+	printf("LOL = ");
+	printi(LOL);
+	printf("\n"); 
+
+	const int c,d,e = 3,f;
+	printf("c = ");
+	printi(e);
+	printf("\n");
+
+
+	// must throw error
+	/* 
+	c = 2;		// const
+	d++;		// const
+	printi(e);	// non initailise
+	printi(h);	// existe pas
+	printf(LOL); // int et pas string
+	*/
 }

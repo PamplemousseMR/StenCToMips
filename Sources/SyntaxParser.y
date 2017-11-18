@@ -27,9 +27,10 @@
 							yyerror(instructionTempo)
 
 	#define INSTRUCTION_SIZE 50
-														
+
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
+	bool constantZone = false;
 
 	int yylex();
 	void yyerror (char const*);
@@ -46,6 +47,7 @@
 	char* String;
 	InstructionsList Instruction;
 	Symbol Sym;
+	bool constant;
 	
 }
 
@@ -64,6 +66,7 @@
 %token<String> PRINTI
 %token<String> STENCIL
 %token<String> TYPE
+%token<String> CONST
 %token<String> ID
 %token<String> CHIFFRE
 %token<String> OPERATOR_NEGATION
@@ -88,14 +91,12 @@
 %token<String> STRING
 
 %type<Instruction> programme
-//%type<Instruction> preprocessor_instructions_serie		ne renvoie rien car ecriture dans rootTree 
-//%type<Instruction> preprocessor_instruction				via créetion de variable constante dans la table symbole
 %type<Instruction> functions_serie
 %type<Instruction> main
 %type<Instruction> instructions_serie
 %type<Instruction> ligne
 %type<Instruction> return
-%type<Sym> variable			
+%type<Sym> 		   variable			//cas particulier renvoie le symbole de la table des symbole
 %type<Instruction> hooks
 %type<Instruction> initialisation
 %type<Instruction> variables_init_serie
@@ -108,7 +109,7 @@
 %type<Instruction> else
 %type<Instruction> evaluation
 %type<Instruction> variable_incr
-%type<String> chiffre 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
+%type<String>      chiffre 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMPARATOR_OR
 %left COMPARATOR_AND
@@ -321,20 +322,38 @@ hooks :
 	}
 	;
 
-//__________________________________________________________________________________
+//=================================================================================================
+//				Les initialisations de variables et stencil
+//=================================================================================================
 
 initialisation :
 // ------------------------------------------------------------------ DONE
-	TYPE variables_init_serie {
-		printf("TYPE variables_init_serie -> initialisation\n");
+	const TYPE variables_init_serie {
+		printf("const TYPE variables_init_serie -> initialisation\n");
+
+		constantZone = false;
 		
-		$$ = $2;
+		$$ = $3;
 	}
 // ------------------------------------------------------------------
-	| STENCIL suite_stencil_init {
-		printf("STENCIL suite_stencil_init -> initialisation\n");
+	| STENCIL stencil_init_serie {
+		printf("STENCIL stencil_init_serie -> initialisation\n");
 		
 		instructionListMalloc(&$$);
+	}
+	;
+
+//__________________________________________________________________________________
+
+const :
+// ------------------------------------------------------------------
+	CONST {
+		printf("CONST -> const\n");
+
+		constantZone = true;
+	}
+// ------------------------------------------------------------------
+	| {
 	}
 	;
 
@@ -358,28 +377,31 @@ variables_init_serie :
 
 //__________________________________________________________________________________
 
-suite_stencil_init :
+stencil_init_serie :
 // ------------------------------------------------------------------
-	stencil_init COMMA suite_stencil_init {
-		printf("stencil_init COMA suite_stencil_init -> suite_stencil_init\n");
+	stencil_init COMMA stencil_init_serie {
+		printf("stencil_init COMA stencil_init_serie -> stencil_init_serie\n");
 	}
 // ------------------------------------------------------------------
 	| stencil_init {
-		printf("stencil_init -> suite_stencil_init\n");
+		printf("stencil_init -> stencil_init_serie\n");
 	}
 	;
 
 //__________________________________________________________________________________ 
 
 variable_init :
-// ------------------------------------------------------------------ DONE HOOK TODO
+// ------------------------------------------------------------------ DONE HOOK TODO et evaluation sur tableau ????
 	ID hooks_init EQUALS evaluation {
 		printf("ID hooks_init EQUALS evaluation -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,true,false);
+		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,true);
+		if(constantZone == true){
+			result->constante = true;
+		}
 		$$ = $4;
 		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
 		
@@ -391,7 +413,10 @@ variable_init :
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		symbolsTableAddSymbol(symbolsTable,$1,false,false);
+		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,false);
+		if(constantZone == true){
+			result->constante = true;
+		}
 		instructionListMalloc(&$$);
 	}
 	;
@@ -402,18 +427,10 @@ hooks_init :
 // ------------------------------------------------------------------ 
 	LHOO ID RHOO hooks_init {
 		printf("LHOO ID RHOO -> hooks_init\n");
-		
-		Symbol node1;
-		if((node1 = symbolsTableGetSymbolById(symbolsTable,$1)) == NULL || !node1->constante){
-			ERROR("définition de tableau non constant !");
-		}
-		//que renvoyer ?   une structure ? (avec nb dimention nb ligne nb colonne ...) surement une liste(encore ??) vu que ça s'enchaine !
 	}
 // ------------------------------------------------------------------
 	| LHOO CHIFFRE RHOO hooks_init {
 		printf("LHOO CHIFFRE RHOO -> hooks_init\n");
-		
-		// que renvoyer . cf 6ligne plus haut 
 	}
 // ------------------------------------------------------------------
 	| {
@@ -463,12 +480,18 @@ suite_chiffre :
 	}
 	;
 
-//__________________________________________________________________________________
+//=================================================================================================
+//				Les affectations de variables
+//=================================================================================================
 
 affectation :
 // ------------------------------------------------------------------ DONE
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
+
+		if($1->constante == true){
+			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
+		}
 
 		$$ = $3;
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
@@ -476,6 +499,10 @@ affectation :
 // ------------------------------------------------------------------ DONE MODULO TODO
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
+
+		if($1->constante == true){
+			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
+		}
 
 		$$ = $3;
 		PUSH_BACK($$,1,"lw $t3 %s",$1->mipsId);
@@ -718,8 +745,11 @@ variable_incr :
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
+		if( $2->constante == true ){
+			ERROR("La variable '%s' a ete declare constante !",$2->id); 				
+		}
 		if( $2->init == false ){
-				ERROR("La variable '%s' est utilise mais pas initialise !",$2->id); 				
+			ERROR("La variable '%s' est utilise mais pas initialise !",$2->id); 				
 		}
 
 		instructionListMalloc(&$$);
@@ -734,9 +764,12 @@ variable_incr :
 // ------------------------------------------------------------------ DONE
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
-
+		
+		if( $1->constante == true ){
+			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
+		}
 		if( $1->init == false ){
-				ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 				
+			ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 				
 		}
 
 		instructionListMalloc(&$$);

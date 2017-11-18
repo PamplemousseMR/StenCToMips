@@ -1,75 +1,8 @@
-PROGRAMME : PREPROCESSEURS FONCTIONS 
-			| FONCTIONS
-
-PREPROCESSEURS : 	PREPROCESSEUR PREPROCESSEURS
-					| PREPROCESSEUR
-
-PREPROCESSEUR : define id chiffre endline
-
-FONCTIONS : MAIN
-
-MAIN : type main lbra ARGS rbra lemb INSTRUCTIONS remb
-
-INSTRUCTIONS : 	LIGNE INSTRUCTION 
-				| LIGNE
-
-LIGNE : FOR 
-		| WHILE 
-		| IF 
-		| BLOC
-		| INITIALISATION 
-		| AFFECTATION 
-		| EVALUATION semi
-		| RETURN
-
-RETURN : return EVALUATION semi
-
-//------------------------------------------
-
-AFFECTATION : 	VARIABLE equals EVALUATION semi 
-				| VARIABLE affect EVALUATION semi 
-
-INITIALISATION : type VARINITS semi
-
-VARINITS : 	VARINIT coma VARINITS
-        	| VARINIT
-
-VARINIT : 	VARIABLE
-    		| VARIABLE equals EVALUATION
-
-VARIABLE : 	id HOOKS
-
-HOOKS : LHOO EVALUATION RHOO HOOKS 
-		| epsilon
-
-//------------------------------------------
-
-BLOC : lemb INSTRUCTIONS remb 					// USELESS ! remplacer par LEMB suite_instructions REMB ! dans ligne !
-	   | LIGNE
-
-FOR : 	for lbra INITIALISATION semi EVALUATION semi EVALUATION rbra BLOC
-
-IF : if lbra EVALUATION rbra BLOC ELSE
-
-ELSE : else BLOC | epsilon
-
-WHILE : while lbra EVALUATION rbra BLOC
-
-//-----------------------------------------
-
-EVALUATION : 	VARIABLE
-				| chiffre
-				| lbra EVALUTATION rbra
-				| printf lbra string rbra
-				| printi lbra EVALUATION rbra
-				| EVALUATION comparator EVALUATION
-				| EVALUATION operator EVALUATION
-				| EVALUATION increment
-				| increment EVALUATION 
-
-stencils 
-fonctions (on gere pas les autres fonctions que le main) 
-EVALUATION aussi appel de fonctions 
-STENCIL   
-OPERATOR_STENCIL 
-++ --
+stencils
+operateur stencil
+affectation de stencil
+hook 
+fonctions (on gere pas les autres fonctions que le main)    
+macro
+commentaire /* */ marche pas
+probleme avec des commentaire // dans un /* */

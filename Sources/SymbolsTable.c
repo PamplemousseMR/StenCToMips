@@ -26,7 +26,7 @@ void symbolsTableFree(SymbolsTable l){
 	l = NULL;
 }
 
-Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init, bool array){
+Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		strncpy(result->id,c,BUFFER_SIZE);
@@ -36,18 +36,16 @@ Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init, bool array){
 		result->init = init;
 		result->constante = false;
 		result->step = false;
-		result->array = array;
-		result->value_constante = 0;
 		result->next = NULL;
 		return result;
 	}else {
-		n->next = symbolsTableAddSymbolBis(n->next, c, init, array);
+		n->next = symbolsTableAddSymbolBis(n->next, c, init);
 		return n;
 	}
 }
 
-Symbol symbolsTableAddSymbol(SymbolsTable l, char* c, bool init, bool array){
-	*l = symbolsTableAddSymbolBis(*l, c, init, array);
+Symbol symbolsTableAddSymbol(SymbolsTable l, char* c, bool init){
+	*l = symbolsTableAddSymbolBis(*l, c, init);
 	return symbolsTableGetSymbolById(l,c);
 }
 
@@ -61,8 +59,6 @@ Symbol symbolsTableAddSymbolConstBis(Symbol n, char* c, int i){
 		result->constante = true;
 		result->init = true;
 		result->step = false;
-		result->array = false;
-		result->value_constante = i;
 		result->next = NULL;
 		return result;
 	}else {
@@ -84,8 +80,6 @@ Symbol symbolsTableAddStepBis(Symbol n){
 		result->constante = true;
 		result->init = true;
 		result->step = true;
-		result->array = false;
-		result->value_constante = 0;
 		result->next = NULL;
 		return result;
 	}else {
