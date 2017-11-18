@@ -5,7 +5,6 @@
 #include "SymbolsTable.h"
 #include "InstructionsList.h"
 
-extern unsigned long long labelCounter;
 extern unsigned long long variableCounter;
 extern InstructionsList rootTree;
 char temp[BUFFER_SIZE];
@@ -36,13 +35,13 @@ Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init, bool array){
 		instructionPushBack(rootTree,temp,1);
 		result->init = init;
 		result->constante = false;
+		result->step = false;
 		result->array = array;
-		result->creationLabelCounter = labelCounter;
+		result->value_constante = 0;
 		result->next = NULL;
 		return result;
 	}else {
-		if(strcmp(n->id,c))
-			n->next = symbolsTableAddSymbolBis(n->next, c, init, array);
+		n->next = symbolsTableAddSymbolBis(n->next, c, init, array);
 		return n;
 	}
 }
@@ -61,13 +60,13 @@ Symbol symbolsTableAddSymbolConstBis(Symbol n, char* c, int i){
 		instructionPushBack(rootTree,temp,1);
 		result->constante = true;
 		result->init = true;
+		result->step = false;
+		result->array = false;
 		result->value_constante = i;
-		result->creationLabelCounter = labelCounter;
 		result->next = NULL;
 		return result;
 	}else {
-		if(strcmp(n->id,c))
-			n->next = symbolsTableAddSymbolConstBis(n->next, c, i);
+		n->next = symbolsTableAddSymbolConstBis(n->next, c, i);
 		return n;
 	}
 }
@@ -75,6 +74,28 @@ Symbol symbolsTableAddSymbolConstBis(Symbol n, char* c, int i){
 Symbol symbolsTableAddSymbolConst(SymbolsTable l, char* c, int i){
 	*l = symbolsTableAddSymbolConstBis(*l,c,i);
 	return symbolsTableGetSymbolById(l,c);
+}
+
+Symbol symbolsTableAddStepBis(Symbol n){
+	if(n == NULL){
+		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		strncpy(result->id,"step",BUFFER_SIZE);
+		snprintf(result->mipsId,BUFFER_SIZE,"null");
+		result->constante = true;
+		result->init = true;
+		result->step = true;
+		result->array = false;
+		result->value_constante = 0;
+		result->next = NULL;
+		return result;
+	}else {
+		n->next = symbolsTableAddStepBis(n->next);
+		return n;
+	}
+}
+
+void symbolsTableAddStep(SymbolsTable l){
+	*l = symbolsTableAddStepBis(*l);
 }
 
 Symbol symbolsTableGetSymbolByIdBis(Symbol n, char* c){
@@ -87,34 +108,48 @@ Symbol symbolsTableGetSymbolById(SymbolsTable l, char* c){
 	return symbolsTableGetSymbolByIdBis(*l, c);
 }
 
-Symbol symbolsTableRemoveSymbolBis(Symbol n, char* c){
-	if(n == NULL) return NULL;
-	if(!strcmp(n->id,c)){
-		Symbol tmp = n->next;
-		free(n);
-		return tmp;
-	}else{
-		n->next = symbolsTableRemoveSymbolBis(n->next,c);
-		return n;
+Symbol lastStep = NULL;
+static inline void symbolsTableGetLastStep(Symbol n){
+	if(n == NULL){
+		return;
+	} 
+	else {
+		if(n->step == true){
+			lastStep = n;
+		}
+		symbolsTableGetLastStep(n->next); 
 	}
 }
 
-void symbolsTableRemoveSymbol(SymbolsTable l, char* c){
-	*l = symbolsTableRemoveSymbolBis(*l, c);
-}
-
-Symbol symbolsTableRemoveAllSymbolGreaterThanBis(Symbol n,unsigned int i){
-	if(n == NULL) return NULL;
-	n->next = symbolsTableRemoveAllSymbolGreaterThanBis(n->next,i);
-	if(n->creationLabelCounter >= i){
-		Symbol tmp = n->next;
-		free(n);
-		return tmp;
-	}else{
-		return n;
+Symbol beforeStep = NULL;
+static inline bool symbolsTableRemoveStep(Symbol n){
+	if(n == NULL){
+		return false;
+	} 
+	else {
+		if(n == lastStep){
+			if(beforeStep != NULL){
+				symbolsTableFreeBis(beforeStep->next);
+				beforeStep->next = NULL;
+			}else{
+				symbolsTableFreeBis(n);
+				n = NULL;
+			}
+			return (beforeStep == NULL);
+		}
+		beforeStep = n;
+		symbolsTableRemoveStep(n->next); 
+		return false;
 	}
 }
 
-void symbolsTableRemoveAllSymbolGreaterThan(SymbolsTable l, int i){
-	*l = symbolsTableRemoveAllSymbolGreaterThanBis(*l, i); 
+void symbolsTableRemoveUntilStep(SymbolsTable l){
+	symbolsTableGetLastStep(*l);
+	if(lastStep != NULL){
+		if(symbolsTableRemoveStep(*l)){
+			*l = NULL;
+		}
+		lastStep = NULL;
+		beforeStep = NULL;
+	}
 }

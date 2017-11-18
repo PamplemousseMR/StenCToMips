@@ -17,22 +17,27 @@
 	#define printf(...)
 	#endif
 
-	#define PUSH_BACK(dest, indent, code...) 	snprintf(instructionTempo,BUFFER_SIZE,code);\
+	#define PUSH_BACK(dest, indent, code...) 	snprintf(instructionTempo,INSTRUCTION_SIZE,code);\
 												instructionPushBack(dest,instructionTempo,indent)
 
-	#define PUSH_FORWARD(dest, indent, code...) snprintf(instructionTempo,BUFFER_SIZE,code);\
+	#define PUSH_FORWARD(dest, indent, code...) snprintf(instructionTempo,INSTRUCTION_SIZE,code);\
 												instructionPushForward(dest,instructionTempo,indent)
+
+	#define ERROR(msg...) 	snprintf(instructionTempo,INSTRUCTION_SIZE,msg);\
+							yyerror(instructionTempo)
+
+	#define INSTRUCTION_SIZE 50
 														
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
 
 	int yylex();
-	void yyerror (char const *s);
+	void yyerror (char const*);
 
 	FILE* outputFile;
 	SymbolsTable symbolsTable;
 	InstructionsList rootTree;
-	char instructionTempo[BUFFER_SIZE];
+	char instructionTempo[INSTRUCTION_SIZE];
 	
 %}
 
@@ -140,7 +145,7 @@ programme :
 //__________________________________________________________________________________
 
 preprocessor_instructions_serie :
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	preprocessor_instruction preprocessor_instructions_serie {
 		printf("preprocessor_instruction preprocessor_instructions_serie -> preprocessor_instructions_serie\n");
 	}
@@ -157,7 +162,7 @@ preprocessor_instruction :
 		printf("DEFINE ID chiffre ENDLINE -> preprocessor_instruction\n");
 		
 		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
-			yyerror("La variable existe deja !"); 	
+			ERROR("La variable '%s' existe deja !",$2); 	
 		}
 		symbolsTableAddSymbolConst(symbolsTable,$2,atoi($3));
 	}
@@ -225,11 +230,14 @@ ligne :
 		instructionListMalloc(&$$); // pour evité les core dumped
 	}
 // ------------------------------------------------------------------ DONE
-	| LEMB instructions_serie REMB {
+	| LEMB step instructions_serie REMB {
 		printf("LEMB instructions_serie REMB -> ligne\n");
 		
-		$$ = $2;
+		$$ = $3;
 		instructionIncr($$,1);
+		PUSH_FORWARD($$,1,"#{");
+		PUSH_BACK($$,1,"#}");
+		symbolsTableRemoveUntilStep(symbolsTable);
 	}
 // ------------------------------------------------------------------ DONE
 	| initialisation SEMI {
@@ -237,11 +245,11 @@ ligne :
 		
 		$$ = $1;
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| affectation SEMI {
 		printf("affectation SEMI -> ligne\n");
 		
-		instructionListMalloc(&$$); // pour evité les core dumped
+		$$ = $1; // pour evité les core dumped
 	}
 // ------------------------------------------------------------------
 	| return SEMI {
@@ -254,6 +262,15 @@ ligne :
 		printf("evaluation SEMI -> ligne\n");
 		
 		$$ = $1;
+	}
+	;
+
+//__________________________________________________________________________________
+
+step : 
+// ------------------------------------------------------------------ DONE
+	{ 
+		symbolsTableAddStep(symbolsTable); 
 	}
 	;
 
@@ -279,13 +296,13 @@ stencil :
 //__________________________________________________________________________________
 
 variable :
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE HOOK TODO
 	ID hooks {
 		printf("ID hooks -> variable\n");
 
 		Symbol s;
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
-			yyerror("La variable n'existe pas !"); 
+			ERROR("La variable '%s' n'existe pas !",$1); 
 		}
 
 		$$ = s;
@@ -352,15 +369,15 @@ suite_stencil_init :
 	}
 	;
 
-//__________________________________________________________________________________ TODO hook en mips ?? (changer les false en true)
+//__________________________________________________________________________________ 
 
 variable_init :
-// ------------------------------------------------------------------ DONE
+// ------------------------------------------------------------------ DONE HOOK TODO
 	ID hooks_init EQUALS evaluation {
 		printf("ID hooks_init EQUALS evaluation -> variable_init\n");
-		
+
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			yyerror("La variable existe deja !"); 
+			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,true,false);
 		$$ = $4;
@@ -372,14 +389,14 @@ variable_init :
 		printf("ID hooks_init -> variable_init\n");
 		
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			yyerror("La variable existe deja !"); 				
+			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		symbolsTableAddSymbol(symbolsTable,$1,false,false);
 		instructionListMalloc(&$$);
 	}
 	;
 	
-//__________________________________________________________________________________	TODO hook en mips ??
+//__________________________________________________________________________________
 
 hooks_init :
 // ------------------------------------------------------------------ 
@@ -388,7 +405,7 @@ hooks_init :
 		
 		Symbol node1;
 		if((node1 = symbolsTableGetSymbolById(symbolsTable,$1)) == NULL || !node1->constante){
-			yyerror("définition de tableau non constant !");
+			ERROR("définition de tableau non constant !");
 		}
 		//que renvoyer ?   une structure ? (avec nb dimention nb ligne nb colonne ...) surement une liste(encore ??) vu que ça s'enchaine !
 	}
@@ -449,13 +466,31 @@ suite_chiffre :
 //__________________________________________________________________________________
 
 affectation :
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
+
+		$$ = $3;
+		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE MODULO TODO
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
+
+		$$ = $3;
+		PUSH_BACK($$,1,"lw $t3 %s",$1->mipsId);
+		if(!strcmp($2,"+=")){
+			PUSH_BACK($$,1,"add $t0 $t3 $t0");
+		}else if(!strcmp($2,"-=")){
+			PUSH_BACK($$,1,"sub $t0 $t3 $t0");
+		}else if(!strcmp($2,"*=")){
+			PUSH_BACK($$,1,"mul $t0 $t3 $t0");
+		}else if(!strcmp($2,"/=")){
+			PUSH_BACK($$,1,"div $t0 $t3 $t0");
+		}else if(!strcmp($2,"%=")){
+			PUSH_BACK($$,1,"sub $t0 $t3 $t0");
+		}
+		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
 	}
 	;
 
@@ -619,6 +654,8 @@ evaluation :
 			PUSH_BACK($$,1,"sw $t%d %d($sp)",i,i*4);
 		}
 		instructionIncr($2,1);
+		PUSH_FORWARD($2,1,"#{");
+		PUSH_BACK($2,1,"#}");
 		instructionConcat($$,$2);
 		for(i=1 ; i<=9 ; ++i)
 		{
@@ -682,12 +719,16 @@ variable_incr :
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
 		if( $2->init == false ){
-				yyerror("La variable est utilise mais pas initialise !"); 				
+				ERROR("La variable '%s' est utilise mais pas initialise !",$2->id); 				
 		}
 
 		instructionListMalloc(&$$);
 		PUSH_BACK($$,1,"lw $t0 %s",$2->mipsId);
-		PUSH_BACK($$,1,"addi $t0 $t0 1");
+		if(!strcmp($1, "++")){
+			PUSH_BACK($$,1,"add $t0 $t0 1");
+		}else{
+			PUSH_BACK($$,1,"sub $t0 $t0 1");
+		}
 		PUSH_BACK($$,1,"sw $t0 %s",$2->mipsId);
 	}
 // ------------------------------------------------------------------ DONE
@@ -695,14 +736,22 @@ variable_incr :
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 
 		if( $1->init == false ){
-				yyerror("La variable est utilise mais pas initialise !"); 				
+				ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 				
 		}
 
 		instructionListMalloc(&$$);
 		PUSH_BACK($$,1,"lw $t0 %s",$1->mipsId);
-		PUSH_BACK($$,1,"addi $t0 $t0 1");
+		if(!strcmp($2, "++")){
+			PUSH_BACK($$,1,"add $t0 $t0 1");
+		}else{
+			PUSH_BACK($$,1,"sub $t0 $t0 1");
+		}
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
-		PUSH_BACK($$,1,"subi $t0 $t0 1");
+		if(!strcmp($2, "++")){
+			PUSH_BACK($$,1,"sub $t0 $t0 1");
+		}else{
+			PUSH_BACK($$,1,"add $t0 $t0 1");
+		}
 
 	// pour ++
 	// move $t0 $variable
@@ -713,7 +762,7 @@ variable_incr :
 		printf("variable -> variable_incr\n");
 
 		if( $1->init == false ){
-			yyerror("La variable est utilise mais pas initialise !"); 				
+				ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 				
 		}
 
 		instructionListMalloc(&$$);
@@ -766,6 +815,6 @@ int main(void)
 
 void yyerror (char const *s)
 {
-	printf("error : %s %d\n",s, yychar);
+	printf("error : %s\n",s);
 	exit(EXIT_FAILURE);
 }
