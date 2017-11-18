@@ -132,12 +132,12 @@ programme :
 		printf("preprocessor_instructions_serie functions_serie -> programme\n");
 		
 		PUSH_FORWARD(rootTree,0,".data");
-		PUSH_BACK(rootTree,0,".text");
-		PUSH_BACK(rootTree,0,".golbl __main\n\n#####\n");
+		PUSH_BACK(rootTree,0,"\n#####\n\n.golbl __main");
+		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
 		
 		instructionConcat(rootTree,$2);
 		
-		PUSH_BACK(rootTree,0,"\n#####\n\nExit :");
+		PUSH_BACK(rootTree,0,"\n#####\n\nExit :\n");
 		PUSH_BACK(rootTree,1,"li $v0 10");
 		PUSH_BACK(rootTree,1,"syscall");
 	}
@@ -188,7 +188,7 @@ main :
 		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 		
 		$$ = $6;
-		PUSH_FORWARD($$,0,"__main :");
+		PUSH_FORWARD($$,0,"\n__main :");
 		PUSH_BACK($$,1,"j Exit");
 	}
 	;
@@ -409,19 +409,19 @@ variable_init :
 		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
 		
 	}
-	// ------------------------------------------------------------------
+// ------------------------------------------------------------------
 	| ID hooks EQUALS LEMB suite_suite_chiffre REMB {
 		printf("ID hooks EQUALS LEMB suite_suite_chiffre REMB -> variable_init\n");
 		
 		instructionListMalloc(&$$);
 	}
-	// ------------------------------------------------------------------
+// ------------------------------------------------------------------
 	| ID hooks EQUALS LEMB suite_chiffre REMB {
 		printf("ID hooks EQUALS LEMB suite_chiffre REMB -> variable_init\n");
 		
 		instructionListMalloc(&$$);
 	}
-	// ------------------------------------------------------------------
+// ------------------------------------------------------------------
 	| ID hooks {
 		printf("ID hooks -> variable_init\n");
 		
@@ -783,10 +783,6 @@ variable_incr :
 		}else{
 			PUSH_BACK($$,1,"add $t0 $t0 1");
 		}
-
-	// pour ++
-	// move $t0 $variable
-	// addi $varibale 1
 	}
 // ------------------------------------------------------------------ DONE TODO check if array
 	| variable {
