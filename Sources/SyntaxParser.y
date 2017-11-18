@@ -339,7 +339,7 @@ initialisation :
 		$$ = $3;
 	}
 // ------------------------------------------------------------------
-	| STENCIL stencil_init_serie {
+	| const STENCIL stencil_init_serie {
 		printf("STENCIL stencil_init_serie -> initialisation\n");
 		
 		instructionListMalloc(&$$);

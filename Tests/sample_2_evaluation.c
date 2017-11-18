@@ -80,4 +80,6 @@ int main()
 	printi(h);
 	printf(LOL);
 	*/
+
+	return 0;
 }

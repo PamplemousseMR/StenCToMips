@@ -2,6 +2,7 @@ stencils
 operateur stencil
 affectation de stencil
 hook 
+retrun au main pas obligatoir ?
 fonctions (on gere pas les autres fonctions que le main)    
 macro
 commentaire /* */ marche pas
