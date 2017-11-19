@@ -132,7 +132,7 @@ programme :
 		printf("preprocessor_instructions_serie functions_serie -> programme\n");
 		
 		PUSH_FORWARD(rootTree,0,".data");
-		PUSH_BACK(rootTree,0,"\n#####\n\n.golbl __main");
+		PUSH_BACK(rootTree,0,"\n#####\n\n.globl __main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
 		
 		instructionConcat(rootTree,$2);
@@ -216,13 +216,13 @@ ligne :
 	for {
 		printf("for -> ligne\n");
 		
-		instructionListMalloc(&$$); // pour evité les core dumped
+		$$ = $1;
 	}
 // ------------------------------------------------------------------
 	| while {
 		printf("while -> ligne\n");
 		
-		instructionListMalloc(&$$); // pour evité les core dumped
+		$$ = $1;
 	}
 // ------------------------------------------------------------------
 	| if {
@@ -349,13 +349,13 @@ initialisation :
 //__________________________________________________________________________________
 
 const :
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	CONST {
 		printf("CONST -> const\n");
 
 		constantZone = true;
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| {
 	}
 	;
@@ -424,6 +424,11 @@ variable_init :
 // ------------------------------------------------------------------
 	| ID hooks {
 		printf("ID hooks -> variable_init\n");
+
+		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
+			ERROR("La variable '%s' existe deja !",$1); 	
+		}
+		symbolsTableAddSymbol(symbolsTable,$1,true);
 		
 		instructionListMalloc(&$$);
 	}
@@ -520,18 +525,36 @@ affectation :
 //=================================================================================================
 
 for :
-// ------------------------------------------------------------------
+// -1---2----3-----------4----5----------6----7----------8----9-----
 	FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
 		printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
+		
+		$$ = $3;
+		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
+		instructionConcat($$,$5);
+		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
+		instructionConcat($$,$9);
+		instructionConcat($$,$7);
+		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
+		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
+		labelCounter++;
 	}
 	;
 
 //__________________________________________________________________________________
 
 while :
-// ------------------------------------------------------------------
+// -1-----2----3----------4----5-------------------------------------
 	WHILE LBRA evaluation RBRA ligne {
 		printf("WHILE LBRA evaluation RBA ligne -> while\n");
+		
+		$$ = $3;
+		PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
+		PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
+		instructionConcat($$,$5);
+		PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
+		PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
+		labelCounter++;
 	}
 	;
 
@@ -842,6 +865,6 @@ int main(void)
 
 void yyerror (char const *s)
 {
-	printf("error : %s at line %d\n",s,yylineno);
+	fprintf(stderr,"error : %s at line %d\n",s,yylineno);
 	exit(EXIT_FAILURE);
 }
