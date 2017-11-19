@@ -212,13 +212,13 @@ instructions_serie :
 //__________________________________________________________________________________
 
 ligne :
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	for {
 		printf("for -> ligne\n");
 		
 		$$ = $1;
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| while {
 		printf("while -> ligne\n");
 		
@@ -525,36 +525,38 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3-----------4----5----------6----7----------8----9-----
-	FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
+// -1---2----3----4-----------5----6----------7----8----------9----- DONE
+	FOR step LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
 		printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
-		$$ = $3;
+		$$ = $4;
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
-		instructionConcat($$,$5);
+		instructionConcat($$,$6);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
-		instructionConcat($$,$9);
-		instructionConcat($$,$7);
+		instructionConcat($$,$10);
+		instructionConcat($$,$8);
 		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 		labelCounter++;
+		symbolsTableRemoveUntilStep(symbolsTable);
 	}
 	;
 
 //__________________________________________________________________________________
 
 while :
-// -1-----2----3----------4----5-------------------------------------
-	WHILE LBRA evaluation RBRA ligne {
+// -1-----2----3----4----------5----6-------------------------------- DONE
+	WHILE step LBRA evaluation RBRA ligne {
 		printf("WHILE LBRA evaluation RBA ligne -> while\n");
 		
-		$$ = $3;
+		$$ = $4;
 		PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
-		instructionConcat($$,$5);
+		instructionConcat($$,$6);
 		PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
 		labelCounter++;
+		symbolsTableRemoveUntilStep(symbolsTable);
 	}
 	;
 

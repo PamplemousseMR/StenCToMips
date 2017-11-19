@@ -2,6 +2,13 @@
 
 int main() 
 {
+	int ii,jj;
+
+	ii = 1;
+	jj = 2;
+
+	printi(ii);
+
 	int a = 0;
 	printi(a++);
 	printf("\n");

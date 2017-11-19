@@ -363,7 +363,7 @@ UNKNOW				.
 
 {UNKNOW} {
 	
-	printf("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);;
+	printf("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
 
 }
 

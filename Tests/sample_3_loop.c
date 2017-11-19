@@ -9,6 +9,7 @@ int main(){
 		j = -6;
 		
 		while (j < MAX_WHILE){
+			int k;
 			printf("val de i : ");
 			printi(i);
 			printf(" val de j : ");
@@ -16,6 +17,7 @@ int main(){
 			printf("\n");
 			j++;
 		}
-	
+		
+		int k =0;
 	}
 }
