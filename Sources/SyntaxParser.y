@@ -128,7 +128,7 @@
 //=================================================================================================
 
 programme :
-// ------------------------------------------------------------------ DONE
+// -1-------------------------------2-------------------------------- DONE
 	preprocessor_instructions_serie functions_serie {
 		printf("preprocessor_instructions_serie functions_serie -> programme\n");
 		
@@ -147,7 +147,7 @@ programme :
 //__________________________________________________________________________________
 
 preprocessor_instructions_serie :
-// ------------------------------------------------------------------ DONE
+// -1------------------------2--------------------------------------- DONE
 	preprocessor_instruction preprocessor_instructions_serie {
 		printf("preprocessor_instruction preprocessor_instructions_serie -> preprocessor_instructions_serie\n");
 	}
@@ -159,7 +159,7 @@ preprocessor_instructions_serie :
 //__________________________________________________________________________________
 
 preprocessor_instruction :
-// ------------------------------------------------------------------ DONE
+// -1------2--3------4----------------------------------------------- DONE
 	DEFINE ID number ENDLINE {
 		printf("DEFINE ID number ENDLINE -> preprocessor_instruction\n");
 		
@@ -173,7 +173,7 @@ preprocessor_instruction :
 //__________________________________________________________________________________
 
 functions_serie :
-// ------------------------------------------------------------------ DONE
+// -1---------------------------------------------------------------- DONE
 	main {
 		printf("main -> functions_serie\n");
 		
@@ -184,7 +184,7 @@ functions_serie :
 //__________________________________________________________________________________
 
 main :
-// ------------------------------------------------------------------ DONE
+// -1----2----3----4----5----7------------------8-------------------- DONE
 	TYPE MAIN LBRA RBRA LEMB instructions_serie REMB {
 		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 		
@@ -197,7 +197,7 @@ main :
 //__________________________________________________________________________________
 
 instructions_serie :
-// ------------------------------------------------------------------ DONE
+// -1-----2---------------------------------------------------------- DONE
 	ligne instructions_serie {
 		printf("ligne instructions_serie -> instructions_serie\n");
 		
@@ -213,25 +213,25 @@ instructions_serie :
 //__________________________________________________________________________________
 
 ligne :
-// ------------------------------------------------------------------ DONE
+// -1---------------------------------------------------------------- DONE
 	for {
 		printf("for -> ligne\n");
 		
 		$$ = $1;
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| while {
 		printf("while -> ligne\n");
 		
 		$$ = $1;
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| if {
 		printf("if -> ligne\n");
 		
 		$$ = $1;
 	}
-// ------------------------------------------------------------------ DONE
+// ---1----2----3------------------4--------------------------------- DONE
 	| LEMB step instructions_serie REMB {
 		printf("LEMB instructions_serie REMB -> ligne\n");
 		
@@ -241,27 +241,27 @@ ligne :
 		PUSH_BACK($$,1,"#}");
 		symbolsTableRemoveUntilStep(symbolsTable);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1--------------2----------------------------------------------- DONE
 	| initialisation SEMI {
 		printf("initialisation SEMI -> ligne\n");
 		
 		$$ = $1;
 		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-----------2-------------------------------------------------- DONE
 	| affectation SEMI {
 		printf("affectation SEMI -> ligne\n");
 		
 		$$ = $1;
 		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
-// ------------------------------------------------------------------
+// ---1------2-------------------------------------------------------
 	| return SEMI {
 		printf("return SEMI -> ligne\n");
 		
 		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1----------2--------------------------------------------------- DONE
 	| evaluation SEMI {
 		printf("evaluation SEMI -> ligne\n");
 		
@@ -282,7 +282,7 @@ step :
 //__________________________________________________________________________________
 
 return :
-// ------------------------------------------------------------------
+// -1------2---------------------------------------------------------
 	RETURN evaluation {
 		printf("RETURN evaluation -> return\n");
 	}
@@ -293,7 +293,7 @@ return :
 //=================================================================================================
 
 stencil :
-// ------------------------------------------------------------------
+// -1--2----3------4-----5------6------------------------------------
 	ID LEMB NUMBER COMMA NUMBER REMB {
 		printf("ID LEMB NUMBER COMA NUMBER REMB -> stencil\n");
 	}
@@ -301,7 +301,7 @@ stencil :
 //__________________________________________________________________________________
 
 variable :
-// ------------------------------------------------------------------ DONE TODO check if array
+// -1--2------------------------------------------------------------- DONE TODO check if array
 	ID hooks {
 		printf("ID hooks -> variable\n");
 
@@ -317,7 +317,7 @@ variable :
 //__________________________________________________________________________________
 
 hooks :
-// ------------------------------------------------------------------
+// -1----2----------3----4-------------------------------------------
 	LHOO evaluation RHOO hooks {
 		printf("LHOO evaluation RHOO -> hooks\n");
 	}
@@ -337,7 +337,7 @@ initialisation :
 		
 		$$ = $2;
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------2------------------------------------------------------ DONE
 	| STENCIL stencils_init_serie {
 		printf("STENCIL stencils_init_serie -> initialisation\n");
 		
@@ -348,14 +348,14 @@ initialisation :
 //__________________________________________________________________________________
 
 variables_init_serie :
-// ------------------------------------------------------------------ DONE
+// -1-------------2-----3-------------------------------------------- DONE
 	variable_init COMMA variables_init_serie {
 		printf("variable_init COMA variables_init_serie -> variables_init_serie\n");
 		
 		$$ = $1;
 		instructionConcat($$,$3);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| variable_init {
 		printf("variable_init -> variables_init_serie\n");
 		
@@ -366,14 +366,14 @@ variables_init_serie :
 //__________________________________________________________________________________
 
 stencils_init_serie :
-// ------------------------------------------------------------------ DONE
+// -1------------2-----3--------------------------------------------- DONE
 	stencil_init COMMA stencils_init_serie {
 		printf("stencil_init COMA stencils_init_serie -> stencils_init_serie\n");
 		
 		$$ = $1;
 		instructionConcat($$,$3);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| stencil_init {
 		printf("stencil_init -> stencils_init_serie\n");
 		
@@ -384,7 +384,7 @@ stencils_init_serie :
 //__________________________________________________________________________________ 
 
 variable_init :		
-// ------------------------------------------------------------------ DONE
+// -1--2------3------------------------------------------------------ DONE
 	ID EQUALS evaluation {
 		printf("ID EQUALS evaluation -> variable_init\n");
 
@@ -396,7 +396,7 @@ variable_init :
 		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
 		
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| ID {
 		printf("ID -> variable_init\n");
 
@@ -406,7 +406,7 @@ variable_init :
 		symbolsTableAddSymbol(symbolsTable,$1,false);
 		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------ 
+// ---1-------------------------------------------------------------- 
 	| array_init {
 		$$ = $1;
 	}
@@ -416,19 +416,19 @@ variable_init :
 
 
 array_init :	
-// ------------------------------------------------------------------
+// -1--2----------3------4----5------------------6-------------------
 	ID hooks_init EQUALS LEMB suite_suite_number REMB {
 		printf("ID hooks_init EQUALS LEMB suite_suite_number REMB -> array_init\n");
 		
 		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------
+// ---1--2----------3------4----5------------6-----------------------
 	| ID hooks_init EQUALS LEMB suite_number REMB {
 		printf("ID hooks_init EQUALS LEMB suite_number REMB -> array_init\n");
 		
 		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------ 
+// ---1--2----------------------------------------------------------- 
 	| ID hooks_init {
 		printf("ID hooks_init -> array_init\n");
 		
@@ -462,7 +462,7 @@ hooks_init :
 			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
 		}
 	}
-// ---1----2-------3----4--------------------------------------------
+// ---1----2------3----4---------------------------------------------
 	| LHOO number RHOO hooks_init {
 		printf("LHOO number RHOO hooks_init -> hooks_init\n");
 	}
@@ -475,19 +475,19 @@ hooks_init :
 //__________________________________________________________________________________
 
 stencil_init :
-// ------------------------------------------------------------------
+// -1-------2------3----4------------------5-------------------------
 	stencil EQUALS LEMB suite_suite_number REMB {
 		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------
+// ---1-------2------3----4------------5-----------------------------
 	| stencil EQUALS LEMB suite_number REMB {
 		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
 	}
-// ------------------------------------------------------------------
+// ---1--------------------------------------------------------------
 	| stencil {
 		printf("stencil -> stencil_init\n");
 		
@@ -498,11 +498,11 @@ stencil_init :
 //__________________________________________________________________________________
 
 suite_suite_number :
-// ------------------------------------------------------------------
+// -1----2------------3----4-----5-----------------------------------
 	LEMB suite_number REMB COMMA suite_suite_number {
 		printf("LEMB suite_number REMB COMMA suite_suite_number -> suite_suite_number\n");
 	}
-// ------------------------------------------------------------------
+// ---1----2------------3--------------------------------------------
 	| LEMB suite_number REMB {
 		printf("LEMB suite_number REMB -> suite_suite_number\n");
 	}
@@ -511,11 +511,11 @@ suite_suite_number :
 //__________________________________________________________________________________
 
 suite_number :
-// ------------------------------------------------------------------
+// -1------2-----3---------------------------------------------------
 	number COMMA suite_number {
 		printf("number COMMA suite_number -> suite_number\n");
 	}
-// ------------------------------------------------------------------
+// ---1--------------------------------------------------------------
 	| number {
 		printf("number -> suite_number\n");
 	}
@@ -526,7 +526,7 @@ suite_number :
 //=================================================================================================
 
 affectation :
-// ------------------------------------------------------------------ DONE TODO check if array
+// -1--------2------3------------------------------------------------ DONE TODO check if array
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
@@ -538,7 +538,7 @@ affectation :
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
 		$1->init = true;
 	}
-// ------------------------------------------------------------------ DONE TODO check if array
+// ---1--------2------3---------------------------------------------- DONE TODO check if array
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
@@ -572,7 +572,7 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3----4-----------5----6----------7----8----------9----- DONE
+// -1---2----3----4-----------5----6----------7----8----------9----10 DONE
 	FOR step LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
 		printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
@@ -628,7 +628,7 @@ if :
 //__________________________________________________________________________________
 
 else :
-// ------------------------------------------------------------------ DONE
+// -1----2----------------------------------------------------------- DONE
 	ELSE ligne {
 		printf("ELSE ligne -> else\n");
 		
@@ -645,7 +645,7 @@ else :
 //=================================================================================================
 
 evaluation :
-// ------------------------------------------------------------------ DONE
+// -1----------2-------------3--------------------------------------- DONE
 	evaluation COMPARATOR_OR evaluation {
 		printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 
@@ -660,7 +660,7 @@ evaluation :
 		PUSH_BACK($$,1,"COMP_OR_%llu_FIN :",labelCounter);	
 		++labelCounter;
 	}
-// ------------------------------------------------------------------ DONE
+// ---1----------2--------------3------------------------------------ DONE
 	| evaluation COMPARATOR_AND evaluation {
 		printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 		
@@ -675,7 +675,7 @@ evaluation :
 		PUSH_BACK($$,1,"COMP_AND_%llu_FIN :",labelCounter);
 		++labelCounter;	
 	}
-// ------------------------------------------------------------------ DONE 
+// ---1----------2-------------------3------------------------------- DONE 
 	| evaluation COMPARATOR_EQUALITY evaluation {
 		printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n");
 
@@ -696,7 +696,7 @@ evaluation :
 		PUSH_BACK($$,1,"COMP_EQUALITY_%llu_FIN :",labelCounter);
 		++labelCounter;	
 	}
-// ------------------------------------------------------------------ DONE 
+// ---1----------2--------------------3------------------------------ DONE 
 	| evaluation COMPARATOR_SUPREMACY evaluation {
 		printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n");
 		char inst[4];
@@ -721,7 +721,7 @@ evaluation :
 		PUSH_BACK($$,1,"COMP_SUPREMACY_%llu_FIN :",labelCounter);
 		++labelCounter;	
 	}
-// ------------------------------------------------------------------ DONE
+// ---1----------2-----------------3--------------------------------- DONE
 	| evaluation OPERATOR_ADDITION evaluation {
 		printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 
@@ -734,7 +734,7 @@ evaluation :
 			PUSH_BACK($$,1,"sub $t0 $t5 $t0");
 		}
 	}
-// ------------------------------------------------------------------ DONE
+// ---1----------2--------------3------------------------------------ DONE
 	| evaluation OPERATOR_MULTI evaluation {
 		printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 		
@@ -751,7 +751,7 @@ evaluation :
 			PUSH_BACK($$,1,"sub $t0 $t4 $t3");
 		}
 	}
-// ------------------------------------------------------------------ DONE
+// ---1----2----------3---------------------------------------------- DONE
 	| LBRA evaluation RBRA {
 		printf("LBRA evaluation RBRA -> evaluation\n");
 		int i;
@@ -772,7 +772,7 @@ evaluation :
 		}
 		PUSH_BACK($$,1,"addi $sp $sp %d",4*9);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1------2----3----------4--------------------------------------- DONE
 	| PRINTI LBRA evaluation RBRA {
 		printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 		
@@ -781,7 +781,7 @@ evaluation :
 		PUSH_BACK($$,1,"li $v0 1");
 		PUSH_BACK($$,1,"syscall");
 	}
-// ------------------------------------------------------------------ DONE
+// ---1------2----3------4------------------------------------------- DONE
 	| PRINTF LBRA STRING RBRA {
 		printf("PRINTF LBRA STRING RBRA -> evaluation\n");
 
@@ -792,7 +792,7 @@ evaluation :
 		PUSH_BACK($$,1,"li $v0 4");
 		PUSH_BACK($$,1,"syscall");
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-----------------2-------------------------------------------- DONE
 	| OPERATOR_NEGATION evaluation {
 		printf("OPERATOR_NEGATION evaluation -> evaluation\n");
 		
@@ -805,14 +805,14 @@ evaluation :
 		PUSH_BACK($$,1,"OPPE_NEG_%llu_FIN :",labelCounter);
 		++labelCounter;
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| number {
 		printf("number -> evaluation\n");
 		
 		instructionListMalloc(&$$);
 		PUSH_BACK($$,1,"li $t0 %s",$1);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-------------------------------------------------------------- DONE
 	| variable_incr	{
 		printf("variable_incr -> evaluation\n");
 		
@@ -823,7 +823,7 @@ evaluation :
 //__________________________________________________________________________________
 
 variable_incr :
-// ------------------------------------------------------------------ DONE TODO check if array
+// -1------------------2--------------------------------------------- DONE TODO check if array
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
@@ -843,7 +843,7 @@ variable_incr :
 		}
 		PUSH_BACK($$,1,"sw $t0 %s",$2->mipsId);
 	}
-// ------------------------------------------------------------------ DONE TODO check if array
+// ---1--------2----------------------------------------------------- DONE TODO check if array
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
@@ -868,7 +868,7 @@ variable_incr :
 			PUSH_BACK($$,1,"add $t0 $t0 1");
 		}
 	}
-// ------------------------------------------------------------------ DONE TODO check if array
+// ---1-------------------------------------------------------------- DONE TODO check if array
 	| variable {
 		printf("variable -> variable_incr\n");
 
@@ -884,12 +884,12 @@ variable_incr :
 //__________________________________________________________________________________
 
 number :
-// ------------------------------------------------------------------ DONE
+// -1---------------------------------------------------------------- DONE
 	NUMBER {
 		printf("NUMBER -> number\n");
 		sprintf($$,"%s",$1);
 	}
-// ------------------------------------------------------------------ DONE
+// ---1-----------------2-------------------------------------------- DONE
 	| OPERATOR_ADDITION NUMBER {
 		printf("OPERATOR_ADDITION NUMBER -> number\n");
 		sprintf($$,"%s%s",$1,$2);
