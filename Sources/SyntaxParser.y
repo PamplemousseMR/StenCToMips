@@ -217,21 +217,18 @@ ligne :
 		printf("for -> ligne\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 // ------------------------------------------------------------------ DONE
 	| while {
 		printf("while -> ligne\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 // ------------------------------------------------------------------ DONE
 	| if {
 		printf("if -> ligne\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 // ------------------------------------------------------------------ DONE
 	| LEMB step instructions_serie REMB {
@@ -431,7 +428,7 @@ variable_init :
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		symbolsTableAddSymbol(symbolsTable,$1,true);
+		symbolsTableAddSymbol(symbolsTable,$1,false);
 		
 		instructionListMalloc(&$$);
 	}
@@ -495,6 +492,7 @@ affectation :
 
 		$$ = $3;
 		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
+		$1->init = true;
 	}
 // ------------------------------------------------------------------ DONE TODO check if array
 	| variable AFFECT evaluation {
@@ -502,6 +500,8 @@ affectation :
 
 		if($1->constante == true){
 			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
+		}else if($1->init == false){
+			ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 	
 		}
 
 		$$ = $3;
@@ -532,7 +532,7 @@ for :
 	FOR step LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
 		printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
-		$$ = $4;
+		$$ = $4;	
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
 		instructionConcat($$,$6);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);

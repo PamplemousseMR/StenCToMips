@@ -14,6 +14,13 @@ int main(){
 			printi(i);
 			printf(" val de j : ");
 			printi(j);
+			if(i%4)
+			if(!(j%-2))
+				printf(" (pair)");
+			else
+				printf(" (impair)");
+			else
+				printf(" nope");
 			printf("\n");
 			j++;
 		}

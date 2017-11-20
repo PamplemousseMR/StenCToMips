@@ -7,6 +7,7 @@ int main()
 	ii = 1;
 	jj = 2;
 
+	ii++;
 	printi(ii);
 
 	int a = 0;
