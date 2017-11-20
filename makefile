@@ -7,7 +7,7 @@ OBJS = $(BUILD)/SyntaxParser.o $(BUILD)/LexicalParser.o $(BUILD)/SymbolsTable.o 
 GCC = gcc 
 
 $(EXEC) : $(OBJS)
-	gcc $^ -ly -ll -o $@ 
+	gcc $(CCFLAGS) $^ -ly -ll -o $@ 
 
 $(BUILD)/SyntaxParser.o : $(SRCDIR)/SyntaxParser.y
 	yacc -d $< -o $(BUILD)/SyntaxParser.c

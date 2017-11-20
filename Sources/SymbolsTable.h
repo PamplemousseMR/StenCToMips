@@ -11,6 +11,7 @@ typedef struct s_symbol{
 	char mipsId[BUFFER_SIZE];
 	bool init;
 	bool constante;
+	int constante_value;
 	bool step;
 	struct s_symbol* next;
 }*Symbol;

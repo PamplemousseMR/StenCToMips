@@ -32,7 +32,6 @@
 
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
-	bool constantZone = false;
 
 	int yylex();
 	void yyerror (char const*);
@@ -49,7 +48,6 @@
 	char* String;
 	InstructionsList Instruction;
 	Symbol Sym;
-	bool constant;
 	
 }
 
@@ -67,9 +65,8 @@
 %token<String> PRINTI
 %token<String> STENCIL
 %token<String> TYPE
-%token<String> CONST
 %token<String> ID
-%token<String> CHIFFRE
+%token<String> NUMBER
 %token<String> OPERATOR_NEGATION
 %token<String> OPERATOR_INCREMENT
 %token<String> OPERATOR_MULTI
@@ -101,7 +98,9 @@
 %type<Instruction> hooks
 %type<Instruction> initialisation
 %type<Instruction> variables_init_serie
+%type<Instruction> stencils_init_serie
 %type<Instruction> variable_init
+%type<Instruction> stencil_init
 %type<Instruction> array_init
 %type<Instruction> hooks_init
 %type<Instruction> affectation
@@ -111,7 +110,7 @@
 %type<Instruction> else
 %type<Instruction> evaluation
 %type<Instruction> variable_incr
-%type<String>      chiffre 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
+%type<String>      number 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMPARATOR_OR
 %left COMPARATOR_AND
@@ -161,8 +160,8 @@ preprocessor_instructions_serie :
 
 preprocessor_instruction :
 // ------------------------------------------------------------------ DONE
-	DEFINE ID chiffre ENDLINE {
-		printf("DEFINE ID chiffre ENDLINE -> preprocessor_instruction\n");
+	DEFINE ID number ENDLINE {
+		printf("DEFINE ID number ENDLINE -> preprocessor_instruction\n");
 		
 		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
 			ERROR("La variable '%s' existe deja !",$2); 	
@@ -295,8 +294,8 @@ return :
 
 stencil :
 // ------------------------------------------------------------------
-	ID LEMB CHIFFRE COMMA CHIFFRE REMB {
-		printf("ID LEMB CHIFFRE COMA CHIFFRE REMB -> stencil\n");
+	ID LEMB NUMBER COMMA NUMBER REMB {
+		printf("ID LEMB NUMBER COMA NUMBER REMB -> stencil\n");
 	}
 
 //__________________________________________________________________________________
@@ -332,33 +331,17 @@ hooks :
 //=================================================================================================
 
 initialisation :
-// ------------------------------------------------------------------ DONE
-	const TYPE variables_init_serie {
-		printf("const TYPE variables_init_serie -> initialisation\n");
-
-		constantZone = false;
+// -1----2----------------------------------------------------------- DONE
+	TYPE variables_init_serie {
+		printf("TYPE variables_init_serie -> initialisation\n");
 		
-		$$ = $3;
+		$$ = $2;
 	}
-// ------------------------------------------------------------------
-	| const STENCIL stencil_init_serie {
-		printf("STENCIL stencil_init_serie -> initialisation\n");
+// ------------------------------------------------------------------ DONE
+	| STENCIL stencils_init_serie {
+		printf("STENCIL stencils_init_serie -> initialisation\n");
 		
-		instructionListMalloc(&$$);
-	}
-	;
-
-//__________________________________________________________________________________
-
-const :
-// ------------------------------------------------------------------ DONE
-	CONST {
-		printf("CONST -> const\n");
-
-		constantZone = true;
-	}
-// ------------------------------------------------------------------ DONE
-	| {
+		$$ = $2;
 	}
 	;
 
@@ -382,14 +365,19 @@ variables_init_serie :
 
 //__________________________________________________________________________________
 
-stencil_init_serie :
-// ------------------------------------------------------------------
-	stencil_init COMMA stencil_init_serie {
-		printf("stencil_init COMA stencil_init_serie -> stencil_init_serie\n");
+stencils_init_serie :
+// ------------------------------------------------------------------ DONE
+	stencil_init COMMA stencils_init_serie {
+		printf("stencil_init COMA stencils_init_serie -> stencils_init_serie\n");
+		
+		$$ = $1;
+		instructionConcat($$,$3);
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| stencil_init {
-		printf("stencil_init -> stencil_init_serie\n");
+		printf("stencil_init -> stencils_init_serie\n");
+		
+		$$ = $1;
 	}
 	;
 
@@ -404,9 +392,6 @@ variable_init :
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,true);
-		if(constantZone == true){
-			result->constante = true;
-		}
 		$$ = $3;
 		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
 		
@@ -432,14 +417,14 @@ variable_init :
 
 array_init :	
 // ------------------------------------------------------------------
-	ID hooks_init EQUALS LEMB suite_suite_chiffre REMB {
-		printf("ID hooks_init EQUALS LEMB suite_suite_chiffre REMB -> array_init\n");
+	ID hooks_init EQUALS LEMB suite_suite_number REMB {
+		printf("ID hooks_init EQUALS LEMB suite_suite_number REMB -> array_init\n");
 		
 		instructionListMalloc(&$$);
 	}
 // ------------------------------------------------------------------
-	| ID hooks_init EQUALS LEMB suite_chiffre REMB {
-		printf("ID hooks_init EQUALS LEMB suite_chiffre REMB -> array_init\n");
+	| ID hooks_init EQUALS LEMB suite_number REMB {
+		printf("ID hooks_init EQUALS LEMB suite_number REMB -> array_init\n");
 		
 		instructionListMalloc(&$$);
 	}
@@ -453,21 +438,37 @@ array_init :
 //__________________________________________________________________________________
 
 hooks_init :
-// ------------------------------------------------------------------
+// -1----2--3----4---------------------------------------------------
 	LHOO ID RHOO hooks_init {
 		printf("LHOO ID RHOO hooks_init -> hooks_init\n");
+		
+		Symbol s = symbolsTableGetSymbolById(symbolsTable,$2);
+		if( s == NULL ){
+			ERROR("La variable '%s' n'existe pas !",$2); 
+		}
+		if( s->constante == false ){
+			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
+		}
 	}
-// ------------------------------------------------------------------
+// ---1----2--3------------------------------------------------------
 	| LHOO ID RHOO {
 		printf("LHOO ID RHOO -> hooks_init\n");
+		
+		Symbol s = symbolsTableGetSymbolById(symbolsTable,$2);
+		if( s == NULL ){
+			ERROR("La variable '%s' n'existe pas !",$2); 
+		}
+		if( s->constante == false ){
+			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
+		}
 	}
-// ------------------------------------------------------------------
-	| LHOO chiffre RHOO hooks_init {
-		printf("LHOO chiffre RHOO hooks_init -> hooks_init\n");
+// ---1----2-------3----4--------------------------------------------
+	| LHOO number RHOO hooks_init {
+		printf("LHOO number RHOO hooks_init -> hooks_init\n");
 	}
-// ------------------------------------------------------------------
-	| LHOO chiffre RHOO {
-		printf("LHOO chiffre RHOO -> hooks_init\n");
+// ---1----2-------3-------------------------------------------------
+	| LHOO number RHOO {
+		printf("LHOO number RHOO -> hooks_init\n");
 	}
 	;
 
@@ -475,42 +476,48 @@ hooks_init :
 
 stencil_init :
 // ------------------------------------------------------------------
-	stencil EQUALS LEMB suite_suite_chiffre REMB {
-		printf("stencil EQUALS LEMB suite_suite_chiffre REMB -> stencil_init\n");
+	stencil EQUALS LEMB suite_suite_number REMB {
+		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
+		
+		instructionListMalloc(&$$);
 	}
 // ------------------------------------------------------------------
-	| stencil EQUALS LEMB suite_chiffre REMB {
-		printf("stencil EQUALS LEMB suite_chiffre REMB -> stencil_init\n");
+	| stencil EQUALS LEMB suite_number REMB {
+		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
+		
+		instructionListMalloc(&$$);
 	}
 // ------------------------------------------------------------------
 	| stencil {
 		printf("stencil -> stencil_init\n");
+		
+		instructionListMalloc(&$$);
 	}
 	;
 
 //__________________________________________________________________________________
 
-suite_suite_chiffre :
+suite_suite_number :
 // ------------------------------------------------------------------
-	LEMB suite_chiffre REMB COMMA suite_suite_chiffre {
-		printf("LEMB suite_chiffre REMB COMMA suite_suite_chiffre -> suite_suite_chiffre\n");
+	LEMB suite_number REMB COMMA suite_suite_number {
+		printf("LEMB suite_number REMB COMMA suite_suite_number -> suite_suite_number\n");
 	}
 // ------------------------------------------------------------------
-	| LEMB suite_chiffre REMB {
-		printf("LEMB suite_chiffre REMB -> suite_suite_chiffre\n");
+	| LEMB suite_number REMB {
+		printf("LEMB suite_number REMB -> suite_suite_number\n");
 	}
 	;
 
 //__________________________________________________________________________________
 
-suite_chiffre :
+suite_number :
 // ------------------------------------------------------------------
-	chiffre COMMA suite_chiffre {
-		printf("chiffre COMMA suite_chiffre -> suite_chiffre\n");
+	number COMMA suite_number {
+		printf("number COMMA suite_number -> suite_number\n");
 	}
 // ------------------------------------------------------------------
-	| chiffre {
-		printf("chiffre -> suite_chiffre\n");
+	| number {
+		printf("number -> suite_number\n");
 	}
 	;
 
@@ -799,8 +806,8 @@ evaluation :
 		++labelCounter;
 	}
 // ------------------------------------------------------------------ DONE
-	| chiffre {
-		printf("chiffre -> evaluation\n");
+	| number {
+		printf("number -> evaluation\n");
 		
 		instructionListMalloc(&$$);
 		PUSH_BACK($$,1,"li $t0 %s",$1);
@@ -876,15 +883,15 @@ variable_incr :
 
 //__________________________________________________________________________________
 
-chiffre :
+number :
 // ------------------------------------------------------------------ DONE
-	CHIFFRE {
-		printf("CHIFFRE -> chiffre\n");
+	NUMBER {
+		printf("NUMBER -> number\n");
 		sprintf($$,"%s",$1);
 	}
 // ------------------------------------------------------------------ DONE
-	| OPERATOR_ADDITION CHIFFRE {
-		printf("OPERATOR_ADDITION CHIFFRE -> chiffre\n");
+	| OPERATOR_ADDITION NUMBER {
+		printf("OPERATOR_ADDITION NUMBER -> number\n");
 		sprintf($$,"%s%s",$1,$2);
 	}
 	;

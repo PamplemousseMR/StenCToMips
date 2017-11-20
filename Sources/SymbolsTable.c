@@ -35,6 +35,7 @@ Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init){
 		instructionPushBack(rootTree,temp,1);
 		result->init = init;
 		result->constante = false;
+		result->constante_value = 0;
 		result->step = false;
 		result->next = NULL;
 		return result;
@@ -57,6 +58,7 @@ Symbol symbolsTableAddSymbolConstBis(Symbol n, char* c, int i){
 		snprintf(temp,BUFFER_SIZE,"%s: .word %d",result->mipsId,i);
 		instructionPushBack(rootTree,temp,1);
 		result->constante = true;
+		result->constante_value = i;
 		result->init = true;
 		result->step = false;
 		result->next = NULL;
@@ -78,6 +80,7 @@ Symbol symbolsTableAddStepBis(Symbol n){
 		strncpy(result->id,"step",BUFFER_SIZE);
 		snprintf(result->mipsId,BUFFER_SIZE,"null");
 		result->constante = true;
+		result->constante_value = 0;
 		result->init = true;
 		result->step = true;
 		result->next = NULL;

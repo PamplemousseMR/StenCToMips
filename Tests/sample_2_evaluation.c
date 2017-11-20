@@ -37,7 +37,7 @@ int main()
 	printi(LOL);
 	printf("\n"); 
 
-	const int c,d,e = 3,f;
+	int c,d,e = 3,f;
 	printf("c = ");
 	printi(e);
 	printf("\n");
@@ -72,23 +72,16 @@ int main()
 	printf("\n");
 	printi(-10%3);
 	printf("\n");
-	//must work
-	/*
-	int tab[3] = {1,2,3};
-	int tabb[2][2] = {{1,2},{1,2}};
-	int jj=1, ii[2], kk[2][2] = {{1,2},{1,2}};
-	*/
+		
 	// must throw error
-	/* 
-	tab = 10;
-	tabb[1] = 5;
-	printi(kk);
-	c = 2;
-	d++;
-	printi(e);
-	printi(h);
-	printf(LOL);
-	*/
+	
+	
+	//printi(kk);
+	//d++;
+	//printf(e);
+	//printi(h);
+	//printf(LOL);
+	
 
 	return 0;
 }
