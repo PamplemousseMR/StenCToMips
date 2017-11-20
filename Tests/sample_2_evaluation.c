@@ -3,6 +3,7 @@
 int main() 
 {
 	int ii,jj;
+	int test;
 
 	ii = 1;
 	jj = 2;

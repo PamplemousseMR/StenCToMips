@@ -102,6 +102,8 @@
 %type<Instruction> initialisation
 %type<Instruction> variables_init_serie
 %type<Instruction> variable_init
+%type<Instruction> array_init
+%type<Instruction> hooks_init
 %type<Instruction> affectation
 %type<Instruction> for
 %type<Instruction> while
@@ -393,7 +395,7 @@ stencil_init_serie :
 
 //__________________________________________________________________________________ 
 
-variable_init :
+variable_init :		
 // ------------------------------------------------------------------ DONE
 	ID EQUALS evaluation {
 		printf("ID EQUALS evaluation -> variable_init\n");
@@ -409,28 +411,63 @@ variable_init :
 		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
 		
 	}
-// ------------------------------------------------------------------
-	| ID hooks EQUALS LEMB suite_suite_chiffre REMB {
-		printf("ID hooks EQUALS LEMB suite_suite_chiffre REMB -> variable_init\n");
-		
-		instructionListMalloc(&$$);
-	}
-// ------------------------------------------------------------------
-	| ID hooks EQUALS LEMB suite_chiffre REMB {
-		printf("ID hooks EQUALS LEMB suite_chiffre REMB -> variable_init\n");
-		
-		instructionListMalloc(&$$);
-	}
 // ------------------------------------------------------------------ DONE
-	| ID hooks {
-		printf("ID hooks -> variable_init\n");
+	| ID {
+		printf("ID -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		symbolsTableAddSymbol(symbolsTable,$1,false);
+		instructionListMalloc(&$$);
+	}
+// ------------------------------------------------------------------ 
+	| array_init {
+		$$ = $1;
+	}
+	;
+
+//__________________________________________________________________________________
+
+
+array_init :	
+// ------------------------------------------------------------------
+	ID hooks_init EQUALS LEMB suite_suite_chiffre REMB {
+		printf("ID hooks_init EQUALS LEMB suite_suite_chiffre REMB -> array_init\n");
 		
 		instructionListMalloc(&$$);
+	}
+// ------------------------------------------------------------------
+	| ID hooks_init EQUALS LEMB suite_chiffre REMB {
+		printf("ID hooks_init EQUALS LEMB suite_chiffre REMB -> array_init\n");
+		
+		instructionListMalloc(&$$);
+	}
+// ------------------------------------------------------------------ 
+	| ID hooks_init {
+		printf("ID hooks_init -> array_init\n");
+		
+		instructionListMalloc(&$$);
+	}
+	
+//__________________________________________________________________________________
+
+hooks_init :
+// ------------------------------------------------------------------
+	LHOO ID RHOO hooks_init {
+		printf("LHOO ID RHOO hooks_init -> hooks_init\n");
+	}
+// ------------------------------------------------------------------
+	| LHOO ID RHOO {
+		printf("LHOO ID RHOO -> hooks_init\n");
+	}
+// ------------------------------------------------------------------
+	| LHOO chiffre RHOO hooks_init {
+		printf("LHOO chiffre RHOO hooks_init -> hooks_init\n");
+	}
+// ------------------------------------------------------------------
+	| LHOO chiffre RHOO {
+		printf("LHOO chiffre RHOO -> hooks_init\n");
 	}
 	;
 
