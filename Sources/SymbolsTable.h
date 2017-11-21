@@ -19,7 +19,7 @@ typedef struct {
 	int value;
 }ConstUnit;
 
-typedef strucy {
+typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
 	int nbDimension;

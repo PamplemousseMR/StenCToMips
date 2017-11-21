@@ -48,7 +48,6 @@
 	char* String;
 	InstructionsList Instruction;
 	Symbol Sym;
-	
 }
 
 %start programme
@@ -102,6 +101,7 @@
 %type<Instruction> stencils_init_serie
 %type<Instruction> variable_init
 %type<Instruction> stencil_init
+%type<Instruction> unit_init
 %type<Instruction> array_init
 %type<Instruction> hooks_init
 %type<Instruction> affectation
@@ -401,11 +401,24 @@ stencils_init_serie :
 		
 		$$ = $1;
 	}
-	;
+	;	
 
 //__________________________________________________________________________________ 
 
 variable_init :		
+// -1---------------------------------------------------------------- 
+	unit_init {
+		$$ = $1;
+	}
+// ---1-------------------------------------------------------------- 
+	| array_init {
+		$$ = $1;
+	}
+	;
+
+//__________________________________________________________________________________
+
+unit_init :
 // -1--2------3------------------------------------------------------ DONE
 	ID EQUALS evaluation {
 		printf("ID EQUALS evaluation -> variable_init\n");
@@ -428,12 +441,7 @@ variable_init :
 		symbolsTableAddSymbolUnit(symbolsTable,$1,false);
 		instructionListMalloc(&$$);
 	}
-// ---1-------------------------------------------------------------- 
-	| array_init {
-		$$ = $1;
-	}
-	;
-
+	
 //__________________________________________________________________________________
 
 
@@ -460,37 +468,13 @@ array_init :
 //__________________________________________________________________________________
 
 hooks_init :
-// -1----2--3----4---------------------------------------------------
-	LHOO ID RHOO hooks_init {
-		printf("LHOO ID RHOO hooks_init -> hooks_init\n");
-		
-		Symbol s = symbolsTableGetSymbolById(symbolsTable,$2);
-		if( s == NULL ){
-			ERROR("La variable '%s' n'existe pas !",$2); 
-		}
-		if( s->type != constUnit ){
-			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
-		}
+// -1----------2----3----------4-------------------------------------
+	hooks_init LHOO evaluation RHOO  {
+		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 	}
-// ---1----2--3------------------------------------------------------
-	| LHOO ID RHOO {
-		printf("LHOO ID RHOO -> hooks_init\n");
-		
-		Symbol s = symbolsTableGetSymbolById(symbolsTable,$2);
-		if( s == NULL ){
-			ERROR("La variable '%s' n'existe pas !",$2); 
-		}
-		if( s->type != constUnit ){
-			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
-		}
-	}
-// ---1----2------3----4---------------------------------------------
-	| LHOO number RHOO hooks_init {
-		printf("LHOO number RHOO hooks_init -> hooks_init\n");
-	}
-// ---1----2-------3-------------------------------------------------
-	| LHOO number RHOO {
-		printf("LHOO number RHOO -> hooks_init\n");
+// ---1----2----------3----------------------------------------------
+	| LHOO evaluation RHOO {
+		printf("LHOO evaluation RHOO -> hooks_init\n");
 	}
 	;
 
