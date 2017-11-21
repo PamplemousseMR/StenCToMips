@@ -77,6 +77,30 @@ Symbol symbolsTableAddSymbolConstUnit(SymbolsTable l, char* c, int i){
 	return symbolsTableGetSymbolById(l,c);
 }
 
+Symbol symbolsTableAddArrayBis(Symbol n, char* c, bool init){
+	if(n == NULL){
+		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		Unit* data = (Unit*)malloc(sizeof(Array));
+		strncpy(data->id,c,BUFFER_SIZE);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
+		instructionPushBack(rootTree,temp,1);
+		data->init = init;
+		result->type = array;
+		result->data = (void*)data;
+		result->next = NULL;
+		return result;
+	}else {
+		n->next = symbolsTableAddArrayBis(n->next, c, init);
+		return n;
+	}
+}
+
+Symbol symbolsTableAddArray(SymbolsTable l, char* c, bool init){
+	*l = symbolsTableAddArrayBis(*l, c, init);
+	return symbolsTableGetSymbolById(l,c);
+}
+
 Symbol symbolsTableAddStepBis(Symbol n){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
@@ -99,9 +123,13 @@ Symbol symbolsTableGetSymbolByIdBis(Symbol n, char* c){
 	switch(n->type){
 		case unit :
 		case constUnit :
+		case array :
 			if(!strcmp(((Unit*)n->data)->id,c)) return n;
 			break;
+		case step:
+			break;
 		default :
+			printf("TODO symbolsTableGetSymbolByIdBis");
 			break;
 	}
 	return symbolsTableGetSymbolByIdBis(n->next,c);
