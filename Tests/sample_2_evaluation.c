@@ -76,12 +76,12 @@ int main()
 	// must throw error
 	
 	
-	//printi(kk);
-	//d++;
-	//printf(e);
-	//printi(h);
-	//printf(LOL);
+	// printi(kk);
+	// d++;
+	// printf(e);
+	// printi(h);
+	// printf(LOL);
 	
 
-	return 0;
+	// return 0;
 }

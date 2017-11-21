@@ -5,14 +5,24 @@
 
 
 typedef enum bool{false,true} bool;
+typedef enum Type{unit,constUnit,step,array,stencil} Type;
 
-typedef struct s_symbol{
+typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
 	bool init;
-	bool constante;
-	int constante_value;
-	bool step;
+}Unit;
+
+typedef struct {
+	char id[BUFFER_SIZE];
+	char mipsId[BUFFER_SIZE];
+	int value;
+}ConstUnit;
+
+typedef struct s_symbol{
+	Type type; 
+	void* data;
+	
 	struct s_symbol* next;
 }*Symbol;
 
@@ -21,8 +31,8 @@ typedef Symbol* SymbolsTable;
 void symbolsTableMalloc(SymbolsTable*);
 void symbolsTableFree(SymbolsTable);
 
-Symbol symbolsTableAddSymbol(SymbolsTable, char*, bool);
-Symbol symbolsTableAddSymbolConst(SymbolsTable, char*, int);
+Symbol symbolsTableAddSymbolUnit(SymbolsTable, char*, bool);
+Symbol symbolsTableAddSymbolConstUnit(SymbolsTable, char*, int);
 void symbolsTableAddStep(SymbolsTable);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);
 void symbolsTableRemoveUntilStep(SymbolsTable);

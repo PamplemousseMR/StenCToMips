@@ -15,9 +15,12 @@ void symbolsTableMalloc(SymbolsTable* l){
 }
 
 void symbolsTableFreeBis(Symbol n){
-	if(n != NULL) 
+	if(n != NULL){
 		symbolsTableFreeBis(n->next);
-	free(n);
+		if(n->data != NULL)
+			free(n->data);
+		free(n);
+	}
 }
 
 void symbolsTableFree(SymbolsTable l){
@@ -26,64 +29,60 @@ void symbolsTableFree(SymbolsTable l){
 	l = NULL;
 }
 
-Symbol symbolsTableAddSymbolBis(Symbol n, char* c, bool init){
+Symbol symbolsTableAddSymbolUnitBis(Symbol n, char* c, bool init){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
-		strncpy(result->id,c,BUFFER_SIZE);
-		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
-		snprintf(temp,BUFFER_SIZE,"%s: .word 0",result->mipsId);
+		Unit* data = (Unit*)malloc(sizeof(Unit));
+		strncpy(data->id,c,BUFFER_SIZE);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
-		result->init = init;
-		result->constante = false;
-		result->constante_value = 0;
-		result->step = false;
+		data->init = init;
+		result->type = unit;
+		result->data = (void*)data;
 		result->next = NULL;
 		return result;
 	}else {
-		n->next = symbolsTableAddSymbolBis(n->next, c, init);
+		n->next = symbolsTableAddSymbolUnitBis(n->next, c, init);
 		return n;
 	}
 }
 
-Symbol symbolsTableAddSymbol(SymbolsTable l, char* c, bool init){
-	*l = symbolsTableAddSymbolBis(*l, c, init);
+Symbol symbolsTableAddSymbolUnit(SymbolsTable l, char* c, bool init){
+	*l = symbolsTableAddSymbolUnitBis(*l, c, init);
 	return symbolsTableGetSymbolById(l,c);
 }
 
-Symbol symbolsTableAddSymbolConstBis(Symbol n, char* c, int i){
+Symbol symbolsTableAddSymbolConstUnitBis(Symbol n, char* c, int i){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
-		strncpy(result->id,c,BUFFER_SIZE);
-		snprintf(result->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
-		snprintf(temp,BUFFER_SIZE,"%s: .word %d",result->mipsId,i);
+		ConstUnit* data = (ConstUnit*)malloc(sizeof(ConstUnit));
+		strncpy(data->id,c,BUFFER_SIZE);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		snprintf(temp,BUFFER_SIZE,"%s: .word %d",data->mipsId,i);
 		instructionPushBack(rootTree,temp,1);
-		result->constante = true;
-		result->constante_value = i;
-		result->init = true;
-		result->step = false;
+		data->value = i;
+		result->type = constUnit;
+		result->data = (void*)data;
 		result->next = NULL;
 		return result;
 	}else {
-		n->next = symbolsTableAddSymbolConstBis(n->next, c, i);
+		n->next = symbolsTableAddSymbolConstUnitBis(n->next, c, i);
 		return n;
 	}
 }
 
-Symbol symbolsTableAddSymbolConst(SymbolsTable l, char* c, int i){
-	*l = symbolsTableAddSymbolConstBis(*l,c,i);
+Symbol symbolsTableAddSymbolConstUnit(SymbolsTable l, char* c, int i){
+	*l = symbolsTableAddSymbolConstUnitBis(*l,c,i);
 	return symbolsTableGetSymbolById(l,c);
 }
 
 Symbol symbolsTableAddStepBis(Symbol n){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
-		strncpy(result->id,"step",BUFFER_SIZE);
-		snprintf(result->mipsId,BUFFER_SIZE,"null");
-		result->constante = true;
-		result->constante_value = 0;
-		result->init = true;
-		result->step = true;
+		result->type = step;
 		result->next = NULL;
+		result->data = NULL;
 		return result;
 	}else {
 		n->next = symbolsTableAddStepBis(n->next);
@@ -97,7 +96,14 @@ void symbolsTableAddStep(SymbolsTable l){
 
 Symbol symbolsTableGetSymbolByIdBis(Symbol n, char* c){
 	if(n == NULL) return NULL;
-	if(!strcmp(n->id,c)) return n;
+	switch(n->type){
+		case unit :
+		case constUnit :
+			if(!strcmp(((Unit*)n->data)->id,c)) return n;
+			break;
+		default :
+			break;
+	}
 	return symbolsTableGetSymbolByIdBis(n->next,c);
 }
 
@@ -111,7 +117,7 @@ static inline void symbolsTableGetLastStep(Symbol n){
 		return;
 	} 
 	else {
-		if(n->step == true){
+		if(n->type == step){
 			lastStep = n;
 		}
 		symbolsTableGetLastStep(n->next); 

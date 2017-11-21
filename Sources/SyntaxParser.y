@@ -93,6 +93,7 @@
 %type<Instruction> main
 %type<Instruction> instructions_serie
 %type<Instruction> ligne
+%type<Instruction> write_ligne_number
 %type<Instruction> return
 %type<Sym> 		   variable			//cas particulier renvoie le symbole de la table des symbole
 %type<Instruction> hooks
@@ -166,7 +167,7 @@ preprocessor_instruction :
 		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
 			ERROR("La variable '%s' existe deja !",$2); 	
 		}
-		symbolsTableAddSymbolConst(symbolsTable,$2,atoi($3));
+		symbolsTableAddSymbolConstUnit(symbolsTable,$2,atoi($3));
 	}
 	;
 
@@ -213,69 +214,90 @@ instructions_serie :
 //__________________________________________________________________________________
 
 ligne :
-// -1---------------------------------------------------------------- DONE
-	for {
+// -1-----------2---------------------------------------------------- DONE
+	write_ligne_number for {
 		printf("for -> ligne\n");
 		
 		$$ = $1;
+		instructionConcat($$,$2);
 	}
 // ---1-------------------------------------------------------------- DONE
-	| while {
+	| write_ligne_number while {
 		printf("while -> ligne\n");
 		
 		$$ = $1;
+		instructionConcat($$,$2);
 	}
 // ---1-------------------------------------------------------------- DONE
-	| if {
+	| write_ligne_number if {
 		printf("if -> ligne\n");
 		
 		$$ = $1;
+		instructionConcat($$,$2);
 	}
 // ---1----2----3------------------4--------------------------------- DONE
-	| LEMB step instructions_serie REMB {
+	| LEMB step_begin instructions_serie step_end REMB {
 		printf("LEMB instructions_serie REMB -> ligne\n");
 		
 		$$ = $3;
 		instructionIncr($$,1);
 		PUSH_FORWARD($$,1,"#{");
 		PUSH_BACK($$,1,"#}");
-		symbolsTableRemoveUntilStep(symbolsTable);
 	}
 // ---1--------------2----------------------------------------------- DONE
-	| initialisation SEMI {
+	| write_ligne_number initialisation SEMI {
 		printf("initialisation SEMI -> ligne\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
+		instructionConcat($$,$2);
 	}
 // ---1-----------2-------------------------------------------------- DONE
-	| affectation SEMI {
+	| write_ligne_number affectation SEMI {
 		printf("affectation SEMI -> ligne\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
+		instructionConcat($$,$2);
 	}
 // ---1------2-------------------------------------------------------
-	| return SEMI {
+	| write_ligne_number return SEMI {
 		printf("return SEMI -> ligne\n");
 		
-		instructionListMalloc(&$$);
+		$$ = $1;
 	}
 // ---1----------2--------------------------------------------------- DONE
-	| evaluation SEMI {
+	| write_ligne_number evaluation SEMI {
 		printf("evaluation SEMI -> ligne\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
+		instructionConcat($$,$2);
 	}
 	;
 
 //__________________________________________________________________________________
 
-step : 
+step_begin : 
 // ------------------------------------------------------------------ DONE
 	{ 
 		symbolsTableAddStep(symbolsTable); 
+	}
+	;
+	
+//__________________________________________________________________________________
+
+step_end : 
+// ------------------------------------------------------------------ DONE
+	{ 
+		symbolsTableRemoveUntilStep(symbolsTable); 
+	}
+	;
+
+//__________________________________________________________________________________
+
+write_ligne_number : 
+// ------------------------------------------------------------------ DONE
+	{ 
+		instructionListMalloc(&$$);
+		PUSH_FORWARD($$,1,"#---------- : %d ----------",yylineno);
 	}
 	;
 
@@ -391,9 +413,9 @@ variable_init :
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		Symbol result = symbolsTableAddSymbol(symbolsTable,$1,true);
+		Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
 		$$ = $3;
-		PUSH_BACK($$,1,"sw $t0 %s",result->mipsId);
+		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
 		
 	}
 // ---1-------------------------------------------------------------- DONE
@@ -403,7 +425,7 @@ variable_init :
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		symbolsTableAddSymbol(symbolsTable,$1,false);
+		symbolsTableAddSymbolUnit(symbolsTable,$1,false);
 		instructionListMalloc(&$$);
 	}
 // ---1-------------------------------------------------------------- 
@@ -446,7 +468,7 @@ hooks_init :
 		if( s == NULL ){
 			ERROR("La variable '%s' n'existe pas !",$2); 
 		}
-		if( s->constante == false ){
+		if( s->type != constUnit ){
 			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
 		}
 	}
@@ -458,7 +480,7 @@ hooks_init :
 		if( s == NULL ){
 			ERROR("La variable '%s' n'existe pas !",$2); 
 		}
-		if( s->constante == false ){
+		if( s->type != constUnit ){
 			ERROR("La variable '%s' n'a pas ete declare constante !",$2); 				
 		}
 	}
@@ -530,26 +552,39 @@ affectation :
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
-		if($1->constante == true){
-			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
+		switch($1->type){
+			case unit :
+				break;
+			case constUnit :
+				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
+				break;
+			default :
+				ERROR("TODO variable EQUALS evaluation");
 		}
 
 		$$ = $3;
-		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
-		$1->init = true;
+		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
+		((Unit*)$1->data)->init = true;
 	}
 // ---1--------2------3---------------------------------------------- DONE TODO check if array
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
-		if($1->constante == true){
-			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
-		}else if($1->init == false){
-			ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 	
+		switch($1->type){
+			case unit :
+				if(((Unit*)$1->data)->init == false){
+					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				}
+				break;
+			case constUnit :
+				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
+				break;
+			default :
+				ERROR("TODO variable OPERATOR_INCREMENT");
 		}
 
 		$$ = $3;
-		PUSH_BACK($$,1,"lw $t3 %s",$1->mipsId);
+		PUSH_BACK($$,1,"lw $t3 %s",((Unit*)$1->data)->mipsId);
 		if(!strcmp($2,"+=")){
 			PUSH_BACK($$,1,"add $t0 $t3 $t0");
 		}else if(!strcmp($2,"-=")){
@@ -563,7 +598,7 @@ affectation :
 			PUSH_BACK($$,1,"mul $t2 $t2 $t0");
 			PUSH_BACK($$,1,"sub $t0 $t3 $t2");
 		}
-		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
+		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
 	}
 	;
 
@@ -572,54 +607,52 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3----4-----------5----6----------7----8----------9----10 DONE
-	FOR step LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne {
+// -1---2----3-----------4----5----------6----7----------8----9----------10----11- DONE
+	FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA step_begin ligne step_end {
 		printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
-		$$ = $4;	
+		$$ = $3;	
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
-		instructionConcat($$,$6);
+		instructionConcat($$,$5);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
 		instructionConcat($$,$10);
-		instructionConcat($$,$8);
+		instructionConcat($$,$7);
 		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 		labelCounter++;
-		symbolsTableRemoveUntilStep(symbolsTable);
 	}
 	;
 
 //__________________________________________________________________________________
 
 while :
-// -1-----2----3----4----------5----6-------------------------------- DONE
-	WHILE step LBRA evaluation RBRA ligne {
+// -1-----2----3----------4----5----------6-----7-------------------- DONE
+	WHILE LBRA evaluation RBRA step_begin ligne step_end {
 		printf("WHILE LBRA evaluation RBA ligne -> while\n");
 		
-		$$ = $4;
+		$$ = $3;
 		PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
 		instructionConcat($$,$6);
 		PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
 		labelCounter++;
-		symbolsTableRemoveUntilStep(symbolsTable);
 	}
 	;
 
 //__________________________________________________________________________________
 
 if :
-// -1--2----3----------4----5-----6---------------------------------- DONE
-	IF LBRA evaluation RBRA ligne else {
+// -1--2----3----------4----5----------6-----7--------8-------------- DONE
+	IF LBRA evaluation RBRA step_begin ligne step_end else {
 		printf("IF LBRA evaluation RBRA ligne else -> if\n");
 		
 		$$ = $3;
-		PUSH_BACK($$,1,"bne $0 $t0 IF_COND_%llu_TRUE",labelCounter);
+		PUSH_BACK($$,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
 		instructionConcat($$,$6);
 		PUSH_BACK($$,1,"j IF_COND_%llu_END",labelCounter);
-		PUSH_BACK($$,1,"IF_COND_%llu_TRUE :",labelCounter);
-		instructionConcat($$,$5);
+		PUSH_BACK($$,1,"IF_COND_%llu_FALSE :",labelCounter);
+		instructionConcat($$,$8);
 		PUSH_BACK($$,1,"IF_COND_%llu_END :",labelCounter);
 		labelCounter++;
 	}
@@ -628,11 +661,11 @@ if :
 //__________________________________________________________________________________
 
 else :
-// -1----2----------------------------------------------------------- DONE
-	ELSE ligne {
+// -1----2----------3-----4------------------------------------------ DONE
+	ELSE step_begin ligne step_end {
 		printf("ELSE ligne -> else\n");
 		
-		$$ = $2;
+		$$ = $3;
 	}
 // ------------------------------------------------------------------ DONE
 	| {
@@ -827,41 +860,53 @@ variable_incr :
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
-		if( $2->constante == true ){
-			ERROR("La variable '%s' a ete declare constante !",$2->id); 				
-		}
-		if( $2->init == false ){
-			ERROR("La variable '%s' est utilise mais pas initialise !",$2->id); 				
+		switch($2->type){
+			case unit :
+				if( ((Unit*)$2->data)->init == false ){
+					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$2->data)->id); 				
+				}
+				break;
+			case constUnit :
+				ERROR("La variable '%s' a ete declare constante !",((Unit*)$2->data)->id); 				
+				break;
+			default :
+				ERROR("TODO variable OPERATOR_INCREMENT");
 		}
 
 		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"lw $t0 %s",$2->mipsId);
+		PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$2->data)->mipsId);
 		if(!strcmp($1, "++")){
 			PUSH_BACK($$,1,"add $t0 $t0 1");
 		}else{
 			PUSH_BACK($$,1,"sub $t0 $t0 1");
 		}
-		PUSH_BACK($$,1,"sw $t0 %s",$2->mipsId);
+		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$2->data)->mipsId);
 	}
 // ---1--------2----------------------------------------------------- DONE TODO check if array
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
-		if( $1->constante == true ){
-			ERROR("La variable '%s' a ete declare constante !",$1->id); 				
-		}
-		if( $1->init == false ){
-			ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 				
+		switch($1->type){
+			case unit :
+				if( ((Unit*)$1->data)->init == false ){
+					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				}
+				break;
+			case constUnit :
+				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
+				break;
+			default :
+				ERROR("TODO variable OPERATOR_INCREMENT");
 		}
 
 		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"lw $t0 %s",$1->mipsId);
+		PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
 		if(!strcmp($2, "++")){
 			PUSH_BACK($$,1,"add $t0 $t0 1");
 		}else{
 			PUSH_BACK($$,1,"sub $t0 $t0 1");
 		}
-		PUSH_BACK($$,1,"sw $t0 %s",$1->mipsId);
+		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
 		if(!strcmp($2, "++")){
 			PUSH_BACK($$,1,"sub $t0 $t0 1");
 		}else{
@@ -872,12 +917,20 @@ variable_incr :
 	| variable {
 		printf("variable -> variable_incr\n");
 
-		if( $1->init == false ){
-				ERROR("La variable '%s' est utilise mais pas initialise !",$1->id); 				
+		switch($1->type){
+			case unit :
+				if( ((Unit*)$1->data)->init == false ){
+					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				}
+				break;
+			case constUnit :
+				break;
+			default :
+				ERROR("TODO variable");
 		}
 
 		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"lw $t0 %s",$1->mipsId);
+		PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
 	}
 	;
 
