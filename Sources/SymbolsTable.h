@@ -19,6 +19,12 @@ typedef struct {
 	int value;
 }ConstUnit;
 
+typedef strucy {
+	char id[BUFFER_SIZE];
+	char mipsId[BUFFER_SIZE];
+	int nbDimension;
+}Array;
+
 typedef struct s_symbol{
 	Type type; 
 	void* data;
