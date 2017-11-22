@@ -536,8 +536,11 @@ affectation :
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
+		$$ = $3;
 		switch($1->type){
 			case unit :
+				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
+				((Unit*)$1->data)->init = true;
 				break;
 			case constUnit :
 				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
@@ -545,20 +548,32 @@ affectation :
 			default :
 				ERROR("TODO variable EQUALS evaluation");
 		}
-
-		$$ = $3;
-		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
-		((Unit*)$1->data)->init = true;
 	}
 // ---1--------2------3---------------------------------------------- DONE TODO check if array
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
+		$$ = $3;
 		switch($1->type){
 			case unit :
 				if(((Unit*)$1->data)->init == false){
 					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
 				}
+				PUSH_BACK($$,1,"lw $t3 %s",((Unit*)$1->data)->mipsId);
+				if(!strcmp($2,"+=")){
+					PUSH_BACK($$,1,"add $t0 $t3 $t0");
+				}else if(!strcmp($2,"-=")){
+					PUSH_BACK($$,1,"sub $t0 $t3 $t0");
+				}else if(!strcmp($2,"*=")){
+					PUSH_BACK($$,1,"mul $t0 $t3 $t0");
+				}else if(!strcmp($2,"/=")){
+					PUSH_BACK($$,1,"div $t0 $t3 $t0");
+				}else if(!strcmp($2,"%=")){
+					PUSH_BACK($$,1,"div $t2 $t3 $t0");
+					PUSH_BACK($$,1,"mul $t2 $t2 $t0");
+					PUSH_BACK($$,1,"sub $t0 $t3 $t2");
+				}
+				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
 				break;
 			case constUnit :
 				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
@@ -566,23 +581,6 @@ affectation :
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
 		}
-
-		$$ = $3;
-		PUSH_BACK($$,1,"lw $t3 %s",((Unit*)$1->data)->mipsId);
-		if(!strcmp($2,"+=")){
-			PUSH_BACK($$,1,"add $t0 $t3 $t0");
-		}else if(!strcmp($2,"-=")){
-			PUSH_BACK($$,1,"sub $t0 $t3 $t0");
-		}else if(!strcmp($2,"*=")){
-			PUSH_BACK($$,1,"mul $t0 $t3 $t0");
-		}else if(!strcmp($2,"/=")){
-			PUSH_BACK($$,1,"div $t0 $t3 $t0");
-		}else if(!strcmp($2,"%=")){
-			PUSH_BACK($$,1,"div $t2 $t3 $t0");
-			PUSH_BACK($$,1,"mul $t2 $t2 $t0");
-			PUSH_BACK($$,1,"sub $t0 $t3 $t2");
-		}
-		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
 	}
 	;
 
@@ -844,11 +842,19 @@ variable_incr :
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
+		instructionListMalloc(&$$);
 		switch($2->type){
 			case unit :
 				if( ((Unit*)$2->data)->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$2->data)->id); 				
 				}
+				PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$2->data)->mipsId);
+				if(!strcmp($1, "++")){
+					PUSH_BACK($$,1,"add $t0 $t0 1");
+				}else{
+					PUSH_BACK($$,1,"sub $t0 $t0 1");
+				}
+				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$2->data)->mipsId);
 				break;
 			case constUnit :
 				ERROR("La variable '%s' a ete declare constante !",((Unit*)$2->data)->id); 				
@@ -856,24 +862,28 @@ variable_incr :
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
 		}
-
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$2->data)->mipsId);
-		if(!strcmp($1, "++")){
-			PUSH_BACK($$,1,"add $t0 $t0 1");
-		}else{
-			PUSH_BACK($$,1,"sub $t0 $t0 1");
-		}
-		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$2->data)->mipsId);
 	}
 // ---1--------2----------------------------------------------------- DONE TODO check if array
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
+		instructionListMalloc(&$$);
 		switch($1->type){
 			case unit :
 				if( ((Unit*)$1->data)->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				}
+				PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
+				if(!strcmp($2, "++")){
+					PUSH_BACK($$,1,"add $t0 $t0 1");
+				}else{
+					PUSH_BACK($$,1,"sub $t0 $t0 1");
+				}
+				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
+				if(!strcmp($2, "++")){
+					PUSH_BACK($$,1,"sub $t0 $t0 1");
+				}else{
+					PUSH_BACK($$,1,"add $t0 $t0 1");
 				}
 				break;
 			case constUnit :
@@ -882,39 +892,25 @@ variable_incr :
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
 		}
-
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
-		if(!strcmp($2, "++")){
-			PUSH_BACK($$,1,"add $t0 $t0 1");
-		}else{
-			PUSH_BACK($$,1,"sub $t0 $t0 1");
-		}
-		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
-		if(!strcmp($2, "++")){
-			PUSH_BACK($$,1,"sub $t0 $t0 1");
-		}else{
-			PUSH_BACK($$,1,"add $t0 $t0 1");
-		}
 	}
 // ---1-------------------------------------------------------------- DONE TODO check if array
 	| variable {
 		printf("variable -> variable_incr\n");
 
+		instructionListMalloc(&$$);
 		switch($1->type){
 			case unit :
 				if( ((Unit*)$1->data)->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
 				}
+				PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
 				break;
 			case constUnit :
+				PUSH_BACK($$,1,"lw $t0 %s",((ConstUnit*)$1->data)->mipsId);
 				break;
 			default :
 				ERROR("TODO variable");
 		}
-
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
 	}
 	;
 
