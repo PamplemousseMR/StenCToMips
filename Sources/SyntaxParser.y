@@ -695,7 +695,7 @@ evaluation :
 		printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n");
 
 		$$ = $1;
-		PUSH_BACK($$,1,"move $t7 $t0");
+		PUSH_BACK($$,1,"move $s3 $t0");
 		instructionConcat($$,$3);
 		char inst[4];
 		if(!strcmp($2,"==")){
@@ -703,7 +703,7 @@ evaluation :
 		}else if(!strcmp($2,"!=")){
 			strcpy(inst,"bne");
 		}
-		PUSH_BACK($$,1,"%s $t7 $t0 COMP_EQUALITY_%llu_RETURN_TRUE",inst,labelCounter);
+		PUSH_BACK($$,1,"%s $s3 $t0 COMP_EQUALITY_%llu_RETURN_TRUE",inst,labelCounter);
 		PUSH_BACK($$,1,"li $t0 0");
 		PUSH_BACK($$,1,"j COMP_EQUALITY_%llu_FIN",labelCounter);
 		PUSH_BACK($$,1,"COMP_EQUALITY_%llu_RETURN_TRUE :",labelCounter);
@@ -717,7 +717,7 @@ evaluation :
 		char inst[4];
 
 		$$ = $1;
-		PUSH_BACK($$,1,"move $t6 $t0");
+		PUSH_BACK($$,1,"move $s2 $t0");
 		instructionConcat($$,$3);
 		if(!strcmp($2,"<")){
 			strcpy(inst,"blt");
@@ -728,7 +728,7 @@ evaluation :
 		}else if(!strcmp($2,">=")){
 			strcpy(inst,"bge");
 		}
-		PUSH_BACK($$,1,"%s $t6 $t0 COMP_SUPREMACY_%llu_RETURN_TRUE",inst,labelCounter);
+		PUSH_BACK($$,1,"%s $s2 $t0 COMP_SUPREMACY_%llu_RETURN_TRUE",inst,labelCounter);
 		PUSH_BACK($$,1,"li $t0 0");
 		PUSH_BACK($$,1,"j COMP_SUPREMACY_%llu_FIN",labelCounter);
 		PUSH_BACK($$,1,"COMP_SUPREMACY_%llu_RETURN_TRUE :",labelCounter);
@@ -741,12 +741,12 @@ evaluation :
 		printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 
 		$$ = $1;
-		PUSH_FORWARD($3,1,"move $t5 $t0");
+		PUSH_FORWARD($3,1,"move $s1 $t0");
 		instructionConcat($$,$3);
 		if($2[0] == '+'){
-			PUSH_BACK($$,1,"add $t0 $t5 $t0");
+			PUSH_BACK($$,1,"add $t0 $s1 $t0");
 		}else{
-			PUSH_BACK($$,1,"sub $t0 $t5 $t0");
+			PUSH_BACK($$,1,"sub $t0 $s1 $t0");
 		}
 	}
 // ---1----------2--------------3------------------------------------ DONE
@@ -754,16 +754,16 @@ evaluation :
 		printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($3,1,"move $t4 $t0");
+		PUSH_FORWARD($3,1,"move $s0 $t0");
 		instructionConcat($$,$3);
 		if($2[0] == '*'){
-			PUSH_BACK($$,1,"mul $t0 $t4 $t0");
+			PUSH_BACK($$,1,"mul $t0 $s0 $t0");
 		}else if($2[0] == '/') {
-			PUSH_BACK($$,1,"div $t0 $t4 $t0");
+			PUSH_BACK($$,1,"div $t0 $s0 $t0");
 		}else{
-			PUSH_BACK($$,1,"div $t1 $t4 $t0");
+			PUSH_BACK($$,1,"div $t1 $s0 $t0");
 			PUSH_BACK($$,1,"mul $t1 $t1 $t0");
-			PUSH_BACK($$,1,"sub $t0 $t4 $t1");
+			PUSH_BACK($$,1,"sub $t0 $s0 $t1");
 		}
 	}
 // ---1----2----------3---------------------------------------------- DONE
@@ -773,17 +773,17 @@ evaluation :
 
 		instructionListMalloc(&$$);
 		PUSH_BACK($$,1,"subi $sp $sp %d",4*9);
-		for(i=1 ; i<=9 ; ++i)
+		for(i=0 ; i<=3 ; ++i)
 		{
-			PUSH_BACK($$,1,"sw $t%d %d($sp)",i,i*4);
+			PUSH_BACK($$,1,"sw $s%d %d($sp)",i,i*4);
 		}
 		instructionIncr($2,1);
 		PUSH_FORWARD($2,1,"#(");
 		PUSH_BACK($2,1,"#)");
 		instructionConcat($$,$2);
-		for(i=1 ; i<=9 ; ++i)
+		for(i=0 ; i<=3 ; ++i)
 		{
-			PUSH_BACK($$,1,"lw $t%d %d($sp)",i,i*4);
+			PUSH_BACK($$,1,"lw $s%d %d($sp)",i,i*4);
 		}
 		PUSH_BACK($$,1,"addi $sp $sp %d",4*9);
 	}
