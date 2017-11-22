@@ -559,19 +559,19 @@ affectation :
 				if(((Unit*)$1->data)->init == false){
 					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t3 %s",((Unit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"lw $t1 %s",((Unit*)$1->data)->mipsId);
 				if(!strcmp($2,"+=")){
-					PUSH_BACK($$,1,"add $t0 $t3 $t0");
+					PUSH_BACK($$,1,"add $t0 $t1 $t0");
 				}else if(!strcmp($2,"-=")){
-					PUSH_BACK($$,1,"sub $t0 $t3 $t0");
+					PUSH_BACK($$,1,"sub $t0 $t1 $t0");
 				}else if(!strcmp($2,"*=")){
-					PUSH_BACK($$,1,"mul $t0 $t3 $t0");
+					PUSH_BACK($$,1,"mul $t0 $t1 $t0");
 				}else if(!strcmp($2,"/=")){
-					PUSH_BACK($$,1,"div $t0 $t3 $t0");
+					PUSH_BACK($$,1,"div $t0 $t1 $t0");
 				}else if(!strcmp($2,"%=")){
-					PUSH_BACK($$,1,"div $t2 $t3 $t0");
+					PUSH_BACK($$,1,"div $t2 $t1 $t0");
 					PUSH_BACK($$,1,"mul $t2 $t2 $t0");
-					PUSH_BACK($$,1,"sub $t0 $t3 $t2");
+					PUSH_BACK($$,1,"sub $t0 $t1 $t2");
 				}
 				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
 				break;
@@ -761,9 +761,9 @@ evaluation :
 		}else if($2[0] == '/') {
 			PUSH_BACK($$,1,"div $t0 $t4 $t0");
 		}else{
-			PUSH_BACK($$,1,"div $t3 $t4 $t0");
-			PUSH_BACK($$,1,"mul $t3 $t3 $t0");
-			PUSH_BACK($$,1,"sub $t0 $t4 $t3");
+			PUSH_BACK($$,1,"div $t1 $t4 $t0");
+			PUSH_BACK($$,1,"mul $t1 $t1 $t0");
+			PUSH_BACK($$,1,"sub $t0 $t4 $t1");
 		}
 	}
 // ---1----2----------3---------------------------------------------- DONE
