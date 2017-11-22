@@ -77,7 +77,7 @@ Symbol symbolsTableAddSymbolConstUnit(SymbolsTable l, char* c, int i){
 	return symbolsTableGetSymbolById(l,c);
 }
 
-Symbol symbolsTableAddArrayBis(Symbol n, char* c,int dim){
+Symbol symbolsTableAddArrayBis(Symbol n, char* c){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		Array* data = (Array*)malloc(sizeof(Array));
@@ -85,19 +85,19 @@ Symbol symbolsTableAddArrayBis(Symbol n, char* c,int dim){
 		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
-		data->nDimension = dim;
+		data->nbDimension = 0;
 		result->type = array;
 		result->data = (void*)data;
 		result->next = NULL;
 		return result;
 	}else {
-		n->next = symbolsTableAddArrayBis(n->next, c, dim);
+		n->next = symbolsTableAddArrayBis(n->next, c);
 		return n;
 	}
 }
 
-Symbol symbolsTableAddArray(SymbolsTable l, char* c, int dim){
-	*l = symbolsTableAddArrayBis(*l, c, dim);
+Symbol symbolsTableAddArray(SymbolsTable l, char* c){
+	*l = symbolsTableAddArrayBis(*l, c);
 	return symbolsTableGetSymbolById(l,c);
 }
 

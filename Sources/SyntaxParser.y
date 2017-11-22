@@ -40,6 +40,7 @@
 	SymbolsTable symbolsTable;
 	InstructionsList rootTree;
 	char instructionTempo[INSTRUCTION_SIZE];
+	Array* actualArrayInit;
 	
 %}
 
@@ -447,23 +448,34 @@ unit_init :
 
 array_init :	
 // -1--2----------3------4----5------------------6-------------------
-	ID hooks_init EQUALS LEMB suite_suite_number REMB {
+	array_init_begin hooks_init EQUALS LEMB suite_suite_number REMB {
 		printf("ID hooks_init EQUALS LEMB suite_suite_number REMB -> array_init\n");
-		
-		instructionListMalloc(&$$);
+
+		$$ = $2;		
 	}
 // ---1--2----------3------4----5------------6-----------------------
-	| ID hooks_init EQUALS LEMB suite_number REMB {
+	| array_init_begin hooks_init EQUALS LEMB suite_number REMB {
 		printf("ID hooks_init EQUALS LEMB suite_number REMB -> array_init\n");
 		
-		instructionListMalloc(&$$);
+		$$ = $2;
 	}
 // ---1--2----------------------------------------------------------- 
-	| ID hooks_init {
+	| array_init_begin hooks_init {
 		printf("ID hooks_init -> array_init\n");
 		
-		instructionListMalloc(&$$);
+		$$ = $2;
 	}
+
+
+array_init_begin : 
+// -1--2-------------------------------------------------------------
+	ID LHOO {
+		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
+			ERROR("La variable '%s' existe deja !",$1); 	
+		}
+		actualArrayInit = symbolsTableAddArray(symbolsTable,$1)->data;
+	}
+	;
 	
 //__________________________________________________________________________________
 
@@ -471,10 +483,36 @@ hooks_init :
 // -1----------2----3----------4-------------------------------------
 	hooks_init LHOO evaluation RHOO  {
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
+		
+		$$ = $1;
+		//stocker $t0 (taille dimension precedente) dans genre t9
+		PUSH_BACK($$,1,"move $t9 $t0");
+		instructionConcat($$,$1);
+		actualArrayInit->nbDimension++;
 	}
-// ---1----2----------3----------------------------------------------
-	| LHOO evaluation RHOO {
+// ---1----2---------------------------------------------------------
+	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
+		
+		$$ = $1;
+		
+		//on stock la taille(total) du tableau dans s5
+		PUSH_BACK($$,1,"move $s5 $t0");
+		//et la dimension du tableau actuel dans s6
+		PUSH_BACK($$,1,"move $S6 $t0");
+		
+		//créé tableau taille dans evaluation ($t0) le mettre dans mipsId
+		PUSH_BACK($$,1,"sll $a0 $t0 2"); 
+		PUSH_BACK($$,1,"li  $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		//pointeur dans v0
+		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
+		
+		//enregistrement du pointeur du tableau s4
+		PUSH_BACK($$,1,"move $s4 $v0");
+		
+
+		actualArrayInit->nbDimension++;
 	}
 	;
 
