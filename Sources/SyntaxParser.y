@@ -515,8 +515,8 @@ hooks_init :
 			labelCounter++;
 		
 		//préparer l'itération suivante
-		PUSH_BACK($$,1,"move $4 $t2");
-		PUSH_BACK($$,1,"move $5 $a0");
+		PUSH_BACK($$,1,"move $s4 $t2");
+		PUSH_BACK($$,1,"move $s5 $a0");
 		
 		actualArrayInit->nbDimension++;
 	}
