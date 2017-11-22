@@ -22,13 +22,12 @@ typedef struct {
 typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
-	bool init;
+	int nDimension;
 }Array;
 
 typedef struct s_symbol{
 	Type type; 
 	void* data;
-	
 	struct s_symbol* next;
 }*Symbol;
 
@@ -39,7 +38,7 @@ void symbolsTableFree(SymbolsTable);
 
 Symbol symbolsTableAddSymbolUnit(SymbolsTable, char*, bool);
 Symbol symbolsTableAddSymbolConstUnit(SymbolsTable, char*, int);
-Symbol symbolsTableAddArray(SymbolsTable, char*, bool);
+Symbol symbolsTableAddArray(SymbolsTable, char*, int);
 void symbolsTableAddStep(SymbolsTable);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);
 void symbolsTableRemoveUntilStep(SymbolsTable);
