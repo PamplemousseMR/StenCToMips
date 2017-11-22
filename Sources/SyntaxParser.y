@@ -459,7 +459,7 @@ array_init :
 		
 		$$ = $2;
 	}
-// ---1--2----------------------------------------------------------- 
+// ---1--2----------------------------------------------------------- DONE
 	| array_init_begin hooks_init {
 		printf("ID hooks_init -> array_init\n");
 		
@@ -468,7 +468,7 @@ array_init :
 
 
 array_init_begin : 
-// -1--2-------------------------------------------------------------
+// -1--2------------------------------------------------------------- DONE
 	ID LHOO {
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
@@ -480,29 +480,58 @@ array_init_begin :
 //__________________________________________________________________________________
 
 hooks_init :
-// -1----------2----3----------4-------------------------------------
+// -1----------2----3----------4------------------------------------- DONE COMMENT TODO 
 	hooks_init LHOO evaluation RHOO  {
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
 		$$ = $1;
-		//stocker $t0 (taille dimension precedente) dans genre t9
-		PUSH_BACK($$,1,"move $t9 $t0");
-		instructionConcat($$,$1);
+		instructionConcat($$,$3);//mutiplie par 4 (taille int)
+		
+		
+		//calcul du tableau de la dimension suivante +creation 
+		PUSH_BACK($$,1,"mul $a0 $s5 $t0");
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		
+		//multiplication de $t0 par 4 pour l'itération dans le tableau
+		PUSH_BACK($$,1,"sll $t0 $t0 2"); 
+		PUSH_BACK($$,1,"move $t2 $v0");
+		//relié les deux tableau
+			//init du FOR
+			PUSH_BACK($$,1,"li $t1 0");
+			PUSH_BACK($$,1,"LOOP_HOOKS_INIT_%llu_BEGIN : ",labelCounter);
+			PUSH_BACK($$,1,"bge $t1 $s5 LOOP_HOOKS_INIT_%llu_END",labelCounter);
+			
+			//traitement du FOR
+			PUSH_BACK($$,1,"sw $v0 0($s4)");
+			
+			//incrément du FOR + j BEGIN
+			PUSH_BACK($$,1,"add $t1 $t1 4");
+			PUSH_BACK($$,1,"add $v0 $v0 $t0");
+			PUSH_BACK($$,1,"add $s4 $s4 4");
+			
+			PUSH_BACK($$,1,"j LOOP_HOOKS_INIT_%llu_BEGIN ",labelCounter);
+			PUSH_BACK($$,1,"LOOP_HOOKS_INIT_%llu_END : ",labelCounter);
+			labelCounter++;
+		
+		//préparer l'itération suivante
+		PUSH_BACK($$,1,"move $4 $t2");
+		PUSH_BACK($$,1,"move $5 $a0");
+		
 		actualArrayInit->nbDimension++;
 	}
-// ---1----2---------------------------------------------------------
+// ---1----2--------------------------------------------------------- DONE COMMENT TODO 
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
 		$$ = $1;
 		
+		PUSH_BACK($$,1,"sll $t0 $t0 2"); //mutiplie par 4 (taille int)
 		//on stock la taille(total) du tableau dans s5
 		PUSH_BACK($$,1,"move $s5 $t0");
-		//et la dimension du tableau actuel dans s6
-		PUSH_BACK($$,1,"move $S6 $t0");
 		
 		//créé tableau taille dans evaluation ($t0) le mettre dans mipsId
-		PUSH_BACK($$,1,"sll $a0 $t0 2"); 
+		PUSH_BACK($$,1,"move $a0 $t0"); 
 		PUSH_BACK($$,1,"li  $v0 9");
 		PUSH_BACK($$,1,"syscall");
 		//pointeur dans v0

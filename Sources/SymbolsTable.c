@@ -34,7 +34,7 @@ Symbol symbolsTableAddSymbolUnitBis(Symbol n, char* c, bool init){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		Unit* data = (Unit*)malloc(sizeof(Unit));
 		strncpy(data->id,c,BUFFER_SIZE);
-		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Unit",variableCounter++);
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->init = init;
@@ -58,7 +58,7 @@ Symbol symbolsTableAddSymbolConstUnitBis(Symbol n, char* c, int i){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		ConstUnit* data = (ConstUnit*)malloc(sizeof(ConstUnit));
 		strncpy(data->id,c,BUFFER_SIZE);
-		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_ConstUnit",variableCounter++);
 		snprintf(temp,BUFFER_SIZE,"%s: .word %d",data->mipsId,i);
 		instructionPushBack(rootTree,temp,1);
 		data->value = i;
@@ -82,7 +82,7 @@ Symbol symbolsTableAddArrayBis(Symbol n, char* c){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		Array* data = (Array*)malloc(sizeof(Array));
 		strncpy(data->id,c,BUFFER_SIZE);
-		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu",variableCounter++);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Array",variableCounter++);
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->nbDimension = 0;
