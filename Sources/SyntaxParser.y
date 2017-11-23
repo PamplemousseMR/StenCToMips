@@ -140,6 +140,10 @@ programme :
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\n.globl __main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
+		PUSH_BACK(rootTree,0,"\n#####\n\n__main :");
+		PUSH_BACK(rootTree,1,"jal MAIN");
+		PUSH_BACK(rootTree,1,"move $a0 $t0");
+		PUSH_BACK(rootTree,1,"j EXIT");
 		
 		instructionConcat(rootTree,$2);
 		
@@ -147,9 +151,10 @@ programme :
 		PUSH_BACK(rootTree,1,"la $a0 string_outOfBound");
 		PUSH_BACK(rootTree,1,"li $v0 4");
 		PUSH_BACK(rootTree,1,"syscall");
-		PUSH_BACK(rootTree,1,"j Exit");
+		PUSH_BACK(rootTree,1,"li $a0 -1"); //exit failure !
+		PUSH_BACK(rootTree,1,"j EXIT");
 		
-		PUSH_BACK(rootTree,0,"\n#####\n\nExit :\n");
+		PUSH_BACK(rootTree,0,"\n#####\n\nEXIT :\n");
 		PUSH_BACK(rootTree,1,"li $v0 10");
 		PUSH_BACK(rootTree,1,"syscall");
 	}
@@ -200,8 +205,9 @@ main :
 		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 		
 		$$ = $6;
-		PUSH_FORWARD($$,0,"\n__main :");
-		PUSH_BACK($$,1,"j Exit");
+		PUSH_FORWARD($$,1,"sw $ra 0($sp)\n");
+		PUSH_FORWARD($$,1,"sub $sp $sp 4");
+		PUSH_FORWARD($$,0,"\nMAIN :");
 	}
 	;
 
