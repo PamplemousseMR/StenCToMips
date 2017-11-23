@@ -887,7 +887,7 @@ evaluation :
 		PUSH_BACK($$,1,"move $a0 $t0");
 		PUSH_BACK($$,1,"li $v0 1");
 		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"li $t0 $zero");
+		PUSH_BACK($$,1,"li $t0 0");
 	}
 // ---1------2----3------4------------------------------------------- DONE
 	| PRINTF LBRA STRING RBRA {
@@ -899,7 +899,7 @@ evaluation :
 		PUSH_BACK($$,1,"la $a0 string_%llu",variableCounter++);
 		PUSH_BACK($$,1,"li $v0 4");
 		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"li $t0 $zero");
+		PUSH_BACK($$,1,"li $t0 0");
 	}
 // ---1-----------------2-------------------------------------------- DONE
 	| OPERATOR_NEGATION evaluation {

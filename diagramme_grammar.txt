@@ -1,10 +1,11 @@
 stencils
 operateur stencil
 affectation de stencil
-hook 
 retrun au main pas obligatoir ?
 fonctions (on gere pas les autres fonctions que le main)    
 macro
 & et | binaire
+géré les break et continue
+multiple affectation et incrementation deans les for
 commentaire /* */ marche pas
 probleme avec des commentaire // dans un /* */
