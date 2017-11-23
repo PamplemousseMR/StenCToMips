@@ -361,10 +361,6 @@ variable :
 				break;
 			case array :
 				instructionListMalloc(&(arr->stepsToAcces));
-				//empiler $s4 $s5
-				// PUSH_BACK(arr->stepsToAcces,1,"subi $sp $sp %d",4*2);
-				// PUSH_BACK(arr->stepsToAcces,1,"sw $s4 0($sp)");
-				// PUSH_BACK(arr->stepsToAcces,1,"sw $s5 4($sp)");
 				
 				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
 				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_dimensions",arr->mipsId);
@@ -373,10 +369,6 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
 				PUSH_BACK(arr->stepsToAcces,1,"lw $t1 %s",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
-				//depiler $s4 $s5
-				// PUSH_BACK(arr->stepsToAcces,1,"lw $s4 0($sp)");
-				// PUSH_BACK(arr->stepsToAcces,1,"lw $s5 4($sp)");
-				// PUSH_BACK(arr->stepsToAcces,1,"addi $sp $sp %d",4*2);
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
@@ -676,6 +668,8 @@ affectation :
 				instructionConcat($$,$3);
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
+				
+				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
 				ERROR("TODO variable EQUALS evaluation");
@@ -732,6 +726,8 @@ affectation :
 					PUSH_BACK($$,1,"sub $t0 $t1 $t2");
 				}
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
+				
+				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
@@ -1028,6 +1024,8 @@ variable_incr :
 					PUSH_BACK($$,1,"sub $t0 $t0 1");
 				}
 				PUSH_BACK($$,1,"sb $t0 0($s4)");
+				
+				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
@@ -1072,6 +1070,8 @@ variable_incr :
 					PUSH_BACK($$,1,"sub $t1 $t1 1");
 				}
 				PUSH_BACK($$,1,"sb $t1 0($s4)");
+				
+				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
@@ -1098,6 +1098,8 @@ variable_incr :
 			case array :
 				$$ = arr->stepsToAcces;
 				PUSH_BACK($$,1,"lb $t0 0($s4)");
+				
+				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
 				ERROR("TODO variable");

@@ -24,4 +24,5 @@ void instructionIncr(InstructionsList, int);	//incrémente de n tout les nbInden
 
 void instructionListPrintFILE(InstructionsList,FILE*);
 
+void instructionEmpilerDepilerS4S5(InstructionsList);
 #endif

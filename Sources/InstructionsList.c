@@ -93,3 +93,12 @@ void instructionListPrintFILE(InstructionsList i,FILE * f)
 		instructionListPrintFILE(&((*i)->next),f);
 	}
 }
+
+void instructionEmpilerDepilerS4S5(InstructionsList l){
+	instructionPushForward(l,"sw $s5 4($sp)",1);
+	instructionPushForward(l,"sw $s4 0($sp)",1);
+	instructionPushForward(l,"subi $sp $sp 8",1);
+	instructionPushBack(l,"lw $s4 0($sp)",1);
+	instructionPushBack(l,"lw $s5 4($sp)",1);
+	instructionPushBack(l,"addi $sp $sp 8",1);
+}

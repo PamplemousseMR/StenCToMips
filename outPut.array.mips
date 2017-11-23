@@ -55,34 +55,74 @@ __main :
 	
 	#dans chaque hooks
 	#evaluation 1
-	li $t0 1 
+	li $t0 1
 	li $t1 0 # valeur renvoyer par le yacc
-	lb $t1 var_0_Array_dimensions($t1);
-	mult $t1 $t1 $t0
+	lb $t1 var_0_Array_dimensions($t1)
+	mul $t1 $t1 $t0
 	add $s4 $s4 $t1
 
 	#dans chaque hooks
 	#evaluation 2
 	li $t0 2
 	li $t1 4  # valeur renvoyer par le yacc
-	lb $t1 var_0_Array_dimensions($t1);
-	mult $t1 $t1 $t0
+	lb $t1 var_0_Array_dimensions($t1)
+	mul $t1 $t1 $t0
 	add $s4 $s4 $t1
 
 	#dans chaque hooks
 	#evaluation 3
 	li $t0 3
 	li $t1 8  # valeur renvoyer par le yacc
-	lb $t1 var_0_Array_dimensions($t1);
-	mult $t1 $t1 $t0
+	lb $t1 var_0_Array_dimensions($t1)
+	mul $t1 $t1 $t0
 	add $s4 $s4 $t1
 
 	#a la sortie de hooks
-	sll $s4 $s4 2 
-	
-	lb $t1 var_0_Array
+	sll $s4 $s4 2
+	li $t0 42   #valeur a inscrire
+	lw $t1 var_0_Array
 	add $t1 $t1 $s4
+	sb $t0 ($t1)
+
+
+
+#tableau crée [2][3][4]
+#valeur a accédé [0][2][3] = 42
 	
+	#avant hooks
+	li $s4 0
+	la $s5 var_0_Array_dimensions
+	
+	#dans chaque hooks
+	#evaluation 1
+	li $t0 0
+
+	lw $t1 ($s5)
+	add $s5 $s5 4
+	mul $t1 $t1 $t0
+	add $s4 $s4 $t1
+
+	#dans chaque hooks
+	#evaluation 2
+	li $t0 2
+	lw $t1 ($s5)
+	add $s5 $s5 4
+	mul $t1 $t1 $t0
+	add $s4 $s4 $t1
+
+	#dans chaque hooks
+	#evaluation 3
+	li $t0 3
+	lw $t1 ($s5)
+	add $s5 $s5 4
+	mul $t1 $t1 $t0
+	add $s4 $s4 $t1
+
+	#a la sortie de hooks
+	sll $s4 $s4 2
+	li $t0 42   #valeur a inscrire
+	lw $t1 var_0_Array
+	add $s4 $s4 $t1
 	sb $t0 ($t1)
 
 	j Exit
