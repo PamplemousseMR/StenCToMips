@@ -1026,7 +1026,7 @@ evaluation :
 		int i;
 
 		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"subi $sp $sp %d",4*9);
+		PUSH_BACK($$,1,"sub $sp $sp %d",4*9);
 		for(i=0 ; i<=3 ; ++i)
 		{
 			PUSH_BACK($$,1,"sw $s%d %d($sp)",i,i*4);
@@ -1039,7 +1039,7 @@ evaluation :
 		{
 			PUSH_BACK($$,1,"lw $s%d %d($sp)",i,i*4);
 		}
-		PUSH_BACK($$,1,"addi $sp $sp %d",4*9);
+		PUSH_BACK($$,1,"add $sp $sp %d",4*9);
 	}
 // ---1------2----3----------4--------------------------------------- DONE
 	| PRINTI LBRA evaluation RBRA {
