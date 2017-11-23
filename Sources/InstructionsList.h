@@ -3,11 +3,11 @@
 
 #include <stdio.h>
 
-#define BUFFER_SIZE 50 
+#define INSTRUCTION_SIZE 100 
 
 typedef struct s_instruction
 {
-	char code[BUFFER_SIZE];
+	char code[INSTRUCTION_SIZE];
 	int indentation;
 	struct s_instruction* next;
 } *Instruction;

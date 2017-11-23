@@ -7,7 +7,7 @@
 static inline Instruction instructionMalloc(char* c, int ind)
 {
 	Instruction i = (Instruction)malloc(sizeof(struct s_instruction));
-	strncpy(i->code,c,BUFFER_SIZE);
+	strncpy(i->code,c,INSTRUCTION_SIZE);
 	i->indentation = ind;
 	i->next = NULL;
 	return i;

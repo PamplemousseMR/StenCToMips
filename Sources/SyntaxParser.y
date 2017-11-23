@@ -26,8 +26,6 @@
 	#define ERROR(msg...) 	snprintf(instructionTempo,INSTRUCTION_SIZE,msg);\
 							yyerror(instructionTempo)
 
-	#define INSTRUCTION_SIZE 50
-
 	extern int yylineno;
 
 	unsigned long long labelCounter = 0;
@@ -89,7 +87,6 @@
 %token<String> SEMI
 %token<String> STRING
 
-%type<Instruction> programme
 %type<Instruction> functions_serie
 %type<Instruction> main
 %type<Instruction> instructions_serie
@@ -136,10 +133,18 @@ programme :
 		printf("preprocessor_instructions_serie functions_serie -> programme\n");
 		
 		PUSH_FORWARD(rootTree,0,".data");
+		PUSH_BACK(rootTree,1,"string_outOfBound : .asciiz \"Exeption : Array index out of bound !\" ");
+		
 		PUSH_BACK(rootTree,0,"\n#####\n\n.globl __main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
 		
 		instructionConcat(rootTree,$2);
+		
+		PUSH_BACK(rootTree,0,"\n#####\n\nOUTOFBOUND :\n");
+		PUSH_BACK(rootTree,1,"la $a0 string_outOfBound");
+		PUSH_BACK(rootTree,1,"li $v0 4");
+		PUSH_BACK(rootTree,1,"syscall");
+		PUSH_BACK(rootTree,1,"j Exit");
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\nExit :\n");
 		PUSH_BACK(rootTree,1,"li $v0 10");
