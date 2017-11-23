@@ -89,6 +89,7 @@
 %token<String> STRING
 
 %type<Instruction> functions_serie
+%type<Instruction> function
 %type<Instruction> main
 %type<Instruction> instructions_serie
 %type<Instruction> ligne
@@ -192,8 +193,16 @@ preprocessor_instruction :
 //__________________________________________________________________________________
 
 functions_serie :
-// -1---------------------------------------------------------------- DONE
-	main {
+// -1--------2------------------------------------------------------- DONE
+	function functions_serie {
+		printf("function functions_serie -> functions_serie\n");
+		
+		$$ = $1;
+		PUSH_BACK($$,0,"\n");
+		instructionConcat($$,$2);
+	}
+// ---1-------------------------------------------------------------- DONE
+	| main {
 		printf("main -> functions_serie\n");
 		
 		$$ = $1;
@@ -201,13 +210,29 @@ functions_serie :
 	;
 
 //__________________________________________________________________________________
+	
+function : 	
+// -1----2--3----4----5----6----------7------------------8--------9-- 
+	TYPE ID LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
+		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function");
+		
+		instructionListMalloc(&$$);
+		// symbolsTableAddFunction(symbolsTable,$2);		la création après c'est po viable 
+		//													en vrai j'aimerais bien que function et main soit la meme règle
+		//													en aillant un petit bool qui permet de s'avoir si la fonction main a été crée et empécher d'en faire deux :)
+		//													en mode function -> debut_fonction LBRA RBRA LEMB step_begin instructions_serie step_end REMB
+		//													& debut_fonction -> TYPE ID | TYPE MAIN
+	}
+	;
+	
+//__________________________________________________________________________________
 
 main :
-// -1----2----3----4----5----7------------------8-------------------- DONE
-	TYPE MAIN LBRA RBRA LEMB instructions_serie REMB {
+// -1----2----3----4----5----6----------7------------------8--------9 DONE
+	TYPE MAIN LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
 		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 		
-		$$ = $6;
+		$$ = $7;
 		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,1,"#---------- save for return ----------");
