@@ -30,6 +30,7 @@ RETURN				(return)
 MAIN				(main)
 PRINTF				(printf)
 PRINTI				(printi)
+SCANI				(scani)
 STENCIL				(stencil)
 TYPE				(int)
 ID					[a-zA-Z_][0-9a-zA-Z_]*
@@ -142,6 +143,14 @@ UNKNOW				.
 	printf("\t\tPRINTI : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return PRINTI;
+	
+}
+
+{SCANI} {
+	
+	printf("\t\tPRINTI : %s\n",yytext);
+	yylval.String = strdup(yytext);
+	return SCANI;
 	
 }
 

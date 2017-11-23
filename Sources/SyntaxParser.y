@@ -62,6 +62,7 @@
 %token<String> MAIN
 %token<String> PRINTF
 %token<String> PRINTI
+%token<String> SCANI
 %token<String> STENCIL
 %token<String> TYPE
 %token<String> ID
@@ -996,6 +997,15 @@ evaluation :
 		PUSH_BACK($$,1,"li $v0 1");
 		PUSH_BACK($$,1,"syscall");
 		PUSH_BACK($$,1,"li $t0 0");
+	}
+// ---1-----2----3--------------------------------------------------- DONE
+	| SCANI LBRA RBRA {
+		printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
+		
+		instructionListMalloc(&$$);
+		PUSH_BACK($$,1,"li $v0 5");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"move $t0 $v0");
 	}
 // ---1------2----3------4------------------------------------------- DONE
 	| PRINTF LBRA STRING RBRA {
