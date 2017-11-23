@@ -101,8 +101,11 @@
 %type<Instruction> stencils_init_serie
 %type<Instruction> variable_init
 %type<Instruction> stencil_init
+%type<Instruction> suite_suite_number
+%type<Instruction> suite_number
 %type<Instruction> unit_init
 %type<Instruction> array_init
+%type<Instruction> array_affect
 %type<Instruction> hooks_init
 %type<Instruction> affectation
 %type<Instruction> for
@@ -205,9 +208,9 @@ main :
 		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 		
 		$$ = $6;
-		PUSH_FORWARD($$,1,"#---------- save for return ----------");
 		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
+		PUSH_FORWARD($$,1,"#---------- save for return ----------");
 		PUSH_FORWARD($$,0,"\nMAIN :");
 
 		PUSH_BACK($$,1,"#---------- default return ----------");
@@ -371,7 +374,7 @@ variable :
 		}
 		$$ = s;
 	}
-// ---1--2----3------------------------------------------------------
+// ---1--2----3------------------------------------------------------ DONE
 	| ID LHOO hooks{
 		printf("ID LHOO hooks -> variable\n");
 
@@ -540,23 +543,9 @@ unit_init :
 
 
 array_init :	
-// -1--2----------3------4----5------------------6-------------------
-	array_init_begin hooks_init EQUALS LEMB suite_suite_number REMB {
-		printf("ID hooks_init EQUALS LEMB suite_suite_number REMB -> array_init\n");
-
-		$$ = $2;		
-		ERROR("Not implémented array_init_begin hooks_init EQUALS LEMB suite_suite_number REMB");
-	}
-// ---1--2----------3------4----5------------6-----------------------
-	| array_init_begin hooks_init EQUALS LEMB suite_number REMB {
-		printf("ID hooks_init EQUALS LEMB suite_number REMB -> array_init\n");
-		
-		$$ = $2;
-		ERROR("Not implémented array_init_begin hooks_init EQUALS LEMB suite_number REMB");
-	}
 // ---1--2----------------------------------------------------------- DONE
-	| array_init_begin hooks_init {
-		printf("ID hooks_init -> array_init\n");
+	array_init_begin hooks_init array_affect {
+		printf("array_init_begin hooks_init array_affect -> array_init\n");
 		
 		$$ = $2;
 		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
@@ -588,9 +577,38 @@ array_init :
 			PUSH_BACK($$,1,"add $t1 $t1 4");
 		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
-		
 		labelCounter+=2;
+
+		instructionConcat($$,$3);
 	}
+	;
+
+//__________________________________________________________________________________
+
+array_affect :
+// ------------------------------------------------------------------ DONE TODO verifier si la taille correspond au taille du tableaux
+	EQUALS LEMB suite_suite_number REMB {
+		printf("EQUALS LEMB suite_suite_number REMB -> array_affect\n");
+
+		PUSH_FORWARD($3,1,"sub $v0 $v0 $t1");
+		PUSH_FORWARD($3,1,"li $t1 4");
+		$$ = $3;
+	}
+// ------------------------------------------------------------------ DONE TODO verifier si la taille correspond au taille du tableaux
+	| EQUALS LEMB suite_number REMB {
+		printf("EQUALS LEMB suite_number REMB -> array_affect\n");
+
+		PUSH_FORWARD($3,1,"sub $v0 $v0 $t1");
+		PUSH_FORWARD($3,1,"li $t1 4");
+		$$ = $3;
+	}
+// ------------------------------------------------------------------ DONE
+	| {
+		instructionListMalloc(&$$);
+	}
+	;
+
+//__________________________________________________________________________________
 
 array_init_begin : 
 // -1--2------------------------------------------------------------- DONE
@@ -628,6 +646,7 @@ hooks_init :
 		
 		actualArrayInit->nbDimension++;
 	}
+	;
 
 //__________________________________________________________________________________
 
@@ -655,26 +674,42 @@ stencil_init :
 //__________________________________________________________________________________
 
 suite_suite_number :
-// -1----2------------3----4-----5-----------------------------------
+// -1----2------------3----4-----5----------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
 	LEMB suite_number REMB COMMA suite_suite_number {
 		printf("LEMB suite_number REMB COMMA suite_suite_number -> suite_suite_number\n");
+
+		$$ = $2;
+		instructionConcat($$,$5);
 	}
-// ---1----2------------3--------------------------------------------
+// ---1----2------------3-------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
 	| LEMB suite_number REMB {
 		printf("LEMB suite_number REMB -> suite_suite_number\n");
+
+		$$ = $2;
 	}
 	;
 
 //__________________________________________________________________________________
 
 suite_number :
-// -1------2-----3---------------------------------------------------
-	number COMMA suite_number {
+// -1------2-----3--------------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
+	suite_number COMMA evaluation {
 		printf("number COMMA suite_number -> suite_number\n");
+
+		$$ = $1;
+		instructionConcat($$,$3);
+		PUSH_BACK($$,1,"li $t1 4");
+		PUSH_BACK($$,1,"add $v0 $v0 $t1");
+		PUSH_BACK($$,1,"sw $t0 0($v0)");
 	}
-// ---1--------------------------------------------------------------
-	| number {
+// ---1-------------------------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
+	| evaluation {
 		printf("number -> suite_number\n");
+
+		$$ = $1;
+		PUSH_BACK($$,1,"li $t1 4");
+		PUSH_BACK($$,1,"add $v0 $v0 $t1");
+		PUSH_BACK($$,1,"sw $t0 0($v0)");
 	}
 	;
 

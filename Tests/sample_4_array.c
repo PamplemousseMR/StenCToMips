@@ -3,13 +3,32 @@
 	
 int main(){
 	//must work
-	
-	//int tab[3] = {1,2,3};
-	//int tabb[2][2] = {{1,2},{1,2}};
-	//int jj=1, ii[2],l kk[2][2] = {{1,2},{1,2}};
-
 	int i;
 	int j;
+
+	int tab[3] = {1,2,3};
+	for(i=0 ; i<3 ;++i)
+	{
+		printi(tab[i]);
+		printf("\n");
+	}
+	printf("\n");
+
+
+	int tabb[2][2] = {{1,2},{3,4}};
+	for(i=0 ; i<2 ;++i)
+	{
+		for(j=0 ; j<2 ; ++j)
+		{
+			printi(tabb[i][j]);
+			printf("\t");
+		}
+		printf("\n");
+	}
+	printf("\n");
+
+	int jj=1, ii[2],kk[2][2] = {{1,2},{1,2}};
+
 	int array[5][2];
 	for(i=0 ; i<5 ;++i)
 	{
@@ -28,8 +47,8 @@ int main(){
 		}
 		printf("\n");
 	}
-
 	printf("\n");
+
 	for(i=0 ; i<5 ;++i)
 	{
 		for(j=0 ; j<2 ; ++j)
@@ -39,9 +58,9 @@ int main(){
 		}
 		printf("\n");
 	}
+	printf("\n");
 
 	int rec[array[4][1]][array[2][0]];  // 5 2
-	printf("\n");
 	for(i=0 ; i<array[4][1] ;++i)
 	{
 		for(j=0 ; j<array[2][0] ; ++j)
@@ -52,8 +71,7 @@ int main(){
 		}
 		printf("\n");
 	}
-	
-	
+	printf("\n");
 
 	//must throws error
 	// tab = 10;
