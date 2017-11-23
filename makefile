@@ -6,11 +6,10 @@ BUILD = Build
 OBJS = $(BUILD)/SyntaxParser.o $(BUILD)/LexicalParser.o $(BUILD)/SymbolsTable.o $(BUILD)/InstructionsList.o
 GCC = gcc 
 
-$(EXEC) : $(OBJS)
-	gcc $(CCFLAGS) $^ -ly -ll -o $@ 
+$(EXEC) : $(BUILD) $(OBJS)
+	gcc $(CCFLAGS) $(OBJS) -ly -ll -o $@ 
 
 $(BUILD)/SyntaxParser.o : $(SRCDIR)/SyntaxParser.y
-	[ -d $(BUILD) ] || mkdir $(BUILD)
 	yacc -d $< -o $(BUILD)/SyntaxParser.c
 	$(GCC) $(CCFLAGS) $(CCFORCEDFLAGS) $@ $(BUILD)/SyntaxParser.c
 
@@ -23,6 +22,9 @@ $(BUILD)/SymbolsTable.o : $(SRCDIR)/SymbolsTable.c $(SRCDIR)/SymbolsTable.h
 
 $(BUILD)/InstructionsList.o : $(SRCDIR)/InstructionsList.c $(SRCDIR)/InstructionsList.h
 	$(GCC) $(CCFLAGS) $(CCFORCEDFLAGS)$@ $< 
+
+$(BUILD) :
+	mkdir $(BUILD)
 
 debug: CCFLAGS = -DDEBUG -Wall -Wextra
 debug: $(EXEC)
