@@ -3,9 +3,15 @@
 
 int main(){
 	int i, j;
+	int l,m;
 
-	for (i = printf("lol"); i < MAX_FOR; i++){
+	for (i = 0, l = 3, m = 12; i < MAX_FOR; i++, l--, ++m){
 	
+		printi(l);
+		printf("\n");
+		printi(m);
+		printf("\n");
+		printf("\n");
 		j = -6;
 		
 		while (j < MAX_WHILE){
