@@ -317,6 +317,11 @@ return :
 // -1------2---------------------------------------------------------
 	RETURN evaluation {
 		printf("RETURN evaluation -> return\n");
+
+		$$ = $2;
+		PUSH_BACK($$,1,"lw $ra 0(sp)");
+		PUSH_BACK($$,1,"add $sp $sp 4");
+		PUSH_BACK($$,1,"jr $ra");
 	}
 	;
 
@@ -333,7 +338,7 @@ stencil :
 //__________________________________________________________________________________
 
 variable :
-// -1---------------------------------------------------------------- DONE TODO check if array
+// -1---------------------------------------------------------------- DONE
 	ID {
 		printf("ID -> variable\n");
 
@@ -389,7 +394,7 @@ variable :
 //__________________________________________________________________________________
 
 hooks :
-// -1-----2----3----------4------------------------------------------
+// -1-----2----3----------4------------------------------------------ DONE
 	hooks LHOO evaluation RHOO {
 		printf("hooks LHOO evaluation RHOO -> hooks\n");
 		
@@ -405,7 +410,7 @@ hooks :
 		PUSH_BACK($$,1,"add $s4 $s4 $t1");	
 		//vérifier longeur !
 	}
-// ---1----------2---------------------------------------------------
+// ---1----------2--------------------------------------------------- DONE
 	| evaluation RHOO {
 		printf("evaluation RHOO -> hooks\n");
 		
@@ -479,11 +484,11 @@ stencils_init_serie :
 //__________________________________________________________________________________ 
 
 variable_init :		
-// -1---------------------------------------------------------------- 
+// -1---------------------------------------------------------------- DONE
 	unit_init {
 		$$ = $1;
 	}
-// ---1-------------------------------------------------------------- 
+// ---1-------------------------------------------------------------- DONE
 	| array_init {
 		$$ = $1;
 		
@@ -587,7 +592,7 @@ array_init_begin :
 //__________________________________________________________________________________
 
 hooks_init :
-// -1----------2----3----------4------------------------------------- DONE COMMENT TODO 
+// -1----------2----3----------4------------------------------------- DONE
 	hooks_init LHOO evaluation RHOO  {
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
@@ -599,7 +604,7 @@ hooks_init :
 		
 		actualArrayInit->nbDimension++;
 	}
-// ---1----------2--------------------------------------------------- DONE COMMENT TODO 
+// ---1----------2--------------------------------------------------- DONE
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
@@ -665,7 +670,7 @@ suite_number :
 //=================================================================================================
 
 affectation :
-// -1--------2------3------------------------------------------------ DONE TODO check if array
+// -1--------2------3------------------------------------------------ DONE
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
@@ -690,10 +695,10 @@ affectation :
 				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
-				ERROR("TODO variable EQUALS evaluation");
+				ERROR("Symbole inatendu '%u'",$1->type);
 		}
 	}
-// ---1--------2------3---------------------------------------------- DONE TODO check if array
+// ---1--------2------3---------------------------------------------- DONE
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
@@ -748,7 +753,7 @@ affectation :
 				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
-				ERROR("TODO variable OPERATOR_INCREMENT");
+				ERROR("Symbole inatendu '%u'",$1->type);
 		}
 	}
 	;
@@ -777,7 +782,7 @@ for :
 //__________________________________________________________________________________
 
 affectations_serie :
-// -1------------------2-----3---------------------------------------------------- DONE
+// -1------------------2-----3--------------------------------------- DONE
 	affectations_serie COMMA affectation  {
 		printf("affectations_serie affectation COMMA -> affectations_serie\n");
 
@@ -793,7 +798,7 @@ affectations_serie :
 //__________________________________________________________________________________
 
 evaluations_serie :
-// -1------------------2-----3---------------------------------------------------- DONE
+// -1------------------2-----3--------------------------------------- DONE
 	evaluations_serie COMMA evaluation  {
 		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
 
@@ -1050,7 +1055,7 @@ evaluation :
 //__________________________________________________________________________________
 
 variable_incr :
-// -1------------------2--------------------------------------------- DONE TODO check if array
+// -1------------------2--------------------------------------------- DONE
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
@@ -1087,10 +1092,10 @@ variable_incr :
 				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
-				ERROR("TODO variable OPERATOR_INCREMENT");
+				ERROR("Symbole inatendu '%u'",$2->type);
 		}
 	}
-// ---1--------2----------------------------------------------------- DONE TODO check if array
+// ---1--------2----------------------------------------------------- DONE
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
@@ -1133,10 +1138,10 @@ variable_incr :
 				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
-				ERROR("TODO variable OPERATOR_INCREMENT");
+				ERROR("Symbole inatendu '%u'",$1->type);
 		}
 	}
-// ---1-------------------------------------------------------------- DONE TODO check if array
+// ---1-------------------------------------------------------------- DONE
 	| variable {
 		printf("variable -> variable_incr\n");
 
@@ -1161,7 +1166,7 @@ variable_incr :
 				instructionEmpilerDepilerS4S5($$);
 				break;
 			default :
-				ERROR("TODO variable");
+				ERROR("Symbole inatendu '%u'",$1->type);
 		}
 	}
 	;
