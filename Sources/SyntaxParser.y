@@ -353,13 +353,30 @@ variable :
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
 			ERROR("La variable '%s' n'existe pas !",$1); 
 		}
+		Array* arr = (Array*)s->data;
 		switch(s->type){
 			case unit :
 			case constUnit : 
 				ERROR("La variable '%s' n'est pas un tableau",$1);				
 				break;
 			case array :
-				ERROR("TODO array");
+				instructionListMalloc(&(arr->stepsToAcces));
+				//empiler $s4 $s5
+				// PUSH_BACK(arr->stepsToAcces,1,"subi $sp $sp %d",4*2);
+				// PUSH_BACK(arr->stepsToAcces,1,"sw $s4 0($sp)");
+				// PUSH_BACK(arr->stepsToAcces,1,"sw $s5 4($sp)");
+				
+				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
+				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_dimensions",arr->mipsId);
+				instructionConcat(arr->stepsToAcces,$3);
+				
+				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
+				PUSH_BACK(arr->stepsToAcces,1,"lw $t1 %s",arr->mipsId);
+				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
+				//depiler $s4 $s5
+				// PUSH_BACK(arr->stepsToAcces,1,"lw $s4 0($sp)");
+				// PUSH_BACK(arr->stepsToAcces,1,"lw $s5 4($sp)");
+				// PUSH_BACK(arr->stepsToAcces,1,"addi $sp $sp %d",4*2);
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
@@ -374,10 +391,24 @@ hooks :
 // -1-----2----3----------4------------------------------------------
 	hooks LHOO evaluation RHOO {
 		printf("hooks LHOO evaluation RHOO -> hooks\n");
+		
+		$$ = $1;
+		instructionConcat($$,$3);
+		PUSH_BACK($$,1,"lw $t1 0($s5)");
+		PUSH_BACK($$,1,"add $s5 $s5 4");
+		PUSH_BACK($$,1,"mul $t1 $t1 $t0");
+		PUSH_BACK($$,1,"add $s4 $s4 $t1");	
+		//vérifier longeur !
 	}
 // ---1----------2---------------------------------------------------
 	| evaluation RHOO {
 		printf("evaluation RHOO -> hooks\n");
+		
+		$$ = $1;
+		PUSH_BACK($$,1,"lw $t1 0($s5)");
+		PUSH_BACK($$,1,"add $s5 $s5 4");
+		PUSH_BACK($$,1,"mul $t1 $t1 $t0");
+		PUSH_BACK($$,1,"add $s4 $s4 $t1");	
 	}
 	;
 
@@ -628,14 +659,23 @@ affectation :
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
-		$$ = $3;
+		Array* arr = (Array*)$1->data;
+		Unit* uni = (Unit*)$1->data;
+		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
-				((Unit*)$1->data)->init = true;
+				$$ = $3;
+				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
+				uni->init = true;
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				break;
+			case array :
+				$$ = arr->stepsToAcces;
+				instructionConcat($$,$3);
+				
+				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				break;
 			default :
 				ERROR("TODO variable EQUALS evaluation");
@@ -645,13 +685,16 @@ affectation :
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
-		$$ = $3;
+		Array* arr = (Array*)$1->data;
+		Unit* uni = (Unit*)$1->data;
+		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				if(((Unit*)$1->data)->init == false){
-					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				$$ = $3;
+				if(uni->init == false){
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t1 %s",((Unit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"lw $t1 %s",uni->mipsId);
 				if(!strcmp($2,"+=")){
 					PUSH_BACK($$,1,"add $t0 $t1 $t0");
 				}else if(!strcmp($2,"-=")){
@@ -665,10 +708,30 @@ affectation :
 					PUSH_BACK($$,1,"mul $t2 $t2 $t0");
 					PUSH_BACK($$,1,"sub $t0 $t1 $t2");
 				}
-				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				break;
+			case array :
+				$$ = arr->stepsToAcces;
+				instructionConcat($$,$3);
+				
+				PUSH_BACK($$,1,"lb $t1 0($s4)");
+				if(!strcmp($2,"+=")){
+					PUSH_BACK($$,1,"add $t0 $t1 $t0");
+				}else if(!strcmp($2,"-=")){
+					PUSH_BACK($$,1,"sub $t0 $t1 $t0");
+				}else if(!strcmp($2,"*=")){
+					PUSH_BACK($$,1,"mul $t0 $t1 $t0");
+				}else if(!strcmp($2,"/=")){
+					PUSH_BACK($$,1,"div $t0 $t1 $t0");
+				}else if(!strcmp($2,"%=")){
+					PUSH_BACK($$,1,"div $t2 $t1 $t0");
+					PUSH_BACK($$,1,"mul $t2 $t2 $t0");
+					PUSH_BACK($$,1,"sub $t0 $t1 $t2");
+				}
+				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				break;
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
@@ -937,21 +1000,34 @@ variable_incr :
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
 		instructionListMalloc(&$$);
+		Array* arr = (Array*)$2->data;
+		Unit* uni = (Unit*)$2->data;
+		ConstUnit* cons = (ConstUnit*)$2->data;
 		switch($2->type){
 			case unit :
-				if( ((Unit*)$2->data)->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$2->data)->id); 				
+				if( uni->init == false ){
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$2->data)->mipsId);
+				PUSH_BACK($$,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$,1,"add $t0 $t0 1");
 				}else{
 					PUSH_BACK($$,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$2->data)->mipsId);
+				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",((Unit*)$2->data)->id); 				
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				break;
+			case array :
+				$$ = arr->stepsToAcces;
+				PUSH_BACK($$,1,"lb $t0 0($s4)");
+				if(!strcmp($1, "++")){
+					PUSH_BACK($$,1,"add $t0 $t0 1");
+				}else{
+					PUSH_BACK($$,1,"sub $t0 $t0 1");
+				}
+				PUSH_BACK($$,1,"sb $t0 0($s4)");
 				break;
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
@@ -962,18 +1038,21 @@ variable_incr :
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
 		instructionListMalloc(&$$);
+		Array* arr = (Array*)$1->data;
+		Unit* uni = (Unit*)$1->data;
+		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				if( ((Unit*)$1->data)->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				if( uni->init == false ){
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($2, "++")){
 					PUSH_BACK($$,1,"add $t0 $t0 1");
 				}else{
 					PUSH_BACK($$,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$,1,"sw $t0 %s",((Unit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				if(!strcmp($2, "++")){
 					PUSH_BACK($$,1,"sub $t0 $t0 1");
 				}else{
@@ -981,7 +1060,18 @@ variable_incr :
 				}
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",((ConstUnit*)$1->data)->id); 				
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				break;
+			case array :
+				$$ = arr->stepsToAcces;
+				PUSH_BACK($$,1,"lb $t0 0($s4)");
+				PUSH_BACK($$,1,"lb $t1 0($s4)");
+				if(!strcmp($2, "++")){
+					PUSH_BACK($$,1,"add $t1 $t1 1");
+				}else{
+					PUSH_BACK($$,1,"sub $t1 $t1 1");
+				}
+				PUSH_BACK($$,1,"sb $t1 0($s4)");
 				break;
 			default :
 				ERROR("TODO variable OPERATOR_INCREMENT");
@@ -992,15 +1082,22 @@ variable_incr :
 		printf("variable -> variable_incr\n");
 
 		instructionListMalloc(&$$);
+		Array* arr = (Array*)$1->data;
+		Unit* uni = (Unit*)$1->data;
+		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				if( ((Unit*)$1->data)->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",((Unit*)$1->data)->id); 				
+				if( uni->init == false ){
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t0 %s",((Unit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"lw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				PUSH_BACK($$,1,"lw $t0 %s",((ConstUnit*)$1->data)->mipsId);
+				PUSH_BACK($$,1,"lw $t0 %s",cons->mipsId);
+				break;
+			case array :
+				$$ = arr->stepsToAcces;
+				PUSH_BACK($$,1,"lb $t0 0($s4)");
 				break;
 			default :
 				ERROR("TODO variable");

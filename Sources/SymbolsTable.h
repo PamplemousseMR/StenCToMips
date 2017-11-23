@@ -1,8 +1,9 @@
 #ifndef __SYMBOLESTABLE_H
 #define __SYMBOLESTABLE_H
 
-#define BUFFER_SIZE 50
+#include "InstructionsList.h"
 
+#define BUFFER_SIZE 50
 
 typedef enum bool{false,true} bool;
 typedef enum Type{unit,constUnit,step,array,stencil} Type;
@@ -23,6 +24,7 @@ typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
 	int nbDimension;
+	InstructionsList stepsToAcces;
 }Array;
 
 typedef struct s_symbol{

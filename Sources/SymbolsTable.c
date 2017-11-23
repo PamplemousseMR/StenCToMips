@@ -86,6 +86,7 @@ Symbol symbolsTableAddArrayBis(Symbol n, char* c){
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->nbDimension = 0;
+		data->stepsToAcces = NULL;
 		result->type = array;
 		result->data = (void*)data;
 		result->next = NULL;
