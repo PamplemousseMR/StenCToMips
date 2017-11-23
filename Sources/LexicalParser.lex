@@ -33,7 +33,7 @@ PRINTI				(printi)
 STENCIL				(stencil)
 TYPE				(int)
 ID					[a-zA-Z_][0-9a-zA-Z_]*
-NUMBER				([0-9]+[0-9]*)
+NUMBER				([0-9]+)
 OPERATOR_NEGATION	(!)
 OPERATOR_INCREMENT	(\+\+|--)
 OPERATOR_MULTI		(\/|\*|%)
@@ -354,7 +354,7 @@ UNKNOW				.
 
 {UNKNOW} {
 	
-	printf("\t\t\x1b[31mUNKNOW : \x1b[0m%s\n",yytext);
+	fprintf(stderr,"\t\t\x1b[31mUNKNOW : \x1b[0m%s at line %d\n",yytext,yylineno);
 
 }
 

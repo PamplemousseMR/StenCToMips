@@ -4,7 +4,7 @@
 int main(){
 	int i, j;
 
-	for (i = 0; i < MAX_FOR; i++){
+	for (i = printf("lol"); i < MAX_FOR; i++){
 	
 		j = -6;
 		
