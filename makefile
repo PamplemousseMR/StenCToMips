@@ -10,6 +10,7 @@ $(EXEC) : $(OBJS)
 	gcc $(CCFLAGS) $^ -ly -ll -o $@ 
 
 $(BUILD)/SyntaxParser.o : $(SRCDIR)/SyntaxParser.y
+	[ -d $(BUILD) ] || mkdir $(BUILD)
 	yacc -d $< -o $(BUILD)/SyntaxParser.c
 	$(GCC) $(CCFLAGS) $(CCFORCEDFLAGS) $@ $(BUILD)/SyntaxParser.c
 
@@ -27,5 +28,4 @@ debug: CCFLAGS = -DDEBUG -Wall -Wextra
 debug: $(EXEC)
 
 clean :
-	rm $(EXEC) $(BUILD)/*
-	
+	rm -Rf $(EXEC) $(BUILD)	
