@@ -1,0 +1,20 @@
+
+
+s4 taille des dimensions 
+
+s3 COMPARATOR_EQUALITY
+s2 COMPARATOR_SUPREMACY
+s1 OPERATOR_ADDITION
+s0 OPERATOR_MULTI
+ 
+
+
+t2 : variable temporaire qui ne stocke RIEN
+t1 : variable temporaire qui ne stocke RIEN 
+
+
+
+for(i = 0,j = 0  ; i < $s5 ; i++,j+=s6)
+	$s4[i] = &v0[j];
+	
+	[4][5][3]

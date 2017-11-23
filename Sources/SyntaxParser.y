@@ -423,6 +423,8 @@ variable_init :
 // ---1-------------------------------------------------------------- 
 	| array_init {
 		$$ = $1;
+		
+		PUSH_BACK(rootTree,1,"%s_dimensions : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
 	}
 	;
 
@@ -461,20 +463,52 @@ array_init :
 		printf("ID hooks_init EQUALS LEMB suite_suite_number REMB -> array_init\n");
 
 		$$ = $2;		
+		ERROR("Not implémented array_init_begin hooks_init EQUALS LEMB suite_suite_number REMB");
 	}
 // ---1--2----------3------4----5------------6-----------------------
 	| array_init_begin hooks_init EQUALS LEMB suite_number REMB {
 		printf("ID hooks_init EQUALS LEMB suite_number REMB -> array_init\n");
 		
 		$$ = $2;
+		ERROR("Not implémented array_init_begin hooks_init EQUALS LEMB suite_number REMB");
 	}
 // ---1--2----------------------------------------------------------- DONE
 	| array_init_begin hooks_init {
 		printf("ID hooks_init -> array_init\n");
 		
 		$$ = $2;
+		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
+		
+		
+		PUSH_BACK($$,1,"li $t1 0");
+		PUSH_BACK($$,1,"li $t3 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_BEGIN :",labelCounter);
+		PUSH_BACK($$,1,"bge $t1 $t3 ARRAY_INIT_LOOP_1_%llu_END",labelCounter);
+		
+			PUSH_BACK($$,1,"add $t2 $t1 4");
+			PUSH_BACK($$,1,"li $t4 1");
+			
+			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
+			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
+			
+			PUSH_BACK($$,1,"lb $t5 %s_dimensions($t2)",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
+			
+			PUSH_BACK($$,1,"add $t2 $t2 4");
+			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
+			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
+			
+			PUSH_BACK($$,1,"sb $t4 %s_dimensions($t1)",actualArrayInit->mipsId);
+			
+			PUSH_BACK($$,1,"add $t1 $t1 4");
+		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
+		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
+		
+		labelCounter+=2;
 	}
-
 
 array_init_begin : 
 // -1--2------------------------------------------------------------- DONE
@@ -494,65 +528,24 @@ hooks_init :
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
 		$$ = $1;
-		instructionConcat($$,$3);//mutiplie par 4 (taille int)
-		
-		
-		//calcul du tableau de la dimension suivante +creation 
-		PUSH_BACK($$,1,"mul $a0 $s5 $t0");
-		PUSH_BACK($$,1,"li $v0 9");
-		PUSH_BACK($$,1,"syscall");
-		
-		//multiplication de $t0 par 4 pour l'itération dans le tableau
-		PUSH_BACK($$,1,"sll $t0 $t0 2"); 
-		PUSH_BACK($$,1,"move $t2 $v0");
-		//relié les deux tableau
-			//init du FOR
-			PUSH_BACK($$,1,"li $t1 0");
-			PUSH_BACK($$,1,"LOOP_HOOKS_INIT_%llu_BEGIN : ",labelCounter);
-			PUSH_BACK($$,1,"bge $t1 $s5 LOOP_HOOKS_INIT_%llu_END",labelCounter);
-			
-			//traitement du FOR
-			PUSH_BACK($$,1,"sw $v0 0($s4)");
-			
-			//incrément du FOR + j BEGIN
-			PUSH_BACK($$,1,"add $t1 $t1 4");
-			PUSH_BACK($$,1,"add $v0 $v0 $t0");
-			PUSH_BACK($$,1,"add $s4 $s4 4");
-			
-			PUSH_BACK($$,1,"j LOOP_HOOKS_INIT_%llu_BEGIN ",labelCounter);
-			PUSH_BACK($$,1,"LOOP_HOOKS_INIT_%llu_END : ",labelCounter);
-			labelCounter++;
-		
-		//préparer l'itération suivante
-		PUSH_BACK($$,1,"move $s4 $t2");
-		PUSH_BACK($$,1,"move $s5 $a0");
+		instructionConcat($$,$3);
+		PUSH_BACK($$,1,"mul $s4 $s4 $t0"); //la taille du tableau
+		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"sb $t0 %s_dimensions($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}
-// ---1----2--------------------------------------------------------- DONE COMMENT TODO 
+// ---1----------1--------------------------------------------------- DONE COMMENT TODO 
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
 		$$ = $1;
+		PUSH_BACK($$,1,"move $s4 $t0"); //la taille du tableau
+		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"sb $t0 %s_dimensions($t1)",actualArrayInit->mipsId);
 		
-		PUSH_BACK($$,1,"sll $t0 $t0 2"); //mutiplie par 4 (taille int)
-		//on stock la taille(total) du tableau dans s5
-		PUSH_BACK($$,1,"move $s5 $t0");
-		
-		//créé tableau taille dans evaluation ($t0) le mettre dans mipsId
-		PUSH_BACK($$,1,"move $a0 $t0"); 
-		PUSH_BACK($$,1,"li  $v0 9");
-		PUSH_BACK($$,1,"syscall");
-		//pointeur dans v0
-		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
-		
-		//enregistrement du pointeur du tableau s4
-		PUSH_BACK($$,1,"move $s4 $v0");
-		
-
 		actualArrayInit->nbDimension++;
 	}
-	;
 
 //__________________________________________________________________________________
 
