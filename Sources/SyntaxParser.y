@@ -279,6 +279,7 @@ ligne :
 		printf("return SEMI -> ligne\n");
 		
 		$$ = $1;
+		instructionConcat($$,$2);
 	}
 // ---1----------2--------------------------------------------------- DONE
 	| write_ligne_number evaluation SEMI {
@@ -325,7 +326,7 @@ return :
 		printf("RETURN evaluation -> return\n");
 
 		$$ = $2;
-		PUSH_BACK($$,1,"lw $ra 0(sp)");
+		PUSH_BACK($$,1,"lw $ra 0($sp)");
 		PUSH_BACK($$,1,"add $sp $sp 4");
 		PUSH_BACK($$,1,"jr $ra");
 	}
