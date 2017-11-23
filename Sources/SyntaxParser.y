@@ -34,7 +34,7 @@
 	unsigned long long variableCounter = 0;
 
 	int yylex();
-	void yyerror (char const*);
+	void yyerror(char const*);
 
 	FILE* outputFile;
 	SymbolsTable symbolsTable;
@@ -49,6 +49,7 @@
 	char* String;
 	InstructionsList Instruction;
 	Symbol Sym;
+
 }
 
 %start programme
@@ -324,9 +325,9 @@ stencil :
 //__________________________________________________________________________________
 
 variable :
-// -1--2------------------------------------------------------------- DONE TODO check if array
-	ID hooks {
-		printf("ID hooks -> variable\n");
+// -1---------------------------------------------------------------- DONE TODO check if array
+	ID {
+		printf("ID -> variable\n");
 
 		Symbol s;
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
@@ -337,7 +338,28 @@ variable :
 			case constUnit : 				
 				break;
 			case array :
-				ERROR("La variable '%s' est un tableau #TODO",$1);
+				ERROR("La variable '%s' est un tableau",$1);
+				break;
+			default :
+				ERROR("Symbole inatendu '%s'",$1);
+		}
+		$$ = s;
+	}
+// ---1--2----3------------------------------------------------------
+	| ID LHOO hooks{
+		printf("ID LHOO hooks -> variable\n");
+
+		Symbol s;
+		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
+			ERROR("La variable '%s' n'existe pas !",$1); 
+		}
+		switch(s->type){
+			case unit :
+			case constUnit : 
+				ERROR("La variable '%s' n'est pas un tableau",$1);				
+				break;
+			case array :
+				ERROR("TODO array");
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
@@ -349,12 +371,13 @@ variable :
 //__________________________________________________________________________________
 
 hooks :
-// -1----2----------3----4-------------------------------------------
-	LHOO evaluation RHOO hooks {
-		printf("LHOO evaluation RHOO -> hooks\n");
+// -1-----2----3----------4------------------------------------------
+	hooks LHOO evaluation RHOO {
+		printf("hooks LHOO evaluation RHOO -> hooks\n");
 	}
-// ------------------------------------------------------------------
-	| {
+// ---1----------2---------------------------------------------------
+	| evaluation RHOO {
+		printf("evaluation RHOO -> hooks\n");
 	}
 	;
 
@@ -535,7 +558,7 @@ hooks_init :
 		
 		actualArrayInit->nbDimension++;
 	}
-// ---1----------1--------------------------------------------------- DONE COMMENT TODO 
+// ---1----------2--------------------------------------------------- DONE COMMENT TODO 
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		

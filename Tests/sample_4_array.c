@@ -7,8 +7,9 @@ int main(){
 	int tab[3] = {1,2,3};
 	int tabb[2][2] = {{1,2},{1,2}};
 	int jj=1, ii[2], kk[2][2] = {{1,2},{1,2}};
+
+	ii[2][3][4];
 	
-	int arr[le];
 
 	//must throws error
 	// tab = 10;
