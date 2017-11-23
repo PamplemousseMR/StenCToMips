@@ -133,7 +133,7 @@ programme :
 		printf("preprocessor_instructions_serie functions_serie -> programme\n");
 		
 		PUSH_FORWARD(rootTree,0,".data");
-		PUSH_BACK(rootTree,1,"string_outOfBound : .asciiz \"Exeption : Array index out of bound !\" ");
+		PUSH_BACK(rootTree,1,"string_outOfBound : .asciiz \"\\nExeption : Array index out of bound !\\n\" ");
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\n.globl __main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
@@ -368,7 +368,8 @@ variable :
 				instructionListMalloc(&(arr->stepsToAcces));
 				
 				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
-				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_dimensions",arr->mipsId);
+				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_multiplicator",arr->mipsId);  
+				PUSH_BACK(arr->stepsToAcces,1,"la $s6 %s_verificator",arr->mipsId);  
 				instructionConcat(arr->stepsToAcces,$3);
 				
 				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
@@ -391,6 +392,10 @@ hooks :
 		
 		$$ = $1;
 		instructionConcat($$,$3);
+		PUSH_BACK($$,1,"lw $t1 0($s6)");
+		PUSH_BACK($$,1,"add $s6 $s6 4");
+		PUSH_BACK($$,1,"blt $t0 $0 OUTOFBOUND");
+		PUSH_BACK($$,1,"bge $t0 $t1 OUTOFBOUND");
 		PUSH_BACK($$,1,"lw $t1 0($s5)");
 		PUSH_BACK($$,1,"add $s5 $s5 4");
 		PUSH_BACK($$,1,"mul $t1 $t1 $t0");
@@ -402,6 +407,10 @@ hooks :
 		printf("evaluation RHOO -> hooks\n");
 		
 		$$ = $1;
+		PUSH_BACK($$,1,"lw $t1 0($s6)");
+		PUSH_BACK($$,1,"add $s6 $s6 4");
+		PUSH_BACK($$,1,"blt $t0 $0 OUTOFBOUND");
+		PUSH_BACK($$,1,"bge $t0 $t1 OUTOFBOUND");
 		PUSH_BACK($$,1,"lw $t1 0($s5)");
 		PUSH_BACK($$,1,"add $s5 $s5 4");
 		PUSH_BACK($$,1,"mul $t1 $t1 $t0");
@@ -475,7 +484,8 @@ variable_init :
 	| array_init {
 		$$ = $1;
 		
-		PUSH_BACK(rootTree,1,"%s_dimensions : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
+		PUSH_BACK(rootTree,1,"%s_verificator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
+		PUSH_BACK(rootTree,1,"%s_multiplicator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
 	}
 	;
 
@@ -545,14 +555,14 @@ array_init :
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
 			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
 			
-			PUSH_BACK($$,1,"lb $t5 %s_dimensions($t2)",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"lb $t5 %s_verificator($t2)",actualArrayInit->mipsId);
 			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
 			
 			PUSH_BACK($$,1,"add $t2 $t2 4");
 			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
 			
-			PUSH_BACK($$,1,"sb $t4 %s_dimensions($t1)",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"sb $t4 %s_multiplicator($t1)",actualArrayInit->mipsId);
 			
 			PUSH_BACK($$,1,"add $t1 $t1 4");
 		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
@@ -582,7 +592,7 @@ hooks_init :
 		instructionConcat($$,$3);
 		PUSH_BACK($$,1,"mul $s4 $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$,1,"sb $t0 %s_dimensions($t1)",actualArrayInit->mipsId);
+		PUSH_BACK($$,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}
@@ -593,7 +603,7 @@ hooks_init :
 		$$ = $1;
 		PUSH_BACK($$,1,"move $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$,1,"sb $t0 %s_dimensions($t1)",actualArrayInit->mipsId);
+		PUSH_BACK($$,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}

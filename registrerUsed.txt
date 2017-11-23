@@ -1,5 +1,6 @@
 
-
+s6 pointeur du tableau de verification
+s5 pointeur du tableau des multiplicateur
 s4 taille du tableau / indice dans le tableau
 
 s3 COMPARATOR_EQUALITY
