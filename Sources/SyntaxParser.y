@@ -332,7 +332,16 @@ variable :
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
 			ERROR("La variable '%s' n'existe pas !",$1); 
 		}
-
+		switch(s->type){
+			case unit :
+			case constUnit : 				
+				break;
+			case array :
+				ERROR("La variable '%s' est un tableau #TODO",$1);
+				break;
+			default :
+				ERROR("Symbole inatendu '%s'",$1);
+		}
 		$$ = s;
 	}
 	;
