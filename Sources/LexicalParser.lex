@@ -19,6 +19,8 @@ int state = STATE_NORMAL;
 %}
 
 %option yylineno
+%option nounput
+%option noinput
 
 DEFINE				(#define)[ ]
 ENDLINE				(\n)
