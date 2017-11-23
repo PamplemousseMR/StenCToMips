@@ -142,10 +142,10 @@ programme :
 		PUSH_FORWARD(rootTree,0,".data");
 		PUSH_BACK(rootTree,1,"string_outOfBound : .asciiz \"\\nExeption : Array index out of bound !\\n\" ");
 		
-		PUSH_BACK(rootTree,0,"\n#####\n\n.globl __main");
+		PUSH_BACK(rootTree,0,"\n#####\n\n.globl main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
-		PUSH_BACK(rootTree,0,"\n#####\n\n__main :");
-		PUSH_BACK(rootTree,1,"jal MAIN");
+		PUSH_BACK(rootTree,0,"\n#####\n\nmain :");
+		PUSH_BACK(rootTree,1,"jal MAINFUNCTION");
 		PUSH_BACK(rootTree,1,"move $a0 $t0");
 		PUSH_BACK(rootTree,1,"j EXIT");
 		
@@ -236,7 +236,7 @@ main :
 		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,1,"#---------- save for return ----------");
-		PUSH_FORWARD($$,0,"\nMAIN :");
+		PUSH_FORWARD($$,0,"\nMAINFUNCTION :");
 
 		PUSH_BACK($$,1,"#---------- default return ----------");
 		PUSH_BACK($$,1,"lw $ra 0($sp)");
