@@ -105,6 +105,8 @@
 %type<Instruction> hooks_init
 %type<Instruction> affectation
 %type<Instruction> for
+%type<Instruction> affectations_serie
+%type<Instruction> evaluations_serie
 %type<Instruction> while
 %type<Instruction> if
 %type<Instruction> else
@@ -756,8 +758,8 @@ affectation :
 
 for :
 // -1---2----3-----------4----5----------6----7----------8----9----------10----11- DONE
-	FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA step_begin ligne step_end {
-		printf("FOR LBRA affectation SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
+	FOR LBRA affectations_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
+		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
 		$$ = $3;	
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
@@ -770,6 +772,38 @@ for :
 		labelCounter++;
 	}
 	;
+
+//__________________________________________________________________________________
+
+affectations_serie :
+// -1------------------2-----3---------------------------------------------------- DONE
+	affectations_serie COMMA affectation  {
+		printf("affectations_serie affectation COMMA -> affectations_serie\n");
+
+		$$ = $1;
+		instructionConcat($$,$3);
+	}
+	| affectation {
+		printf("affectation -> affectations_serie\n");
+
+		$$ = $1;
+	};
+
+//__________________________________________________________________________________
+
+evaluations_serie :
+// -1------------------2-----3---------------------------------------------------- DONE
+	evaluations_serie COMMA evaluation  {
+		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
+
+		$$ = $1;
+		instructionConcat($$,$3);
+	}
+	| evaluation {
+		printf("evaluation -> evaluations_serie\n");
+
+		$$ = $1;
+	};
 
 //__________________________________________________________________________________
 
