@@ -1098,6 +1098,14 @@ evaluation :
 		
 		$$ = $1;
 	}
+// ---1--2----3------------------------------------------------------ TEST appel fonction 
+	| ID LBRA RBRA {
+		printf("variable -> variable_incr\n");
+
+		fprintf(stdout,"appel à la fonction %s NOT IMPLEMENT YET RETURN 0\n",$1);
+		instructionListMalloc(&$$);
+		PUSH_BACK($$,1,"$li $t0 0");
+	}
 	;
 
 //__________________________________________________________________________________
