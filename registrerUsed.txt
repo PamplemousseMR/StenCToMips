@@ -1,16 +1,12 @@
 
 
-s4 taille des dimensions 
+s4 taille du tableau / indice dans le tableau
 
 s3 COMPARATOR_EQUALITY
 s2 COMPARATOR_SUPREMACY
 s1 OPERATOR_ADDITION
 s0 OPERATOR_MULTI
  
-
-
-t2 : variable temporaire qui ne stocke RIEN
-t1 : variable temporaire qui ne stocke RIEN 
 
 
 
