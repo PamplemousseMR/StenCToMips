@@ -205,9 +205,15 @@ main :
 		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
 		
 		$$ = $6;
-		PUSH_FORWARD($$,1,"sw $ra 0($sp)\n");
+		PUSH_FORWARD($$,1,"#---------- save for return ----------");
+		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,0,"\nMAIN :");
+
+		PUSH_BACK($$,1,"#---------- default return ----------");
+		PUSH_BACK($$,1,"lw $ra 0($sp)");
+		PUSH_BACK($$,1,"add $sp $sp 4");
+		PUSH_BACK($$,1,"jr $ra");
 	}
 	;
 
