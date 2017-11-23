@@ -23,7 +23,7 @@ int state = STATE_NORMAL;
 %option noinput
 
 DEFINE				(#define)[ ]
-ENDLINE				(\n)
+ENDLINE				[\n\r]
 FOR					(for)
 WHILE				(while)
 IF					(if)
@@ -59,7 +59,7 @@ SEMI				(\;)
 COM_SINGLE			(\/\/[^\n]*)
 COM_MULTI			(\/\*(.|\n)*\*\/)
 STRING				(\"([^\"\n]|\\(.|\n))*\")
-USELESS				[ |\t]
+USELESS				[ \t]
 UNKNOW				.
 
 %%
