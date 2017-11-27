@@ -8,6 +8,7 @@
 extern unsigned long long variableCounter;
 extern InstructionsList rootTree;
 char temp[BUFFER_SIZE];
+extern int mainFound;
 
 void symbolsTableMalloc(SymbolsTable* l){
 	*l = (SymbolsTable)malloc(sizeof(struct s_symbol*));
@@ -17,8 +18,13 @@ void symbolsTableMalloc(SymbolsTable* l){
 void symbolsTableFreeBis(Symbol n){
 	if(n != NULL){
 		symbolsTableFreeBis(n->next);
-		if(n->data != NULL)
+		if(n->data != NULL){
+			if(n->type == function){
+				instructionListFree(((Function*)n->data)->stackInstructions);
+				instructionListFree(((Function*)n->data)->unStackInstructions);
+			}
 			free(n->data);
+		}
 		free(n);
 	}
 }
@@ -102,6 +108,36 @@ Symbol symbolsTableAddArray(SymbolsTable l, char* c){
 	return symbolsTableGetSymbolById(l,c);
 }
 
+Symbol symbolsTableAddFunctionBis(Symbol n, char* c){
+	if(n == NULL){
+		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		Function* data = (Function*)malloc(sizeof(Function));
+		strncpy(data->id,c,BUFFER_SIZE);
+		if(!strcmp(c,"main")){
+			snprintf(data->mipsId,BUFFER_SIZE,"FUN_MAIN");
+			mainFound = true;
+		}else{ 
+			snprintf(data->mipsId,BUFFER_SIZE,"FUN_%llu",variableCounter++);
+		}			
+		data->nbArgs = 0;
+		data->numOfFirstArg = variableCounter;
+		instructionListMalloc(&data->stackInstructions);
+		instructionListMalloc(&data->unStackInstructions);
+		result->type = function;
+		result->data = (void*)data;
+		result->next = NULL;
+		return result;
+	}else {
+		n->next = symbolsTableAddFunctionBis(n->next, c);
+		return n;
+	}	
+}
+
+Symbol symbolsTableAddFunction(SymbolsTable l, char* c){
+	*l = symbolsTableAddFunctionBis(*l, c);
+	return symbolsTableGetSymbolById(l,c);
+}
+
 Symbol symbolsTableAddStepBis(Symbol n){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
@@ -125,6 +161,7 @@ Symbol symbolsTableGetSymbolByIdBis(Symbol n, char* c){
 		case unit :
 		case constUnit :
 		case array :
+		case function : 
 			if(!strcmp(((Unit*)n->data)->id,c)) return n;
 			break;
 		case step:

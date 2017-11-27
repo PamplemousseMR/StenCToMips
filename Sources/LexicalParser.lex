@@ -29,7 +29,6 @@ WHILE				(while)
 IF					(if)
 ELSE				(else)
 RETURN				(return)
-MAIN				(main)
 PRINTF				(printf)
 PRINTI				(printi)
 SCANI				(scani)
@@ -121,14 +120,6 @@ UNKNOW				.
 	printf("\t\tRETURN : %s\n",yytext);
 	yylval.String = strdup(yytext);
 	return RETURN;
-
-}
-
-{MAIN} {
-
-	printf("\t\tMAIN : %s\n",yytext);
-	yylval.String = strdup(yytext);
-	return MAIN;
 
 }
 
