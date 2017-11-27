@@ -11,5 +11,7 @@ int pow(){
 }
 
 int main(){
-	printi(pow());
+	int temp = pow();
+	printi(temp);
+	return 0;
 }

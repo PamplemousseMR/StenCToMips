@@ -1,8 +1,6 @@
 stencils
 operateur stencil
 affectation de stencil
-retrun au main pas obligatoir ?
-fonctions (on gere pas les autres fonctions que le main)    
 macro
 & et | binaire
 géré les break et continue

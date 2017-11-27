@@ -72,6 +72,8 @@ int main()
 	printf("\n");
 	printi(-10%3);
 	printf("\n");
+
+	return 0;
 		
 	// must throw error
 	
