@@ -75,7 +75,7 @@ int main(){
 	}
 	printf("\n");
 	
-	int test[2][3] = {2,2,2,2,tabb[0]+5,2};  // 5 2
+	int test[2][3] = {2,2,2,2,tabb[0][2]+5,2};  // 5 2
 
 	//must throws error
 	// tab = 10;

@@ -63,7 +63,7 @@
 	} ArrayAffect;
 
 	struct s_hooksInit{
-		InstructionsList instructionHooks;
+		InstructionsList instructionHooksInit;
 		bool constHooksInit;
 		int nbValue;
 	} HooksInit;
@@ -119,14 +119,14 @@
 %type<Instruction> write_ligne_number
 %type<Instruction> return
 %type<Sym> 		   variable			//cas particulier renvoie le symbole de la table des symbole
-%type<Instruction> hooks
+%type<Number> 	   hooks
 %type<Instruction> initialisation
 %type<Instruction> variables_init_serie
 %type<Instruction> stencils_init_serie
 %type<Instruction> variable_init
 %type<Instruction> stencil_init
-%type<Number> number_serie_serie
-%type<Number> number_serie
+%type<Number> 	   number_serie_serie
+%type<Number> 	   number_serie
 %type<Instruction> unit_init
 %type<Instruction> array_init
 %type<ArrayAffect> array_affect	
@@ -138,8 +138,8 @@
 %type<Instruction> while
 %type<Instruction> if
 %type<Instruction> else
-%type<Eval> evaluation				//cas particulier permet de différentier les evaluations constantes ou non
-%type<Eval> variable_incr			// et de simplifier les expressions constantes ex : 3+4 -> 7
+%type<Eval> 	   evaluation				//cas particulier permet de différentier les evaluations constantes ou non
+%type<Eval> 	   variable_incr			// et de simplifier les expressions constantes ex : 3+4 -> 7
 %type<String>      number 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMMA
@@ -437,12 +437,17 @@ variable :
 				ERROR("La variable '%s' n'est pas un tableau",$1);				
 				break;
 			case array :
+				if($3.nbValue > arr->nbDimension){
+					ERROR("trop de dimmension pour le tableau '%s'",$1);				
+				}else if($3.nbValue < arr->nbDimension){
+					ERROR("pas assez de dimmension pour le tableau '%s'",$1);				
+				}
 				instructionListMalloc(&(arr->stepsToAcces));
 				
 				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
 				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_multiplicator",arr->mipsId);  
 				PUSH_BACK(arr->stepsToAcces,1,"la $s6 %s_verificator",arr->mipsId);  
-				instructionConcat(arr->stepsToAcces,$3);
+				instructionConcat(arr->stepsToAcces,$3.instructionNumber);
 				
 				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
 				PUSH_BACK(arr->stepsToAcces,1,"lw $t1 %s",arr->mipsId);
@@ -462,31 +467,33 @@ hooks :
 	hooks LHOO evaluation RHOO {
 		printf("hooks LHOO evaluation RHOO -> hooks\n");
 		
-		$$ = $1;
-		instructionConcat($$,$3.instructionEval);
-		PUSH_BACK($$,1,"lw $t1 0($s6)");
-		PUSH_BACK($$,1,"add $s6 $s6 4");
-		PUSH_BACK($$,1,"blt $t0 $0 OUTOFBOUND");
-		PUSH_BACK($$,1,"bge $t0 $t1 OUTOFBOUND");
-		PUSH_BACK($$,1,"lw $t1 0($s5)");
-		PUSH_BACK($$,1,"add $s5 $s5 4");
-		PUSH_BACK($$,1,"mul $t1 $t1 $t0");
-		PUSH_BACK($$,1,"add $s4 $s4 $t1");	
+		$$.nbValue = $1.nbValue + 1;
+		$$.instructionNumber = $1.instructionNumber;
+		instructionConcat($$.instructionNumber,$3.instructionEval);
+		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s6)");
+		PUSH_BACK($$.instructionNumber,1,"add $s6 $s6 4");
+		PUSH_BACK($$.instructionNumber,1,"blt $t0 $0 OUTOFBOUND");
+		PUSH_BACK($$.instructionNumber,1,"bge $t0 $t1 OUTOFBOUND");
+		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s5)");
+		PUSH_BACK($$.instructionNumber,1,"add $s5 $s5 4");
+		PUSH_BACK($$.instructionNumber,1,"mul $t1 $t1 $t0");
+		PUSH_BACK($$.instructionNumber,1,"add $s4 $s4 $t1");	
 		//vérifier longeur !
 	}
 // ---1----------2--------------------------------------------------- DONE
 	| evaluation RHOO {
 		printf("evaluation RHOO -> hooks\n");
 		
-		$$ = $1.instructionEval;
-		PUSH_BACK($$,1,"lw $t1 0($s6)");
-		PUSH_BACK($$,1,"add $s6 $s6 4");
-		PUSH_BACK($$,1,"blt $t0 $0 OUTOFBOUND");
-		PUSH_BACK($$,1,"bge $t0 $t1 OUTOFBOUND");
-		PUSH_BACK($$,1,"lw $t1 0($s5)");
-		PUSH_BACK($$,1,"add $s5 $s5 4");
-		PUSH_BACK($$,1,"mul $t1 $t1 $t0");
-		PUSH_BACK($$,1,"add $s4 $s4 $t1");	
+		$$.nbValue = 1;
+		$$.instructionNumber = $1.instructionEval;
+		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s6)");
+		PUSH_BACK($$.instructionNumber,1,"add $s6 $s6 4");
+		PUSH_BACK($$.instructionNumber,1,"blt $t0 $0 OUTOFBOUND");
+		PUSH_BACK($$.instructionNumber,1,"bge $t0 $t1 OUTOFBOUND");
+		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s5)");
+		PUSH_BACK($$.instructionNumber,1,"add $s5 $s5 4");
+		PUSH_BACK($$.instructionNumber,1,"mul $t1 $t1 $t0");
+		PUSH_BACK($$.instructionNumber,1,"add $s4 $s4 $t1");	
 	}
 	;
 
@@ -595,7 +602,7 @@ array_init :
 	array_init_begin hooks_init array_affect {
 		printf("array_init_begin hooks_init array_affect -> array_init\n");
 		
-		$$ = $2.instructionHooks;
+		$$ = $2.instructionHooksInit;
 		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
 		PUSH_BACK($$,1,"li $v0 9");
 		PUSH_BACK($$,1,"syscall");
@@ -628,7 +635,7 @@ array_init :
 		labelCounter+=2;
 
 		if(!$2.constHooksInit && !$3.empty){
-			ERROR("impossible d'affecte des valeurs a un tableaux de taille inconnue");
+			ERROR("impossible d'affecte des valeurs au tableau : taille dynamique");
 		}else if(!$3.empty && $2.nbValue > $3.nbValue){
 			ERROR("pas assez de valeur dans l'initialisation");
 		}else if(!$3.empty && $2.nbValue < $3.nbValue){
@@ -690,16 +697,16 @@ hooks_init :
 	hooks_init LHOO evaluation RHOO  {
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
-		$$.instructionHooks = $1.instructionHooks;
+		$$.instructionHooksInit = $1.instructionHooksInit;
 		if(!$3.constEval){
 			$$.constHooksInit = false;
 		}else{
 			$$.nbValue = $1.nbValue*$3.constInt;
 		}
-		instructionConcat($$.instructionHooks,$3.instructionEval);
-		PUSH_BACK($$.instructionHooks,1,"mul $s4 $s4 $t0"); //la taille du tableau
-		PUSH_BACK($$.instructionHooks,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$.instructionHooks,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		instructionConcat($$.instructionHooksInit,$3.instructionEval);
+		PUSH_BACK($$.instructionHooksInit,1,"mul $s4 $s4 $t0"); //la taille du tableau
+		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$.instructionHooksInit,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}
@@ -707,14 +714,14 @@ hooks_init :
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
-		$$.instructionHooks = $1.instructionEval;
+		$$.instructionHooksInit = $1.instructionEval;
 		if($1.constEval){
 			$$.constHooksInit = true;
 			$$.nbValue = $1.constInt;
 		}
-		PUSH_BACK($$.instructionHooks,1,"move $s4 $t0"); //la taille du tableau
-		PUSH_BACK($$.instructionHooks,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$.instructionHooks,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		PUSH_BACK($$.instructionHooksInit,1,"move $s4 $t0"); //la taille du tableau
+		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$.instructionHooksInit,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}
@@ -1154,7 +1161,7 @@ evaluation :
 				$$.constInt /= $3.constInt;
 			}else{
 				if($3.constInt == 0){
-					ERROR("Modulo par zero interdite");
+					ERROR("Modulo par zero interdit");
 				}
 				$$.constInt %= $3.constInt;
 			}
@@ -1276,11 +1283,11 @@ evaluation :
 		instructionListMalloc(&$$.instructionEval);
 		Symbol sym = symbolsTableGetSymbolById(functionsTable,$1);
 		if( sym == NULL){
-			ERROR("Référence inconue vers la fonction %s ",$1);
+			ERROR("Référence inconue vers la fonction '%s' ",$1);
 		}
 		Function* fun = sym->data;
 		if( sym->type != function ){
-			ERROR("Bravo vous avez réussis l'impossible ! Mais error ;)");
+			ERROR("Symbole inatendu '%s'",$1);
 		}
 		$$.constEval = false;
 		//COPIE stackInstructions
