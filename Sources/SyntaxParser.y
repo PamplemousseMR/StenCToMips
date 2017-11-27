@@ -36,10 +36,12 @@
 
 	FILE* outputFile;
 	SymbolsTable symbolsTable;
+	SymbolsTable functionsTable;
 	InstructionsList rootTree;
 	char instructionTempo[INSTRUCTION_SIZE];
 	Array* actualArrayInit;
-	
+	Function* actualFunction;
+	bool mainFound = false;
 %}
 
 %union {
@@ -81,8 +83,7 @@
 %token<String> WHILE
 %token<String> IF
 %token<String> ELSE
-%token<String> RETURN
-%token<String> MAIN
+%token<String> RETURN	
 %token<String> PRINTF
 %token<String> PRINTI
 %token<String> SCANI
@@ -113,7 +114,6 @@
 
 %type<Instruction> functions_serie
 %type<Instruction> function
-%type<Instruction> main
 %type<Instruction> instructions_serie
 %type<Instruction> ligne
 %type<Instruction> write_ligne_number
@@ -163,13 +163,16 @@ programme :
 	preprocessor_instructions_serie functions_serie {
 		printf("preprocessor_instructions_serie functions_serie -> programme\n");
 		
+		if(!mainFound){
+			ERROR("référence indéfinie vers « main »");
+		}
 		PUSH_FORWARD(rootTree,0,".data");
 		PUSH_BACK(rootTree,1,"string_outOfBound : .asciiz \"\\nExeption : Array index out of bound !\\n\" ");
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\n.globl main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
 		PUSH_BACK(rootTree,0,"\n#####\n\nmain :");
-		PUSH_BACK(rootTree,1,"jal MAINFUNCTION");
+		PUSH_BACK(rootTree,1,"jal FUN_MAIN");
 		PUSH_BACK(rootTree,1,"move $a0 $t0");
 		PUSH_BACK(rootTree,1,"j EXIT");
 		
@@ -225,43 +228,29 @@ functions_serie :
 		PUSH_BACK($$,0,"\n");
 		instructionConcat($$,$2);
 	}
-// ---1-------------------------------------------------------------- DONE
-	| main {
-		printf("main -> functions_serie\n");
-		
+// ------------------------------------------------------------------ DONE
+	| function {
 		$$ = $1;
-	}
-	;
+	} ;
 
 //__________________________________________________________________________________
 	
 function : 	
-// -1----2--3----4----5----6----------7------------------8--------9-- 
-	TYPE ID LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
-		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function");
+// -1--------------2----3----4----5----------6------------------7--------8 
+	function_begin LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
+		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function\n");
 		
-		instructionListMalloc(&$$);
+		// instructionListMalloc(&$$);
 		// symbolsTableAddFunction(symbolsTable,$2);		la création après c'est po viable 
 		//													en vrai j'aimerais bien que function et main soit la meme règle
 		//													en aillant un petit bool qui permet de s'avoir si la fonction main a été crée et empécher d'en faire deux :)
 		//													en mode function -> debut_fonction LBRA RBRA LEMB step_begin instructions_serie step_end REMB
 		//													& debut_fonction -> TYPE ID | TYPE MAIN
-	}
-	;
-	
-//__________________________________________________________________________________
-
-main :
-// -1----2----3----4----5----6----------7------------------8--------9 DONE
-	TYPE MAIN LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
-		printf("TYPE MAIN LBRA RBRA LEMB instructions_serie REMB -> main\n");
-		
-		$$ = $7;
+		$$ = $6;
 		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,1,"#---------- save for return ----------");
-		PUSH_FORWARD($$,0,"\nMAINFUNCTION :");
-
+		PUSH_FORWARD($$,0,"\n%s :",actualFunction->mipsId);
 		PUSH_BACK($$,1,"#---------- default return ----------");
 		PUSH_BACK($$,1,"lw $ra 0($sp)");
 		PUSH_BACK($$,1,"add $sp $sp 4");
@@ -269,6 +258,16 @@ main :
 	}
 	;
 
+//__________________________________________________________________________________
+
+function_begin :
+// -1--------------------------------
+	TYPE ID {
+		if( symbolsTableGetSymbolById(functionsTable,$2) != NULL){
+			ERROR("La fonction '%s' existe déja",$2);
+		}
+		actualFunction = symbolsTableAddFunction(functionsTable,$2)->data;
+	}
 //__________________________________________________________________________________
 
 instructions_serie :
@@ -280,8 +279,8 @@ instructions_serie :
 		instructionConcat($$,$2);
 	}
 // ------------------------------------------------------------------ DONE
-	| {
-		instructionListMalloc(&$$);
+	| ligne {
+		$$ = $1;
 	}
 	;
 
@@ -1273,11 +1272,20 @@ evaluation :
 // ---1--2----3------------------------------------------------------ TEST appel fonction 
 	| ID LBRA RBRA {
 		printf("variable -> variable_incr\n");
-
-		fprintf(stdout,"appel à la fonction %s NOT IMPLEMENT YET RETURN 0\n",$1);
+	
 		instructionListMalloc(&$$.instructionEval);
-		PUSH_BACK($$.instructionEval,1,"li $t0 0");
+		Symbol sym = symbolsTableGetSymbolById(functionsTable,$1);
+		if( sym == NULL){
+			ERROR("Référence inconue vers la fonction %s ",$1);
+		}
+		Function* fun = sym->data;
+		if( sym->type != function ){
+			ERROR("Bravo vous avez réussis l'impossible ! Mais error ;)");
+		}
 		$$.constEval = false;
+		//COPIE stackInstructions
+		PUSH_BACK($$.instructionEval,1,"jal %s",fun->mipsId);
+		//COPIE unStackInstructions
 	}
 	;
 
@@ -1425,6 +1433,7 @@ void clearProg()
 {
 	if(outputFile!=NULL)fclose(outputFile);
 	if(symbolsTable!=NULL)symbolsTableFree(symbolsTable);
+	if(functionsTable!=NULL)symbolsTableFree(functionsTable);
 	if(rootTree!=NULL)instructionListFree(rootTree);
 }
 
@@ -1437,6 +1446,7 @@ int main(void)
     }
 
 	symbolsTableMalloc(&symbolsTable);
+	symbolsTableMalloc(&functionsTable);
 	instructionListMalloc(&rootTree);
 	
 	yyparse();
