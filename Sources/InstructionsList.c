@@ -32,6 +32,11 @@ void instructionListFree(InstructionsList i){
 	free(i);
 }
 
+void instructionReAlloc(InstructionsList* i){
+	instructionFree(*i);
+	instructionListMalloc(i);
+}
+
 void instructionPushBack(InstructionsList i, char* c, int ind)
 {	
 	Instruction newI = instructionMalloc(c, ind);

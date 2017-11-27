@@ -48,6 +48,12 @@
 	InstructionsList Instruction;
 	Symbol Sym;
 
+	struct s_eval{
+		InstructionsList instructionEval;
+		bool constEval;
+		int constInt;
+	} Eval;
+	
 }
 
 %start programme
@@ -115,8 +121,8 @@
 %type<Instruction> while
 %type<Instruction> if
 %type<Instruction> else
-%type<Instruction> evaluation
-%type<Instruction> variable_incr
+%type<Eval> evaluation				//cas particulier permet de différentier les evaluations constantes ou non
+%type<Eval> variable_incr			// et de simplifier les expressions constantes ex : 3+4 -> 7
 %type<String>      number 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMPARATOR_OR
@@ -845,7 +851,7 @@ for :
 		instructionConcat($$,$5.instructionEval);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
 		instructionConcat($$,$10);
-		instructionConcat($$,$7.instructionEval);
+		instructionConcat($$,$7);
 		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 		labelCounter++;
@@ -944,51 +950,76 @@ evaluation :
 		printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 
 		$$ = $1;
-		PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
-		instructionConcat($$,$3);
-		PUSH_BACK($$,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
-		PUSH_BACK($$,1,"li $t0 0");	
-		PUSH_BACK($$,1,"j COMP_OR_%llu_FIN",labelCounter);
-		PUSH_BACK($$,1,"COMP_OR_%llu_RETURN_TRUE :",labelCounter);
-		PUSH_BACK($$,1,"li $t0 1");	
-		PUSH_BACK($$,1,"COMP_OR_%llu_FIN :",labelCounter);	
-		++labelCounter;
+		if($1.constEval && $3.constEval){
+			instructionReAlloc(&$$.instructionEval);
+			instructionListFree($3.instructionEval);
+			$$.constInt = $1.constInt || $1.constInt;
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
+		}else{
+			PUSH_BACK($$.instructionEval,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
+			instructionConcat($$.instructionEval,$3.instructionEval);
+			PUSH_BACK($$.instructionEval,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");	
+			PUSH_BACK($$.instructionEval,1,"j COMP_OR_%llu_FIN",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"COMP_OR_%llu_RETURN_TRUE :",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 1");	
+			PUSH_BACK($$.instructionEval,1,"COMP_OR_%llu_FIN :",labelCounter);	
+			++labelCounter;
+		}
 	}
 // ---1----------2--------------3------------------------------------ DONE
 	| evaluation COMPARATOR_AND evaluation {
 		printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 		
 		$$ = $1;
-		PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
-		instructionConcat($$,$3);
-		PUSH_BACK($$,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
-		PUSH_BACK($$,1,"li $t0 1");	
-		PUSH_BACK($$,1,"j COMP_AND_%llu_FIN",labelCounter);
-		PUSH_BACK($$,1,"COMP_AND_%llu_RETURN_FALSE :",labelCounter);
-		PUSH_BACK($$,1,"li $t0 0");	
-		PUSH_BACK($$,1,"COMP_AND_%llu_FIN :",labelCounter);
-		++labelCounter;	
+		if($1.constEval && $3.constEval){
+			instructionReAlloc(&$$.instructionEval);
+			instructionListFree($3.instructionEval);
+			$$.constInt = $1.constInt && $1.constInt;
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
+		}else{
+			PUSH_BACK($$.instructionEval,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
+			instructionConcat($$.instructionEval,$3.instructionEval);
+			PUSH_BACK($$.instructionEval,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
+			PUSH_BACK($$.instructionEval,1,"li $t0 1");	
+			PUSH_BACK($$.instructionEval,1,"j COMP_AND_%llu_FIN",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"COMP_AND_%llu_RETURN_FALSE :",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");	
+			PUSH_BACK($$.instructionEval,1,"COMP_AND_%llu_FIN :",labelCounter);
+			++labelCounter;	
+		}
 	}
 // ---1----------2-------------------3------------------------------- DONE 
 	| evaluation COMPARATOR_EQUALITY evaluation {
 		printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n");
 
 		$$ = $1;
-		PUSH_BACK($$,1,"move $s3 $t0");
-		instructionConcat($$,$3);
-		char inst[4];
-		if(!strcmp($2,"==")){
-			strcpy(inst,"beq");
-		}else if(!strcmp($2,"!=")){
-			strcpy(inst,"bne");
+		if($1.constEval && $3.constEval){
+			instructionReAlloc(&$$.instructionEval);
+			instructionListFree($3.instructionEval);
+			if(!strcmp($2,"==")){
+				$$.constInt = $1.constInt == $1.constInt;
+			}else if(!strcmp($2,"!=")){
+				$$.constInt = $1.constInt != $1.constInt;
+			}
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
+		}else{
+			PUSH_BACK($$.instructionEval,1,"move $s3 $t0");
+			instructionConcat($$.instructionEval,$3.instructionEval);
+			char inst[4];
+			if(!strcmp($2,"==")){
+				strcpy(inst,"beq");
+			}else if(!strcmp($2,"!=")){
+				strcpy(inst,"bne");
+			}
+			PUSH_BACK($$.instructionEval,1,"%s $s3 $t0 COMP_EQUALITY_%llu_RETURN_TRUE",inst,labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");
+			PUSH_BACK($$.instructionEval,1,"j COMP_EQUALITY_%llu_FIN",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"COMP_EQUALITY_%llu_RETURN_TRUE :",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 1");	
+			PUSH_BACK($$.instructionEval,1,"COMP_EQUALITY_%llu_FIN :",labelCounter);
+			++labelCounter;	
 		}
-		PUSH_BACK($$,1,"%s $s3 $t0 COMP_EQUALITY_%llu_RETURN_TRUE",inst,labelCounter);
-		PUSH_BACK($$,1,"li $t0 0");
-		PUSH_BACK($$,1,"j COMP_EQUALITY_%llu_FIN",labelCounter);
-		PUSH_BACK($$,1,"COMP_EQUALITY_%llu_RETURN_TRUE :",labelCounter);
-		PUSH_BACK($$,1,"li $t0 1");	
-		PUSH_BACK($$,1,"COMP_EQUALITY_%llu_FIN :",labelCounter);
-		++labelCounter;	
 	}
 // ---1----------2--------------------3------------------------------ DONE 
 	| evaluation COMPARATOR_SUPREMACY evaluation {
@@ -996,36 +1027,62 @@ evaluation :
 		char inst[4];
 
 		$$ = $1;
-		PUSH_BACK($$,1,"move $s2 $t0");
-		instructionConcat($$,$3);
-		if(!strcmp($2,"<")){
-			strcpy(inst,"blt");
-		}else if(!strcmp($2,"<=")){
-			strcpy(inst,"ble");
-		}else if(!strcmp($2,">")){
-			strcpy(inst,"bgt");
-		}else if(!strcmp($2,">=")){
-			strcpy(inst,"bge");
+		if($1.constEval && $3.constEval){
+			instructionReAlloc(&$$.instructionEval);
+			instructionListFree($3.instructionEval);
+			if(!strcmp($2,"<")){
+				$$.constInt = $1.constInt < $3.constInt;
+			}else if(!strcmp($2,"<=")){
+				$$.constInt = $1.constInt <= $3.constInt;
+			}else if(!strcmp($2,">")){
+				$$.constInt = $1.constInt > $3.constInt;
+			}else if(!strcmp($2,">=")){
+				$$.constInt = $1.constInt >= $3.constInt;
+			}
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
+		}else{
+			PUSH_BACK($$.instructionEval,1,"move $s2 $t0");
+			instructionConcat($$.instructionEval,$3.instructionEval);
+			if(!strcmp($2,"<")){
+				strcpy(inst,"blt");
+			}else if(!strcmp($2,"<=")){
+				strcpy(inst,"ble");
+			}else if(!strcmp($2,">")){
+				strcpy(inst,"bgt");
+			}else if(!strcmp($2,">=")){
+				strcpy(inst,"bge");
+			}
+			PUSH_BACK($$.instructionEval,1,"%s $s2 $t0 COMP_SUPREMACY_%llu_RETURN_TRUE",inst,labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");
+			PUSH_BACK($$.instructionEval,1,"j COMP_SUPREMACY_%llu_FIN",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"COMP_SUPREMACY_%llu_RETURN_TRUE :",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 1");	
+			PUSH_BACK($$.instructionEval,1,"COMP_SUPREMACY_%llu_FIN :",labelCounter);
+			++labelCounter;	
 		}
-		PUSH_BACK($$,1,"%s $s2 $t0 COMP_SUPREMACY_%llu_RETURN_TRUE",inst,labelCounter);
-		PUSH_BACK($$,1,"li $t0 0");
-		PUSH_BACK($$,1,"j COMP_SUPREMACY_%llu_FIN",labelCounter);
-		PUSH_BACK($$,1,"COMP_SUPREMACY_%llu_RETURN_TRUE :",labelCounter);
-		PUSH_BACK($$,1,"li $t0 1");	
-		PUSH_BACK($$,1,"COMP_SUPREMACY_%llu_FIN :",labelCounter);
-		++labelCounter;	
 	}
 // ---1----------2-----------------3--------------------------------- DONE
 	| evaluation OPERATOR_ADDITION evaluation {
 		printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 
 		$$ = $1;
-		PUSH_FORWARD($3,1,"move $s1 $t0");
-		instructionConcat($$,$3);
-		if($2[0] == '+'){
-			PUSH_BACK($$,1,"add $t0 $s1 $t0");
+		if($1.constEval && $3.constEval){
+			instructionReAlloc(&$$.instructionEval);
+			instructionListFree($3.instructionEval);
+			if($2[0] == '+'){
+				$$.constInt += $3.constInt;
+			}else{
+				$$.constInt -= $3.constInt;
+			}
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
 		}else{
-			PUSH_BACK($$,1,"sub $t0 $s1 $t0");
+			PUSH_FORWARD($3.instructionEval,1,"move $s1 $t0");
+			instructionConcat($$.instructionEval,$3.instructionEval);
+			if($2[0] == '+'){
+				PUSH_BACK($$.instructionEval,1,"add $t0 $s1 $t0");
+			}else{
+				PUSH_BACK($$.instructionEval,1,"sub $t0 $s1 $t0");
+			}
 		}
 	}
 // ---1----------2--------------3------------------------------------ DONE
@@ -1033,89 +1090,126 @@ evaluation :
 		printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 		
 		$$ = $1;
-		PUSH_FORWARD($3,1,"move $s0 $t0");
-		instructionConcat($$,$3);
-		if($2[0] == '*'){
-			PUSH_BACK($$,1,"mul $t0 $s0 $t0");
-		}else if($2[0] == '/') {
-			PUSH_BACK($$,1,"div $t0 $s0 $t0");
+		if($1.constEval && $3.constEval){
+			instructionReAlloc(&$$.instructionEval);
+			instructionListFree($3.instructionEval);
+			if($2[0] == '*'){
+				$$.constInt *= $3.constInt;
+			}else if($2[0] == '/') {
+				if($3.constInt == 0){
+					ERROR("Division par zero interdite");
+				}
+				$$.constInt /= $3.constInt;
+			}else{
+				if($3.constInt == 0){
+					ERROR("Modulo par zero interdite");
+				}
+				$$.constInt %= $3.constInt;
+			}
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
 		}else{
-			PUSH_BACK($$,1,"div $t1 $s0 $t0");
-			PUSH_BACK($$,1,"mul $t1 $t1 $t0");
-			PUSH_BACK($$,1,"sub $t0 $s0 $t1");
+			PUSH_FORWARD($3.instructionEval,1,"move $s0 $t0");
+			instructionConcat($$.instructionEval,$3.instructionEval);
+			if($2[0] == '*'){
+				PUSH_BACK($$.instructionEval,1,"mul $t0 $s0 $t0");
+			}else if($2[0] == '/') {
+				//TODO ajouter une vérification coté mips ?
+				PUSH_BACK($$.instructionEval,1,"div $t0 $s0 $t0");
+			}else{
+				//TODO ajouter une vérification coté mips ?
+				PUSH_BACK($$.instructionEval,1,"div $t1 $s0 $t0");
+				PUSH_BACK($$.instructionEval,1,"mul $t1 $t1 $t0");
+				PUSH_BACK($$.instructionEval,1,"sub $t0 $s0 $t1");
+			}			
 		}
 	}
 // ---1----2----------3---------------------------------------------- DONE
 	| LBRA evaluation RBRA {
 		printf("LBRA evaluation RBRA -> evaluation\n");
 		int i;
-
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"sub $sp $sp %d",4*9);
-		for(i=0 ; i<=3 ; ++i)
-		{
-			PUSH_BACK($$,1,"sw $s%d %d($sp)",i,i*4);
+		
+		if($2.constEval){
+			$$ = $2;
+		}else{
+			instructionListMalloc(&$$.instructionEval);
+			PUSH_BACK($$.instructionEval,1,"sub $sp $sp %d",4*9);
+			for(i=0 ; i<=3 ; ++i)
+			{
+				PUSH_BACK($$.instructionEval,1,"sw $s%d %d($sp)",i,i*4);
+			}
+			instructionIncr($2.instructionEval,1);
+			PUSH_FORWARD($2.instructionEval,1,"#(");
+			PUSH_BACK($2.instructionEval,1,"#)");
+			instructionConcat($$.instructionEval,$2.instructionEval);
+			for(i=0 ; i<=3 ; ++i)
+			{
+				PUSH_BACK($$.instructionEval,1,"lw $s%d %d($sp)",i,i*4);
+			}
+			PUSH_BACK($$.instructionEval,1,"add $sp $sp %d",4*9);
 		}
-		instructionIncr($2,1);
-		PUSH_FORWARD($2,1,"#(");
-		PUSH_BACK($2,1,"#)");
-		instructionConcat($$,$2);
-		for(i=0 ; i<=3 ; ++i)
-		{
-			PUSH_BACK($$,1,"lw $s%d %d($sp)",i,i*4);
-		}
-		PUSH_BACK($$,1,"add $sp $sp %d",4*9);
 	}
 // ---1------2----3----------4--------------------------------------- DONE
 	| PRINTI LBRA evaluation RBRA {
 		printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 		
 		$$ = $3;
-		PUSH_BACK($$,1,"move $a0 $t0");
-		PUSH_BACK($$,1,"li $v0 1");
-		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"li $t0 0");
+		PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
+		PUSH_BACK($$.instructionEval,1,"li $v0 1");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");
+		$$.constEval = false;
 	}
 // ---1-----2----3--------------------------------------------------- DONE
 	| SCANI LBRA RBRA {
 		printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 		
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"li $v0 5");
-		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"move $t0 $v0");
+		instructionListMalloc(&$$.instructionEval);
+		PUSH_BACK($$.instructionEval,1,"li $v0 5");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"move $t0 $v0");
+		$$.constEval = false;
 	}
 // ---1------2----3------4------------------------------------------- DONE
 	| PRINTF LBRA STRING RBRA {
 		printf("PRINTF LBRA STRING RBRA -> evaluation\n");
 
-		instructionListMalloc(&$$);
+		instructionListMalloc(&$$.instructionEval);
 
 		PUSH_BACK(rootTree,1,"string_%llu : .asciiz %s",variableCounter,$3);
-		PUSH_BACK($$,1,"la $a0 string_%llu",variableCounter++);
-		PUSH_BACK($$,1,"li $v0 4");
-		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"li $t0 0");
+		PUSH_BACK($$.instructionEval,1,"la $a0 string_%llu",variableCounter++);
+		PUSH_BACK($$.instructionEval,1,"li $v0 4");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");
+		$$.constEval = false;
 	}
 // ---1-----------------2-------------------------------------------- DONE
 	| OPERATOR_NEGATION evaluation {
 		printf("OPERATOR_NEGATION evaluation -> evaluation\n");
 		
 		$$ = $2;
-		PUSH_BACK($$,1,"beq $0 $t0 OPPE_NEG_%llu",labelCounter);
-		PUSH_BACK($$,1,"li $t0 0");
-		PUSH_BACK($$,1,"j OPPE_NEG_%llu_FIN",labelCounter);
-		PUSH_BACK($$,1,"OPPE_NEG_%llu :",labelCounter);
-		PUSH_BACK($$,1,"li $t0 1");
-		PUSH_BACK($$,1,"OPPE_NEG_%llu_FIN :",labelCounter);
-		++labelCounter;
+		if($$.constEval){
+			$$.constInt = !$$.constInt;
+			instructionReAlloc(&$$.instructionEval);
+			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
+		}else{
+			PUSH_BACK($$.instructionEval,1,"beq $0 $t0 OPPE_NEG_%llu",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");
+			PUSH_BACK($$.instructionEval,1,"j OPPE_NEG_%llu_FIN",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"OPPE_NEG_%llu :",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"li $t0 1");
+			PUSH_BACK($$.instructionEval,1,"OPPE_NEG_%llu_FIN :",labelCounter);
+			++labelCounter;		
+		}
 	}
 // ---1-------------------------------------------------------------- DONE
 	| number {
 		printf("number -> evaluation\n");
 		
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"li $t0 %s",$1);
+		instructionListMalloc(&$$.instructionEval);
+		PUSH_BACK($$.instructionEval,1,"li $t0 %s",$1);
+		$$.constEval = true;
+		$$.constInt = atoi($1);
+		
 	}
 // ---1-------------------------------------------------------------- DONE
 	| variable_incr	{
@@ -1128,8 +1222,9 @@ evaluation :
 		printf("variable -> variable_incr\n");
 
 		fprintf(stdout,"appel à la fonction %s NOT IMPLEMENT YET RETURN 0\n",$1);
-		instructionListMalloc(&$$);
-		PUSH_BACK($$,1,"$li $t0 0");
+		instructionListMalloc(&$$.instructionEval);
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");
+		$$.constEval = false;
 	}
 	;
 
@@ -1140,7 +1235,8 @@ variable_incr :
 	OPERATOR_INCREMENT variable	{
 		printf("OPERATOR_INCREMENT variable -> variable_incr\n");
 
-		instructionListMalloc(&$$);
+		instructionListMalloc(&$$.instructionEval);
+		$$.constEval = false;
 		Array* arr = (Array*)$2->data;
 		Unit* uni = (Unit*)$2->data;
 		ConstUnit* cons = (ConstUnit*)$2->data;
@@ -1149,28 +1245,28 @@ variable_incr :
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t0 %s",uni->mipsId);
+				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($1, "++")){
-					PUSH_BACK($$,1,"add $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
 				}else{
-					PUSH_BACK($$,1,"sub $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
+				PUSH_BACK($$.instructionEval,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
 				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
 				break;
 			case array :
-				$$ = arr->stepsToAcces;
-				PUSH_BACK($$,1,"lb $t0 0($s4)");
+				$$.instructionEval = arr->stepsToAcces;
+				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				if(!strcmp($1, "++")){
-					PUSH_BACK($$,1,"add $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
 				}else{
-					PUSH_BACK($$,1,"sub $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$,1,"sb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
 				
-				instructionEmpilerDepilerS4S5($$);
+				instructionEmpilerDepilerS4S5($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$2->type);
@@ -1180,7 +1276,8 @@ variable_incr :
 	| variable OPERATOR_INCREMENT {
 		printf("variable OPERATOR_INCREMENT -> variable_incr\n");
 		
-		instructionListMalloc(&$$);
+		instructionListMalloc(&$$.instructionEval);
+		$$.constEval = false;
 		Array* arr = (Array*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
@@ -1189,34 +1286,34 @@ variable_incr :
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t0 %s",uni->mipsId);
+				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($2, "++")){
-					PUSH_BACK($$,1,"add $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
 				}else{
-					PUSH_BACK($$,1,"sub $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
+				PUSH_BACK($$.instructionEval,1,"sw $t0 %s",uni->mipsId);
 				if(!strcmp($2, "++")){
-					PUSH_BACK($$,1,"sub $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
 				}else{
-					PUSH_BACK($$,1,"add $t0 $t0 1");
+					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
 				}
 				break;
 			case constUnit :
 				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
 				break;
 			case array :
-				$$ = arr->stepsToAcces;
-				PUSH_BACK($$,1,"lb $t0 0($s4)");
-				PUSH_BACK($$,1,"lb $t1 0($s4)");
+				$$.instructionEval = arr->stepsToAcces;
+				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");
 				if(!strcmp($2, "++")){
-					PUSH_BACK($$,1,"add $t1 $t1 1");
+					PUSH_BACK($$.instructionEval,1,"add $t1 $t1 1");
 				}else{
-					PUSH_BACK($$,1,"sub $t1 $t1 1");
+					PUSH_BACK($$.instructionEval,1,"sub $t1 $t1 1");
 				}
-				PUSH_BACK($$,1,"sb $t1 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
 				
-				instructionEmpilerDepilerS4S5($$);
+				instructionEmpilerDepilerS4S5($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1226,7 +1323,8 @@ variable_incr :
 	| variable {
 		printf("variable -> variable_incr\n");
 
-		instructionListMalloc(&$$);
+		instructionListMalloc(&$$.instructionEval);
+		$$.constEval = false;
 		Array* arr = (Array*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
@@ -1235,16 +1333,17 @@ variable_incr :
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
-				PUSH_BACK($$,1,"lw $t0 %s",uni->mipsId);
+				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				PUSH_BACK($$,1,"lw $t0 %s",cons->mipsId);
+				PUSH_BACK($$.instructionEval,1,"li $t0 %d",cons->value);
+				$$.constEval = true;
+				$$.constInt = cons->value;
 				break;
 			case array :
-				$$ = arr->stepsToAcces;
-				PUSH_BACK($$,1,"lb $t0 0($s4)");
-				
-				instructionEmpilerDepilerS4S5($$);
+				$$.instructionEval = arr->stepsToAcces;
+				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				instructionEmpilerDepilerS4S5($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);

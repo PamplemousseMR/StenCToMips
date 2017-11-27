@@ -16,6 +16,7 @@ typedef Instruction* InstructionsList;
 
 void instructionListMalloc(InstructionsList*);
 void instructionListFree(InstructionsList);
+void instructionRealloc(InstructionsList*);
 
 void instructionPushBack(InstructionsList, char*, int);
 void instructionPushForward(InstructionsList, char*, int);
