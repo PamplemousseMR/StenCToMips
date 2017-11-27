@@ -320,7 +320,7 @@ ligne :
 		printf("evaluation SEMI -> ligne\n");
 		
 		$$ = $1;
-		instructionConcat($$,$2);
+		instructionConcat($$,$2.instructionEval);
 	}
 	;
 
@@ -359,7 +359,7 @@ return :
 	RETURN evaluation {
 		printf("RETURN evaluation -> return\n");
 
-		$$ = $2;
+		$$ = $2.instructionEval;
 		PUSH_BACK($$,1,"lw $ra 0($sp)");
 		PUSH_BACK($$,1,"add $sp $sp 4");
 		PUSH_BACK($$,1,"jr $ra");
@@ -440,7 +440,7 @@ hooks :
 		printf("hooks LHOO evaluation RHOO -> hooks\n");
 		
 		$$ = $1;
-		instructionConcat($$,$3);
+		instructionConcat($$,$3.instructionEval);
 		PUSH_BACK($$,1,"lw $t1 0($s6)");
 		PUSH_BACK($$,1,"add $s6 $s6 4");
 		PUSH_BACK($$,1,"blt $t0 $0 OUTOFBOUND");
@@ -455,7 +455,7 @@ hooks :
 	| evaluation RHOO {
 		printf("evaluation RHOO -> hooks\n");
 		
-		$$ = $1;
+		$$ = $1.instructionEval;
 		PUSH_BACK($$,1,"lw $t1 0($s6)");
 		PUSH_BACK($$,1,"add $s6 $s6 4");
 		PUSH_BACK($$,1,"blt $t0 $0 OUTOFBOUND");
@@ -549,7 +549,7 @@ unit_init :
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
-		$$ = $3;
+		$$ = $3.instructionEval;
 		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
 		
 	}
@@ -653,7 +653,7 @@ hooks_init :
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
 		$$ = $1;
-		instructionConcat($$,$3);
+		instructionConcat($$,$3.instructionEval);
 		PUSH_BACK($$,1,"mul $s4 $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
 		PUSH_BACK($$,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
@@ -664,7 +664,7 @@ hooks_init :
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
-		$$ = $1;
+		$$ = $1.instructionEval;
 		PUSH_BACK($$,1,"move $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
 		PUSH_BACK($$,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
@@ -717,12 +717,12 @@ suite_suite_number :
 //__________________________________________________________________________________
 
 suite_number :
-// -1------2-----3--------------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
+// -1------------2-----3--------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
 	suite_number COMMA evaluation {
 		printf("number COMMA suite_number -> suite_number\n");
 
 		$$ = $1;
-		instructionConcat($$,$3);
+		instructionConcat($$,$3.instructionEval);
 		PUSH_BACK($$,1,"li $t1 4");
 		PUSH_BACK($$,1,"add $v0 $v0 $t1");
 		PUSH_BACK($$,1,"sw $t0 0($v0)");
@@ -731,7 +731,7 @@ suite_number :
 	| evaluation {
 		printf("number -> suite_number\n");
 
-		$$ = $1;
+		$$ = $1.instructionEval;
 		PUSH_BACK($$,1,"li $t1 4");
 		PUSH_BACK($$,1,"add $v0 $v0 $t1");
 		PUSH_BACK($$,1,"sw $t0 0($v0)");
@@ -752,7 +752,7 @@ affectation :
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				$$ = $3;
+				$$ = $3.instructionEval;
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				uni->init = true;
 				break;
@@ -761,7 +761,7 @@ affectation :
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
-				instructionConcat($$,$3);
+				instructionConcat($$,$3.instructionEval);
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
@@ -780,7 +780,7 @@ affectation :
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				$$ = $3;
+				$$ = $3.instructionEval;
 				if(uni->init == false){
 					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
 				}
@@ -805,7 +805,7 @@ affectation :
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
-				instructionConcat($$,$3);
+				instructionConcat($$,$3.instructionEval);
 				
 				PUSH_BACK($$,1,"lb $t1 0($s4)");
 				if(!strcmp($2,"+=")){
@@ -836,16 +836,16 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3-----------4----5----------6----7----------8----9----------10----11- DONE
+// -1---2----3------------------4----5----------6----7-----------------8----9----- DONE
 	FOR LBRA affectations_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
 		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
 		$$ = $3;	
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
-		instructionConcat($$,$5);
+		instructionConcat($$,$5.instructionEval);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
 		instructionConcat($$,$10);
-		instructionConcat($$,$7);
+		instructionConcat($$,$7.instructionEval);
 		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 		labelCounter++;
@@ -876,12 +876,12 @@ evaluations_serie :
 		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
 
 		$$ = $1;
-		instructionConcat($$,$3);
+		instructionConcat($$,$3.instructionEval);
 	}
 	| evaluation {
 		printf("evaluation -> evaluations_serie\n");
 
-		$$ = $1;
+		$$ = $1.instructionEval;
 	};
 
 //__________________________________________________________________________________
@@ -891,7 +891,7 @@ while :
 	WHILE LBRA evaluation RBRA step_begin ligne step_end {
 		printf("WHILE LBRA evaluation RBA ligne -> while\n");
 		
-		$$ = $3;
+		$$ = $3.instructionEval;
 		PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
 		instructionConcat($$,$6);
@@ -908,7 +908,7 @@ if :
 	IF LBRA evaluation RBRA step_begin ligne step_end else {
 		printf("IF LBRA evaluation RBRA ligne else -> if\n");
 		
-		$$ = $3;
+		$$ = $3.instructionEval;
 		PUSH_BACK($$,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
 		instructionConcat($$,$6);
 		PUSH_BACK($$,1,"j IF_COND_%llu_END",labelCounter);
