@@ -1,6 +1,6 @@
 %code requires {
-    #include "InstructionsList.h"
-    #include "SymbolsTable.h"
+	#include "InstructionsList.h"
+	#include "SymbolsTable.h"
 }
 
 %{
@@ -56,6 +56,10 @@
 		int constInt;
 	} Eval;
 	
+	struct s_line {
+		InstructionsList instructionLine;
+		bool willReturn;
+	} Line;
 }
 
 %start programme
@@ -97,8 +101,8 @@
 
 %type<Instruction> functions_serie
 %type<Instruction> function
-%type<Instruction> instructions_serie
-%type<Instruction> ligne
+%type<Line> instructions_serie
+%type<Line> ligne
 %type<Instruction> write_ligne_number
 %type<Instruction> return
 %type<Sym> 		   variable			//cas particulier renvoie le symbole de la table des symbole
@@ -119,8 +123,8 @@
 %type<Instruction> affectations_serie
 %type<Instruction> evaluations_serie
 %type<Instruction> while
-%type<Instruction> if
-%type<Instruction> else
+%type<Line> if
+%type<Line> else
 %type<Eval> evaluation				//cas particulier permet de différentier les evaluations constantes ou non
 %type<Eval> variable_incr			// et de simplifier les expressions constantes ex : 3+4 -> 7
 %type<String>      number 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
@@ -228,7 +232,10 @@ function :
 		//													en aillant un petit bool qui permet de s'avoir si la fonction main a été crée et empécher d'en faire deux :)
 		//													en mode function -> debut_fonction LBRA RBRA LEMB step_begin instructions_serie step_end REMB
 		//													& debut_fonction -> TYPE ID | TYPE MAIN
-		$$ = $6;
+		if(!$6.willReturn){
+			ERROR("La fonction %s n'a pas de retour",actualFunction->id);
+		}
+		$$ = $6.instructionLine;
 		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,1,"#---------- save for return ----------");
@@ -258,7 +265,8 @@ instructions_serie :
 		printf("ligne instructions_serie -> instructions_serie\n");
 		
 		$$ = $1;
-		instructionConcat($$,$2);
+		instructionConcat($$.instructionLine,$2.instructionLine);
+		$$.willReturn = $1.willReturn || $2.willReturn;
 	}
 // ------------------------------------------------------------------ DONE
 	| ligne {
@@ -273,59 +281,66 @@ ligne :
 	write_ligne_number for {
 		printf("for -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2);
+		$$.willReturn = false;
 	}
 // ---1-------------------------------------------------------------- DONE
 	| write_ligne_number while {
 		printf("while -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2);
+		$$.willReturn = false;
 	}
 // ---1-------------------------------------------------------------- DONE
 	| write_ligne_number if {
 		printf("if -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2.instructionLine);
+		$$.willReturn = $2.willReturn;
 	}
 // ---1----2----3------------------4--------------------------------- DONE
 	| LEMB step_begin instructions_serie step_end REMB {
 		printf("LEMB instructions_serie REMB -> ligne\n");
 		
 		$$ = $3;
-		instructionIncr($$,1);
-		PUSH_FORWARD($$,1,"#{");
-		PUSH_BACK($$,1,"#}");
+		instructionIncr($$.instructionLine,1);
+		PUSH_FORWARD($$.instructionLine,1,"#{");
+		PUSH_BACK($$.instructionLine,1,"#}");
 	}
 // ---1--------------2----------------------------------------------- DONE
 	| write_ligne_number initialisation SEMI {
 		printf("initialisation SEMI -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2);
+		$$.willReturn = false;
 	}
 // ---1-----------2-------------------------------------------------- DONE
 	| write_ligne_number affectation SEMI {
 		printf("affectation SEMI -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2);
+		$$.willReturn = false;
 	}
 // ---1------2-------------------------------------------------------
 	| write_ligne_number return SEMI {
 		printf("return SEMI -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2);
+		$$.willReturn = true;
 	}
 // ---1----------2--------------------------------------------------- DONE
 	| write_ligne_number evaluation SEMI {
 		printf("evaluation SEMI -> ligne\n");
 		
-		$$ = $1;
-		instructionConcat($$,$2.instructionEval);
+		$$.instructionLine = $1;
+		instructionConcat($$.instructionLine,$2.instructionEval);
+		$$.willReturn = false;
 	}
 	;
 
@@ -841,7 +856,7 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3------------------4----5----------6----7-----------------8----9----- DONE
+// -1---2----3------------------4----5----------6----7-----------------8----9----------10----11 DONE
 	FOR LBRA affectations_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
 		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
@@ -849,7 +864,7 @@ for :
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
 		instructionConcat($$,$5.instructionEval);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
-		instructionConcat($$,$10);
+		instructionConcat($$,$10.instructionLine);
 		instructionConcat($$,$7);
 		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
@@ -899,7 +914,7 @@ while :
 		$$ = $3.instructionEval;
 		PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
-		instructionConcat($$,$6);
+		instructionConcat($$,$6.instructionLine);
 		PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
 		labelCounter++;
@@ -913,31 +928,33 @@ if :
 	IF LBRA evaluation RBRA step_begin ligne step_end else {
 		printf("IF LBRA evaluation RBRA ligne else -> if\n");
 		
-		$$ = $3.instructionEval;
-		PUSH_BACK($$,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
-		instructionConcat($$,$6);
-		PUSH_BACK($$,1,"j IF_COND_%llu_END",labelCounter);
-		PUSH_BACK($$,1,"IF_COND_%llu_FALSE :",labelCounter);
-		instructionConcat($$,$8);
-		PUSH_BACK($$,1,"IF_COND_%llu_END :",labelCounter);
+		$$.instructionLine = $3.instructionEval;
+		PUSH_BACK($$.instructionLine,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
+		instructionConcat($$.instructionLine,$6.instructionLine);
+		PUSH_BACK($$.instructionLine,1,"j IF_COND_%llu_END",labelCounter);
+		PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_FALSE :",labelCounter);
+		instructionConcat($$.instructionLine,$8.instructionLine);
+		PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_END :",labelCounter);
 		labelCounter++;
-	}
-	;
-
-//__________________________________________________________________________________
-
-else :
-// -1----2----------3-----4------------------------------------------ DONE
-	ELSE step_begin ligne step_end {
-		printf("ELSE ligne -> else\n");
+		$$.willReturn = $6.willReturn && $8.willReturn;
+	} 
+	; 
+ 
+//__________________________________________________________________________________ 
+ 
+else : 
+// -1----2----------3-----4------------------------------------------ DONE 
+	ELSE step_begin ligne step_end { 
+		printf("ELSE ligne -> else\n"); 
 		
 		$$ = $3;
-	}
-// ------------------------------------------------------------------ DONE
-	| {
-		instructionListMalloc(&$$);
-	}
-	;
+	} 
+// ------------------------------------------------------------------ DONE 
+	| { 
+		instructionListMalloc(&$$.instructionLine);
+		$$.willReturn = false;
+	} 
+	; 	
 
 //=================================================================================================
 //				Le retour des valeurs
