@@ -1,6 +1,6 @@
 %code requires {
     #include "InstructionsList.h"
-    #include "SymbolsTable.h"
+    #include "SymbolsTable.h"   
 }
 
 %{
@@ -53,7 +53,24 @@
 		bool constEval;
 		int constInt;
 	} Eval;
-	
+
+	struct s_arrayAffect{
+		InstructionsList instructionArray;
+		bool empty;
+		int nbValue;
+	} ArrayAffect;
+
+	struct s_hooksInit{
+		InstructionsList instructionHooks;
+		bool constHooksInit;
+		int nbValue;
+	} HooksInit;
+
+	struct s_number{
+		InstructionsList instructionNumber;
+		int nbValue;
+	} Number;
+
 }
 
 %start programme
@@ -108,12 +125,12 @@
 %type<Instruction> stencils_init_serie
 %type<Instruction> variable_init
 %type<Instruction> stencil_init
-%type<Instruction> suite_suite_number
-%type<Instruction> suite_number
+%type<Number> number_serie_serie
+%type<Number> number_serie
 %type<Instruction> unit_init
 %type<Instruction> array_init
-%type<Instruction> array_affect
-%type<Instruction> hooks_init
+%type<ArrayAffect> array_affect	
+%type<HooksInit>   hooks_init
 %type<Instruction> affectation
 %type<Instruction> for
 %type<Instruction> affectations_serie
@@ -125,6 +142,7 @@
 %type<Eval> variable_incr			// et de simplifier les expressions constantes ex : 3+4 -> 7
 %type<String>      number 			//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
+%left COMMA
 %left COMPARATOR_OR
 %left COMPARATOR_AND
 %left COMPARATOR_EQUALITY
@@ -574,11 +592,11 @@ unit_init :
 
 
 array_init :	
-// ---1--2----------------------------------------------------------- DONE
+// -1----------------2----------3------------------------------------ DONE
 	array_init_begin hooks_init array_affect {
 		printf("array_init_begin hooks_init array_affect -> array_init\n");
 		
-		$$ = $2;
+		$$ = $2.instructionHooks;
 		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
 		PUSH_BACK($$,1,"li $v0 9");
 		PUSH_BACK($$,1,"syscall");
@@ -610,32 +628,47 @@ array_init :
 		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
 		labelCounter+=2;
 
-		instructionConcat($$,$3);
+		if(!$2.constHooksInit && !$3.empty){
+			ERROR("impossible d'affecte des valeurs a un tableaux de taille inconnue");
+		}else if(!$3.empty && $2.nbValue > $3.nbValue){
+			ERROR("pas assez de valeur dans l'initialisation");
+		}else if(!$3.empty && $2.nbValue < $3.nbValue){
+			ERROR("trop de valeur dans l'initialisation");
+		}
+
+		instructionConcat($$,$3.instructionArray);
 	}
 	;
 
 //__________________________________________________________________________________
 
 array_affect :
-// ------------------------------------------------------------------ DONE TODO verifier si la taille correspond au taille du tableaux
-	EQUALS LEMB suite_suite_number REMB {
-		printf("EQUALS LEMB suite_suite_number REMB -> array_affect\n");
+// ------------------------------------------------------------------ DONE
+	EQUALS LEMB number_serie_serie REMB {
+		printf("EQUALS LEMB number_serie_serie REMB -> array_affect\n");
 
-		PUSH_FORWARD($3,1,"sub $v0 $v0 $t1");
-		PUSH_FORWARD($3,1,"li $t1 4");
-		$$ = $3;
+		PUSH_FORWARD($3.instructionNumber,1,"sub $v0 $v0 $t1");
+		PUSH_FORWARD($3.instructionNumber,1,"li $t1 4");
+
+		$$.nbValue = $3.nbValue;
+		$$.instructionArray = $3.instructionNumber;
+		$$.empty = false;
 	}
-// ------------------------------------------------------------------ DONE TODO verifier si la taille correspond au taille du tableaux
-	| EQUALS LEMB suite_number REMB {
-		printf("EQUALS LEMB suite_number REMB -> array_affect\n");
+// ------------------------------------------------------------------  DONE
+	| EQUALS LEMB number_serie REMB {
+		printf("EQUALS LEMB number_serie REMB -> array_affect\n");
 
-		PUSH_FORWARD($3,1,"sub $v0 $v0 $t1");
-		PUSH_FORWARD($3,1,"li $t1 4");
-		$$ = $3;
+		PUSH_FORWARD($3.instructionNumber,1,"sub $v0 $v0 $t1");
+		PUSH_FORWARD($3.instructionNumber,1,"li $t1 4");
+
+		$$.nbValue = $3.nbValue;
+		$$.instructionArray = $3.instructionNumber;
+		$$.empty = false;
 	}
 // ------------------------------------------------------------------ DONE
 	| {
-		instructionListMalloc(&$$);
+		instructionListMalloc(&$$.instructionArray);
+		$$.empty = true;
 	}
 	;
 
@@ -658,11 +691,16 @@ hooks_init :
 	hooks_init LHOO evaluation RHOO  {
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
-		$$ = $1;
-		instructionConcat($$,$3.instructionEval);
-		PUSH_BACK($$,1,"mul $s4 $s4 $t0"); //la taille du tableau
-		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		$$.instructionHooks = $1.instructionHooks;
+		if(!$3.constEval){
+			$$.constHooksInit = false;
+		}else{
+			$$.nbValue = $1.nbValue*$3.constInt;
+		}
+		instructionConcat($$.instructionHooks,$3.instructionEval);
+		PUSH_BACK($$.instructionHooks,1,"mul $s4 $s4 $t0"); //la taille du tableau
+		PUSH_BACK($$.instructionHooks,1,"li $t1 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$.instructionHooks,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}
@@ -670,10 +708,14 @@ hooks_init :
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
-		$$ = $1.instructionEval;
-		PUSH_BACK($$,1,"move $s4 $t0"); //la taille du tableau
-		PUSH_BACK($$,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		$$.instructionHooks = $1.instructionEval;
+		if($1.constEval){
+			$$.constHooksInit = true;
+			$$.nbValue = $1.constInt;
+		}
+		PUSH_BACK($$.instructionHooks,1,"move $s4 $t0"); //la taille du tableau
+		PUSH_BACK($$.instructionHooks,1,"li $t1 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$.instructionHooks,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 	}
@@ -683,19 +725,19 @@ hooks_init :
 
 stencil_init :
 // -1-------2------3----4------------------5-------------------------
-	stencil EQUALS LEMB suite_suite_number REMB {
+	/*stencil EQUALS LEMB number_serie_serie REMB {
 		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
-	}
+	}*/
 // ---1-------2------3----4------------5-----------------------------
-	| stencil EQUALS LEMB suite_number REMB {
+	/*| stencil EQUALS LEMB number_serie REMB {
 		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
-	}
+	}*/
 // ---1--------------------------------------------------------------
-	| stencil {
+	/*|*/ stencil {
 		printf("stencil -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
@@ -704,43 +746,54 @@ stencil_init :
 
 //__________________________________________________________________________________
 
-suite_suite_number :
-// -1----2------------3----4-----5----------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
-	LEMB suite_number REMB COMMA suite_suite_number {
-		printf("LEMB suite_number REMB COMMA suite_suite_number -> suite_suite_number\n");
+number_serie_serie :
+// -1----2------------3----4-----5----------------------------------- DONE
+	 number_serie_serie COMMA number_serie_serie {
+		printf("LEMB number_serie REMB COMMA number_serie_serie -> number_serie_serie\n");
 
-		$$ = $2;
-		instructionConcat($$,$5);
+		$$.nbValue = $1.nbValue + $3.nbValue;
+		$$.instructionNumber = $1.instructionNumber;
+		instructionConcat($$.instructionNumber,$3.instructionNumber);
 	}
-// ---1----2------------3-------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
-	| LEMB suite_number REMB {
-		printf("LEMB suite_number REMB -> suite_suite_number\n");
+// ---1----2------------3-------------------------------------------- DONE
+	| LEMB number_serie REMB {
+		printf("LEMB number_serie REMB -> number_serie_serie\n");
 
-		$$ = $2;
+		$$.nbValue = $2.nbValue;
+		$$.instructionNumber = $2.instructionNumber;
+	}
+// ---1----2------------3-------------------------------------------- DONE
+	| LEMB number_serie_serie REMB{
+		printf("LEMB number_serie REMB -> number_serie_serie\n");
+
+		$$.nbValue = $2.nbValue;
+		$$.instructionNumber = $2.instructionNumber;
 	}
 	;
 
 //__________________________________________________________________________________
 
-suite_number :
-// -1------------2-----3--------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
-	suite_number COMMA evaluation {
-		printf("number COMMA suite_number -> suite_number\n");
+number_serie :
+// -1------------2-----3--------------------------------------------- DONE
+	number_serie COMMA evaluation {
+		printf("number COMMA number_serie -> number_serie\n");
 
-		$$ = $1;
-		instructionConcat($$,$3.instructionEval);
-		PUSH_BACK($$,1,"li $t1 4");
-		PUSH_BACK($$,1,"add $v0 $v0 $t1");
-		PUSH_BACK($$,1,"sw $t0 0($v0)");
+		$$.nbValue = $1.nbValue+1;
+
+		instructionConcat($$.instructionNumber,$3.instructionEval);
+		PUSH_BACK($$.instructionNumber,1,"li $t1 4");
+		PUSH_BACK($$.instructionNumber,1,"add $v0 $v0 $t1");
+		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($v0)");
 	}
-// ---1-------------------------------------------------------------- DONE TODO verifier si la taille correspond au taille du tableaux
+// ---1-------------------------------------------------------------- DONE
 	| evaluation {
-		printf("number -> suite_number\n");
+		printf("number -> number_serie\n");
 
-		$$ = $1.instructionEval;
-		PUSH_BACK($$,1,"li $t1 4");
-		PUSH_BACK($$,1,"add $v0 $v0 $t1");
-		PUSH_BACK($$,1,"sw $t0 0($v0)");
+		$$.nbValue = 1;
+
+		PUSH_BACK($$.instructionNumber,1,"li $t1 4");
+		PUSH_BACK($$.instructionNumber,1,"add $v0 $v0 $t1");
+		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($v0)");
 	}
 	;
 
