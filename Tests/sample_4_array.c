@@ -77,6 +77,8 @@ int main(){
 	
 	int test[2][3] = {2,2,2,2,tabb[0][2]+5,2};  // 5 2
 
+	return 0;
+
 	//must throws error
 	// tab = 10;
 	// tabb[1] = 5;

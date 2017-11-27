@@ -241,7 +241,7 @@ functions_serie :
 //__________________________________________________________________________________
 	
 function : 	
-// -1--------------2----3----4----5----------6------------------7--------8 
+// -1--------------2----3----4----5----------6------------------7--------8 DONE TODO args
 	function_begin LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
 		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function\n");
 		
@@ -269,7 +269,7 @@ function :
 //__________________________________________________________________________________
 
 function_begin :
-// -1--------------------------------
+// -1----2----------------------------------------------------------- DONE
 	TYPE ID {
 		if( symbolsTableGetSymbolById(functionsTable,$2) != NULL){
 			ERROR("La fonction '%s' existe déja",$2);
@@ -337,7 +337,7 @@ ligne :
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = false;
 	}
-// ---1-----------2-------------------------------------------------- DONE
+// ---1------------------2-----------3------------------------------- DONE
 	| write_ligne_number affectation SEMI {
 		printf("affectation SEMI -> ligne\n");
 		
@@ -345,7 +345,7 @@ ligne :
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = false;
 	}
-// ---1------2-------------------------------------------------------
+// ---1------------------2------3------------------------------------ DONE
 	| write_ligne_number return SEMI {
 		printf("return SEMI -> ligne\n");
 		
@@ -353,7 +353,7 @@ ligne :
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = true;
 	}
-// ---1----------2--------------------------------------------------- DONE
+// ---1------------------2----------3-------------------------------- DONE
 	| write_ligne_number evaluation SEMI {
 		printf("evaluation SEMI -> ligne\n");
 		
@@ -394,7 +394,7 @@ write_ligne_number :
 //__________________________________________________________________________________
 
 return :
-// -1------2---------------------------------------------------------
+// -1------2--------------------------------------------------------- DONE
 	RETURN evaluation {
 		printf("RETURN evaluation -> return\n");
 
@@ -1294,7 +1294,7 @@ evaluation :
 		
 		$$ = $1;
 	}
-// ---1--2----3------------------------------------------------------ TEST appel fonction 
+// ---1--2----3------------------------------------------------------ DONE TODO args
 	| ID LBRA RBRA {
 		printf("variable -> variable_incr\n");
 	
