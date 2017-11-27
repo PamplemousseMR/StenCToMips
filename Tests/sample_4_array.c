@@ -6,6 +6,8 @@ int main(){
 	int i;
 	int j;
 
+	int tabfgh[4] = {{{1},{2}},{{3},{2}}};
+
 	int tab[3] = {1,2,3};
 	for(i=0 ; i<3 ;++i)
 	{
@@ -72,6 +74,8 @@ int main(){
 		printf("\n");
 	}
 	printf("\n");
+	
+	int test[2][3] = {2,2,2,2,tabb[0][2]+5,2};  // 5 2
 
 	//must throws error
 	// tab = 10;
