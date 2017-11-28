@@ -10,6 +10,7 @@ static inline Instruction instructionMalloc(char* c, int ind)
 	strncpy(i->code,c,INSTRUCTION_SIZE);
 	i->indentation = ind;
 	i->next = NULL;
+
 	return i;
 }
 

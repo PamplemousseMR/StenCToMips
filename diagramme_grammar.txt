@@ -2,6 +2,8 @@ stencils
 operateur stencil
 affectation de stencil
 macro
+switch case default
+const
 & et | binaire
 géré les break et continue
 commentaire /* */ marche pas

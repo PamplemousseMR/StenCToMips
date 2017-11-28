@@ -5,6 +5,10 @@ int main()
 	int ii,jj;
 	int test;
 
+	const int je = 5;
+	printi(je);
+	printf("\n");
+
 	ii = 1;
 	jj = 2;
 
@@ -22,7 +26,7 @@ int main()
 	printf("\n");
 
 	{
-		int b = 5+8*1+(4*3+(5-6));
+		int b = 5+8*1+(4*a+(5-6));
 		printf("b = ");
 		printi(b);
 		printf("\n");

@@ -30,6 +30,7 @@
 
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
+	bool constanteZone = false;
 
 	int yylex();
 	void yyerror(char const*);
@@ -48,6 +49,8 @@
 %union {
 
 	char* String;
+	int Integer;
+	bool Boolean;
 	InstructionsList Instruction;
 	Symbol Sym;
 
@@ -78,8 +81,6 @@
 		InstructionsList instructionLine;
 		bool willReturn;
 	} Line;
-
-	int Integer;
 	
 }
 
@@ -98,6 +99,7 @@
 %token<String>		STENCIL
 %token<String>		TYPE
 %token<String>		ID
+%token<String>		CONST
 %token<String>		NUMBER
 %token<String>		OPERATOR_NEGATION
 %token<String>		OPERATOR_INCREMENT
@@ -130,6 +132,7 @@
 %type<Number>		hooks
 %type<Instruction>	initialisation
 %type<Instruction>	variables_init_serie
+%type<Boolean>		const
 %type<Instruction>	stencils_init_serie
 %type<Instruction>	variable_init
 %type<Instruction>	stencil_init
@@ -592,18 +595,35 @@ hooks :
 //=================================================================================================
 
 initialisation :
-// -1----2----------------------------------------------------------- DONE
-	TYPE variables_init_serie {
+// -1-----2----3----------------------------------------------------- DONE
+	const TYPE variables_init_serie {
 		printf("TYPE variables_init_serie -> initialisation\n");
 		
-		$$ = $2;
-		free($1);
+		constanteZone = false;
+		$$ = $3;
+		free($2);
 	}
 // ---1-------2------------------------------------------------------ DONE
 	| STENCIL stencils_init_serie {
 		printf("STENCIL stencils_init_serie -> initialisation\n");
 		
 		$$ = $2;
+	}
+	;
+
+//__________________________________________________________________________________
+
+const :
+// -1---------------------------------------------------------------- DONE
+	CONST {
+		printf("const -> CONST\n");
+
+		constanteZone = true;
+		$$ = true;
+	}
+// ------------------------------------------------------------------ DONE
+	| {
+		$$ = false;
 	}
 	;
 
@@ -654,7 +674,7 @@ variable_init :
 	unit_init {
 		$$ = $1;
 	}
-// ---1-------------------------------------------------------------- DONE
+// ---1-------------------------------------------------------------- DONE TODO const
 	| array_init {
 		$$ = $1;
 		
@@ -673,9 +693,17 @@ unit_init :
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
-		$$ = $3.instructionEval;
-		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
+		if(!constanteZone){
+			Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
+			$$ = $3.instructionEval;
+			PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
+		}else{
+			if(!$3.constEval){
+				ERROR("La variable '%s' a besoin d'une valeur constante !",$1); 	
+			}
+			symbolsTableAddSymbolConstUnit(symbolsTable,$1,$3.constInt);
+			instructionListMalloc(&$$);
+		}
 		
 		free($1);
 		free($2);
@@ -687,8 +715,12 @@ unit_init :
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
-		symbolsTableAddSymbolUnit(symbolsTable,$1,false);
-		instructionListMalloc(&$$);
+		if(!constanteZone){
+			symbolsTableAddSymbolUnit(symbolsTable,$1,false);
+			instructionListMalloc(&$$);
+		}else{
+			ERROR("La variable '%s' est declaré constante mais n'est pas initialisé",$1); 	
+		}
 
 		free($1);
 	}
@@ -1176,6 +1208,7 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_OR_%llu_FIN :",labelCounter);	
 			++labelCounter;
 		}
+		$$.constEval = $1.constEval && $3.constEval; 
 
 		free($2);
 	}
@@ -1200,6 +1233,7 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_AND_%llu_FIN :",labelCounter);
 			++labelCounter;	
 		}
+		$$.constEval = $1.constEval && $3.constEval; 
 
 		free($2);
 	}
@@ -1234,6 +1268,7 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_EQUALITY_%llu_FIN :",labelCounter);
 			++labelCounter;	
 		}
+		$$.constEval = $1.constEval && $3.constEval; 
 
 		free($2);
 	}
@@ -1276,6 +1311,7 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_SUPREMACY_%llu_FIN :",labelCounter);
 			++labelCounter;	
 		}
+		$$.constEval = $1.constEval && $3.constEval; 
 
 		free($2);
 	}
@@ -1302,6 +1338,7 @@ evaluation :
 				PUSH_BACK($$.instructionEval,1,"sub $t0 $s1 $t0");
 			}
 		}
+		$$.constEval = $1.constEval && $3.constEval; 
 
 		free($2);
 	}
@@ -1342,7 +1379,7 @@ evaluation :
 				PUSH_BACK($$.instructionEval,1,"sub $t0 $s0 $t1");
 			}			
 		}
-
+		$$.constEval = $1.constEval && $3.constEval; 
 		free($2);
 	}
 // ---1----2----------3---------------------------------------------- DONE
@@ -1644,7 +1681,7 @@ int main(void)
 {
 	if(atexit(clearProg) != 0)
 	{
-	perror("[main] Probleme lors de l'enregistrement ");
+		perror("[main] Probleme lors de l'enregistrement ");
 		exit(EXIT_FAILURE);
 	}
 
