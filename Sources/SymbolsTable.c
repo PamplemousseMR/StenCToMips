@@ -64,8 +64,6 @@ Symbol symbolsTableAddSymbolConstUnitBis(Symbol n, char* c, int i){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		ConstUnit* data = (ConstUnit*)malloc(sizeof(ConstUnit));
 		strncpy(data->id,c,BUFFER_SIZE);
-		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_ConstUnit",variableCounter++);
-		snprintf(temp,BUFFER_SIZE,"%s: .word %d",data->mipsId,i);
 		instructionPushBack(rootTree,temp,1);
 		data->value = i;
 		result->type = constUnit;

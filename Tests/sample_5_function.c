@@ -13,5 +13,6 @@ int pow(){
 int main(){
 	int temp = pow();
 	printi(temp);
+	printf("\n");
 	return 0;
 }
