@@ -99,7 +99,7 @@ void instructionListPrintFILE(InstructionsList i,FILE * f)
 	}
 }
 
-void instructionEmpilerDepilerS4S5(InstructionsList l){
+void instructionStackUnstackS4S5S6(InstructionsList l){
 	instructionPushForward(l,"sw $s6 8($sp)",1);
 	instructionPushForward(l,"sw $s5 4($sp)",1);
 	instructionPushForward(l,"sw $s4 0($sp)",1);

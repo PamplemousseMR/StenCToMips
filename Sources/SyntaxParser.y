@@ -241,20 +241,14 @@ functions_serie :
 //__________________________________________________________________________________
 	
 function : 	
-// -1--------------2----3----4----5----------6------------------7--------8 DONE TODO args
-	function_begin LBRA RBRA LEMB step_begin instructions_serie step_end REMB {
+// -1--------------2----3------------------------4----5----6----------7- DONE TODO args
+	function_begin LBRA argument_init_serie_init RBRA LEMB step_begin instructions_serie step_end REMB {
 		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function\n");
 		
-		// instructionListMalloc(&$$);
-		// symbolsTableAddFunction(symbolsTable,$2);		la création après c'est po viable 
-		//													en vrai j'aimerais bien que function et main soit la meme règle
-		//													en aillant un petit bool qui permet de s'avoir si la fonction main a été crée et empécher d'en faire deux :)
-		//													en mode function -> debut_fonction LBRA RBRA LEMB step_begin instructions_serie step_end REMB
-		//													& debut_fonction -> TYPE ID | TYPE MAIN
-		if(!$6.willReturn){
+		if(!$7.willReturn){
 			ERROR("La fonction %s n'a pas de retour",actualFunction->id);
 		}
-		$$ = $6.instructionLine;
+		$$ = $7.instructionLine;
 		PUSH_FORWARD($$,1,"sw $ra 0($sp)");
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,1,"#---------- save for return ----------");
@@ -265,6 +259,48 @@ function :
 		PUSH_BACK($$,1,"jr $ra");
 	}
 	;
+
+//__________________________________________________________________________________
+
+argument_init_serie_init :
+// -1-------------2-----3--------------------------------------------
+    argument_init COMMA argument_init_serie_init {
+        printf("argument_init COMMA argument_init_serie_init -> argument_init_serie_init\n");
+    }
+// ---1--------------------------------------------------------------
+    | argument_init {
+        printf("argument_init -> argument_init_serie_init\n");
+    }
+    ;
+
+//__________________________________________________________________________________
+
+argument_init :
+// -1----2-----------------------------------------------------------
+    TYPE ID {
+        printf("TYPE ID -> argument_init\n");
+    }
+// ---1----2--3------------------------------------------------------
+    | TYPE ID argument_init_hooks {
+        printf("TYPE ID argument_init_hooks-> argument_init\n");
+    }
+// ------------------------------------------------------------------
+    | {
+    }
+    ;
+
+//__________________________________________________________________________________
+
+argument_init_hooks :
+// -1----2----3------------------------------------------------------
+    LHOO RHOO argument_init_hooks {
+        printf("LHOO RHOO argument_init_hooks -> argument_init_hooks\n");
+    }
+// ---1----2---------------------------------------------------------
+    | LHOO RHOO {
+        printf("LHOO RHOO -> argument_init_hooks\n");
+    }
+    ;
 
 //__________________________________________________________________________________
 
@@ -296,7 +332,7 @@ instructions_serie :
 //__________________________________________________________________________________
 
 ligne :
-// -1-----------2---------------------------------------------------- DONE
+// -1------------------2--------------------------------------------- DONE
 	write_ligne_number for {
 		printf("for -> ligne\n");
 		
@@ -304,7 +340,7 @@ ligne :
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = false;
 	}
-// ---1-------------------------------------------------------------- DONE
+// ---1------------------2------------------------------------------- DONE
 	| write_ligne_number while {
 		printf("while -> ligne\n");
 		
@@ -312,7 +348,7 @@ ligne :
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = false;
 	}
-// ---1-------------------------------------------------------------- DONE
+// ---1------------------2------------------------------------------- DONE
 	| write_ligne_number if {
 		printf("if -> ligne\n");
 		
@@ -329,7 +365,7 @@ ligne :
 		PUSH_FORWARD($$.instructionLine,1,"#{");
 		PUSH_BACK($$.instructionLine,1,"#}");
 	}
-// ---1--------------2----------------------------------------------- DONE
+// ---1------------------2--------------3---------------------------- DONE
 	| write_ligne_number initialisation SEMI {
 		printf("initialisation SEMI -> ligne\n");
 		
@@ -665,7 +701,7 @@ array_init :
 //__________________________________________________________________________________
 
 array_affect :
-// ------------------------------------------------------------------ DONE
+// -1------2----3------------------4--------------------------------- DONE
 	EQUALS LEMB number_serie_serie REMB {
 		printf("EQUALS LEMB number_serie_serie REMB -> array_affect\n");
 
@@ -676,7 +712,7 @@ array_affect :
 		$$.instructionArray = $3.instructionNumber;
 		$$.empty = false;
 	}
-// ------------------------------------------------------------------DONE
+// ---1------2----3------------4-------------------------------------DONE
 	| EQUALS LEMB number_serie REMB {
 		printf("EQUALS LEMB number_serie REMB -> array_affect\n");
 
@@ -769,8 +805,8 @@ stencil_init :
 //__________________________________________________________________________________
 
 number_serie_serie :
-// -1----2------------3----4-----5----------------------------------- DONE
-	 number_serie_serie COMMA number_serie_serie {
+// -1------------------2-----3--------------------------------------- DONE
+	number_serie_serie COMMA number_serie_serie {
 		printf("LEMB number_serie REMB COMMA number_serie_serie -> number_serie_serie\n");
 
 		$$.nbValue = $1.nbValue + $3.nbValue;
@@ -846,7 +882,7 @@ affectation :
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				instructionEmpilerDepilerS4S5($$);
+				instructionStackUnstackS4S5S6($$);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -904,7 +940,7 @@ affectation :
 				}
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				instructionEmpilerDepilerS4S5($$);
+				instructionStackUnstackS4S5S6($$);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -952,7 +988,7 @@ affectations_serie :
 //__________________________________________________________________________________
 
 evaluations_serie :
-// -1------------------2-----3--------------------------------------- DONE
+// -1-----------------2-----3---------------------------------------- DONE
 	evaluations_serie COMMA evaluation{
 		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
 
@@ -1352,7 +1388,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
 				
-				instructionEmpilerDepilerS4S5($$.instructionEval);
+				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$2->type);
@@ -1399,7 +1435,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
 				
-				instructionEmpilerDepilerS4S5($$.instructionEval);
+				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1429,7 +1465,7 @@ variable_incr :
 			case array :
 				$$.instructionEval = arr->stepsToAcces;
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
-				instructionEmpilerDepilerS4S5($$.instructionEval);
+				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
