@@ -4,7 +4,7 @@ CCFORCEDFLAGS = -I Sources/ -c -o
 CCFLAGS = -O3
 BUILD = Build
 OBJS = $(BUILD)/SyntaxParser.o $(BUILD)/LexicalParser.o $(BUILD)/SymbolsTable.o $(BUILD)/InstructionsList.o
-GCC = gcc 
+GCC = gcc -g
 
 $(EXEC) : $(BUILD) $(OBJS)
 	gcc $(CCFLAGS) $(OBJS) -ly -ll -o $@ 

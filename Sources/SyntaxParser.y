@@ -33,6 +33,7 @@
 
 	int yylex();
 	void yyerror(char const*);
+	void yylex_destroy();
 
 	FILE* outputFile;
 	SymbolsTable symbolsTable;
@@ -77,6 +78,8 @@
 		InstructionsList instructionLine;
 		bool willReturn;
 	} Line;
+
+	int Integer;
 	
 }
 
@@ -145,7 +148,7 @@
 %type<Line>			else
 %type<Eval>			evaluation				//cas particulier permet de différentier les evaluations constantes ou non
 %type<Eval>			variable_incr			// et de simplifier les expressions constantes ex : 3+4 ->7
-%type<String>		number					//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
+%type<Integer>	 		number					//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMMA
 %left COMPARATOR_OR
@@ -218,7 +221,11 @@ preprocessor_instruction :
 		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
 			ERROR("La variable '%s' existe deja !",$2); 	
 		}
-		symbolsTableAddSymbolConstUnit(symbolsTable,$2,atoi($3));
+		symbolsTableAddSymbolConstUnit(symbolsTable,$2,$3);
+
+		free($1);
+		free($2);
+		free($4);
 	}
 	;
 
@@ -257,6 +264,11 @@ function :
 		PUSH_BACK($$,1,"lw $ra 0($sp)");
 		PUSH_BACK($$,1,"add $sp $sp 4");
 		PUSH_BACK($$,1,"jr $ra");
+
+		free($2);
+		free($4);
+		free($5);
+		free($9);
 	}
 	;
 
@@ -311,6 +323,9 @@ function_begin :
 			ERROR("La fonction '%s' existe déja",$2);
 		}
 		actualFunction = symbolsTableAddFunction(functionsTable,$2)->data;
+
+		free($1);
+		free($2);
 	}
 //__________________________________________________________________________________
 
@@ -356,7 +371,7 @@ ligne :
 		instructionConcat($$.instructionLine,$2.instructionLine);
 		$$.willReturn = $2.willReturn;
 	}
-// ---1----2----3------------------4--------------------------------- DONE
+// ---1----2----------3------------------4--------5------------------ DONE
 	| LEMB step_begin instructions_serie step_end REMB {
 		printf("LEMB instructions_serie REMB -> ligne\n");
 		
@@ -364,6 +379,9 @@ ligne :
 		instructionIncr($$.instructionLine,1);
 		PUSH_FORWARD($$.instructionLine,1,"#{");
 		PUSH_BACK($$.instructionLine,1,"#}");
+
+		free($1);
+		free($5);
 	}
 // ---1------------------2--------------3---------------------------- DONE
 	| write_ligne_number initialisation SEMI {
@@ -372,6 +390,8 @@ ligne :
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = false;
+
+		free($3);
 	}
 // ---1------------------2-----------3------------------------------- DONE
 	| write_ligne_number affectation SEMI {
@@ -380,6 +400,8 @@ ligne :
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = false;
+
+		free($3);
 	}
 // ---1------------------2------3------------------------------------ DONE
 	| write_ligne_number return SEMI {
@@ -388,6 +410,8 @@ ligne :
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
 		$$.willReturn = true;
+
+		free($3);
 	}
 // ---1------------------2----------3-------------------------------- DONE
 	| write_ligne_number evaluation SEMI {
@@ -396,6 +420,8 @@ ligne :
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2.instructionEval);
 		$$.willReturn = false;
+
+		free($3);
 	}
 	;
 
@@ -438,6 +464,8 @@ return :
 		PUSH_BACK($$,1,"lw $ra 0($sp)");
 		PUSH_BACK($$,1,"add $sp $sp 4");
 		PUSH_BACK($$,1,"jr $ra");
+
+		free($1);
 	}
 	;
 
@@ -473,6 +501,8 @@ variable :
 				ERROR("Symbole inatendu '%s'",$1);
 		}
 		$$ = s;
+
+		free($1);
 	}
 // ---1--2----3------------------------------------------------------ DONE
 	| ID LHOO hooks{
@@ -509,6 +539,10 @@ variable :
 				ERROR("Symbole inatendu '%s'",$1);
 		}
 		$$ = s;
+
+
+		free($1);
+		free($2);
 	}
 	;
 
@@ -530,7 +564,9 @@ hooks :
 		PUSH_BACK($$.instructionNumber,1,"add $s5 $s5 4");
 		PUSH_BACK($$.instructionNumber,1,"mul $t1 $t1 $t0");
 		PUSH_BACK($$.instructionNumber,1,"add $s4 $s4 $t1");	
-		//vérifier longeur !
+		
+		free($2);
+		free($4);
 	}
 // ---1----------2--------------------------------------------------- DONE
 	| evaluation RHOO {
@@ -546,6 +582,8 @@ hooks :
 		PUSH_BACK($$.instructionNumber,1,"add $s5 $s5 4");
 		PUSH_BACK($$.instructionNumber,1,"mul $t1 $t1 $t0");
 		PUSH_BACK($$.instructionNumber,1,"add $s4 $s4 $t1");	
+
+		free($2);
 	}
 	;
 
@@ -559,6 +597,7 @@ initialisation :
 		printf("TYPE variables_init_serie -> initialisation\n");
 		
 		$$ = $2;
+		free($1);
 	}
 // ---1-------2------------------------------------------------------ DONE
 	| STENCIL stencils_init_serie {
@@ -577,6 +616,8 @@ variables_init_serie :
 		
 		$$ = $1;
 		instructionConcat($$,$3);
+
+		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
 	| variable_init {
@@ -595,6 +636,8 @@ stencils_init_serie :
 		
 		$$ = $1;
 		instructionConcat($$,$3);
+
+		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
 	| stencil_init {
@@ -634,6 +677,8 @@ unit_init :
 		$$ = $3.instructionEval;
 		PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
 		
+		free($1);
+		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
 	| ID {
@@ -644,6 +689,8 @@ unit_init :
 		}
 		symbolsTableAddSymbolUnit(symbolsTable,$1,false);
 		instructionListMalloc(&$$);
+
+		free($1);
 	}
 	
 //__________________________________________________________________________________
@@ -711,6 +758,10 @@ array_affect :
 		$$.nbValue = $3.nbValue;
 		$$.instructionArray = $3.instructionNumber;
 		$$.empty = false;
+
+		free($1);
+		free($2);
+		free($4);
 	}
 // ---1------2----3------------4-------------------------------------DONE
 	| EQUALS LEMB number_serie REMB {
@@ -722,6 +773,10 @@ array_affect :
 		$$.nbValue = $3.nbValue;
 		$$.instructionArray = $3.instructionNumber;
 		$$.empty = false;
+
+		free($1);
+		free($2);
+		free($4);
 	}
 // ------------------------------------------------------------------ DONE
 	| {
@@ -739,6 +794,9 @@ array_init_begin :
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		actualArrayInit = symbolsTableAddArray(symbolsTable,$1)->data;
+
+		free($1);
+		free($2);
 	}
 	;
 	
@@ -761,6 +819,9 @@ hooks_init :
 		PUSH_BACK($$.instructionHooksInit,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
+
+		free($2);
+		free($4);
 	}
 // ---1----------2--------------------------------------------------- DONE
 	| evaluation RHOO {
@@ -776,6 +837,8 @@ hooks_init :
 		PUSH_BACK($$.instructionHooksInit,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
+
+		free($2);
 	}
 	;
 
@@ -812,6 +875,8 @@ number_serie_serie :
 		$$.nbValue = $1.nbValue + $3.nbValue;
 		$$.instructionNumber = $1.instructionNumber;
 		instructionConcat($$.instructionNumber,$3.instructionNumber);
+
+		free($2);
 	}
 // ---1----2------------3-------------------------------------------- DONE
 	| LEMB number_serie REMB {
@@ -819,13 +884,19 @@ number_serie_serie :
 
 		$$.nbValue = $2.nbValue;
 		$$.instructionNumber = $2.instructionNumber;
+
+		free($1);
+		free($3);
 	}
-// ---1----2------------3-------------------------------------------- DONE
+// ---1----2------------------3-------------------------------------- DONE
 	| LEMB number_serie_serie REMB{
 		printf("LEMB number_serie REMB -> number_serie_serie\n");
 
 		$$.nbValue = $2.nbValue;
 		$$.instructionNumber = $2.instructionNumber;
+
+		free($1);
+		free($3);
 	}
 	;
 
@@ -842,6 +913,8 @@ number_serie :
 		PUSH_BACK($$.instructionNumber,1,"li $t1 4");
 		PUSH_BACK($$.instructionNumber,1,"add $v0 $v0 $t1");
 		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($v0)");
+
+		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
 	| evaluation {
@@ -887,6 +960,8 @@ affectation :
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
 		}
+
+		free($2);
 	}
 // ---1--------2------3---------------------------------------------- DONE
 	| variable AFFECT evaluation {
@@ -945,6 +1020,8 @@ affectation :
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
 		}
+
+		free($2);
 	}
 	;
 
@@ -966,6 +1043,12 @@ for :
 		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 		labelCounter++;
+
+		free($1);
+		free($2);
+		free($4);
+		free($6);
+		free($8);
 	}
 	;
 
@@ -978,6 +1061,8 @@ affectations_serie :
 
 		$$ = $1;
 		instructionConcat($$,$3);
+
+		free($2);
 	}
 	| affectation {
 		printf("affectation -> affectations_serie\n");
@@ -994,6 +1079,8 @@ evaluations_serie :
 
 		$$ = $1;
 		instructionConcat($$,$3.instructionEval);
+
+		free($2);
 	}
 	| evaluation {
 		printf("evaluation -> evaluations_serie\n");
@@ -1015,6 +1102,10 @@ while :
 		PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
 		PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
 		labelCounter++;
+
+		free($1);
+		free($2);
+		free($4);
 	}
 	;
 
@@ -1034,6 +1125,10 @@ if :
 		PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_END :",labelCounter);
 		labelCounter++;
 		$$.willReturn = $6.willReturn && $8.willReturn;
+
+		free($1);
+		free($2);
+		free($4);
 	} 
 	; 
  
@@ -1045,6 +1140,8 @@ else :
 		printf("ELSE ligne -> else\n"); 
 		
 		$$ = $3;
+
+		free($1);
 	} 
 // ------------------------------------------------------------------ DONE 
 	| { 
@@ -1079,6 +1176,8 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_OR_%llu_FIN :",labelCounter);	
 			++labelCounter;
 		}
+
+		free($2);
 	}
 // ---1----------2--------------3------------------------------------ DONE
 	| evaluation COMPARATOR_AND evaluation {
@@ -1101,6 +1200,8 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_AND_%llu_FIN :",labelCounter);
 			++labelCounter;	
 		}
+
+		free($2);
 	}
 // ---1----------2-------------------3------------------------------- DONE 
 	| evaluation COMPARATOR_EQUALITY evaluation {
@@ -1133,6 +1234,8 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_EQUALITY_%llu_FIN :",labelCounter);
 			++labelCounter;	
 		}
+
+		free($2);
 	}
 // ---1----------2--------------------3------------------------------ DONE 
 	| evaluation COMPARATOR_SUPREMACY evaluation {
@@ -1173,6 +1276,8 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"COMP_SUPREMACY_%llu_FIN :",labelCounter);
 			++labelCounter;	
 		}
+
+		free($2);
 	}
 // ---1----------2-----------------3--------------------------------- DONE
 	| evaluation OPERATOR_ADDITION evaluation {
@@ -1197,6 +1302,8 @@ evaluation :
 				PUSH_BACK($$.instructionEval,1,"sub $t0 $s1 $t0");
 			}
 		}
+
+		free($2);
 	}
 // ---1----------2--------------3------------------------------------ DONE
 	| evaluation OPERATOR_MULTI evaluation {
@@ -1235,6 +1342,8 @@ evaluation :
 				PUSH_BACK($$.instructionEval,1,"sub $t0 $s0 $t1");
 			}			
 		}
+
+		free($2);
 	}
 // ---1----2----------3---------------------------------------------- DONE
 	| LBRA evaluation RBRA {
@@ -1260,6 +1369,9 @@ evaluation :
 			}
 			PUSH_BACK($$.instructionEval,1,"add $sp $sp %d",4*9);
 		}
+
+		free($1);
+		free($3);
 	}
 // ---1------2----3----------4--------------------------------------- DONE
 	| PRINTI LBRA evaluation RBRA {
@@ -1271,6 +1383,10 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"syscall");
 		PUSH_BACK($$.instructionEval,1,"li $t0 0");
 		$$.constEval = false;
+
+		free($1);
+		free($2);
+		free($4);
 	}
 // ---1-----2----3--------------------------------------------------- DONE
 	| SCANI LBRA RBRA {
@@ -1281,6 +1397,10 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"syscall");
 		PUSH_BACK($$.instructionEval,1,"move $t0 $v0");
 		$$.constEval = false;
+
+		free($1);
+		free($2);
+		free($3);
 	}
 // ---1------2----3------4------------------------------------------- DONE
 	| PRINTF LBRA STRING RBRA {
@@ -1294,6 +1414,11 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"syscall");
 		PUSH_BACK($$.instructionEval,1,"li $t0 0");
 		$$.constEval = false;
+
+		free($1);
+		free($2);
+		free($3);
+		free($4);
 	}
 // ---1-----------------2-------------------------------------------- DONE
 	| OPERATOR_NEGATION evaluation {
@@ -1313,16 +1438,17 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"OPPE_NEG_%llu_FIN :",labelCounter);
 			++labelCounter;		
 		}
+
+		free($1);
 	}
 // ---1-------------------------------------------------------------- DONE
 	| number {
 		printf("number -> evaluation\n");
 		
 		instructionListMalloc(&$$.instructionEval);
-		PUSH_BACK($$.instructionEval,1,"li $t0 %s",$1);
+		PUSH_BACK($$.instructionEval,1,"li $t0 %d",$1);
 		$$.constEval = true;
-		$$.constInt = atoi($1);
-		
+		$$.constInt = $1;
 	}
 // ---1-------------------------------------------------------------- DONE
 	| variable_incr	{
@@ -1347,6 +1473,10 @@ evaluation :
 		//COPIE stackInstructions
 		PUSH_BACK($$.instructionEval,1,"jal %s",fun->mipsId);
 		//COPIE unStackInstructions
+
+		free($1);
+		free($2);
+		free($3);
 	}
 	;
 
@@ -1393,6 +1523,8 @@ variable_incr :
 			default :
 				ERROR("Symbole inatendu '%u'",$2->type);
 		}
+
+		free($1);
 	}
 // ---1--------2----------------------------------------------------- DONE
 	| variable OPERATOR_INCREMENT {
@@ -1440,6 +1572,8 @@ variable_incr :
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
 		}
+
+		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
 	| variable {
@@ -1479,12 +1613,18 @@ number :
 // -1---------------------------------------------------------------- DONE
 	NUMBER {
 		printf("NUMBER -> number\n");
-		sprintf($$,"%s",$1);
+		$$ = atoi($1);
+
+		free($1);
 	}
 // ---1-----------------2-------------------------------------------- DONE
 	| OPERATOR_ADDITION NUMBER {
 		printf("OPERATOR_ADDITION NUMBER -> number\n");
-		sprintf($$,"%s%s",$1,$2);
+		
+		if($1[0] == '-')
+			$$ = -atoi($2);
+		free($1);
+		free($2);
 	}
 	;
 
@@ -1496,6 +1636,8 @@ void clearProg()
 	if(symbolsTable!=NULL)symbolsTableFree(symbolsTable);
 	if(functionsTable!=NULL)symbolsTableFree(functionsTable);
 	if(rootTree!=NULL)instructionListFree(rootTree);
+
+	yylex_destroy();
 }
 
 int main(void)
