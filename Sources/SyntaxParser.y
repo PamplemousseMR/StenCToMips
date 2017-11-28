@@ -674,7 +674,7 @@ variable_init :
 	unit_init {
 		$$ = $1;
 	}
-// ---1-------------------------------------------------------------- DONE TODO const
+// ---1-------------------------------------------------------------- DONE 
 	| array_init {
 		$$ = $1;
 		
@@ -766,7 +766,9 @@ array_init :
 		labelCounter+=2;
 
 		if(!$2.constHooksInit && !$3.empty){
-			ERROR("impossible d'affecte des valeurs au tableau : taille dynamique");
+			ERROR("impossible d'affecte des valeurs au tableau de taille dynamique");
+		}else if(!$3.empty && constanteZone){
+			ERROR("impossible de faire des tableaux constant TODO ?");
 		}else if(!$3.empty && $2.nbValue > $3.nbValue){
 			ERROR("pas assez de valeur dans l'initialisation");
 		}else if(!$3.empty && $2.nbValue < $3.nbValue){
