@@ -767,12 +767,14 @@ array_init :
 
 		if(!$2.constHooksInit && !$3.empty){
 			ERROR("impossible d'affecte des valeurs au tableau de taille dynamique");
-		}else if(!$3.empty && constanteZone){
-			ERROR("impossible de faire des tableaux constant TODO ?");
+		}else if($3.empty && constanteZone){
+			ERROR("Le tableau est declaré constant mais n'est pas initialisé"); 	
 		}else if(!$3.empty && $2.nbValue > $3.nbValue){
 			ERROR("pas assez de valeur dans l'initialisation");
 		}else if(!$3.empty && $2.nbValue < $3.nbValue){
 			ERROR("trop de valeur dans l'initialisation");
+		}else if(!$3.empty && constanteZone){
+			actualArrayInit->constant = true;	
 		}
 
 		instructionConcat($$,$3.instructionArray);
@@ -985,6 +987,10 @@ affectation :
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
+				if(arr->constant){
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+				}
+
 				instructionConcat($$,$3.instructionEval);
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
@@ -1031,6 +1037,9 @@ affectation :
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
+				if(arr->constant){
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+				}
 				instructionConcat($$,$3.instructionEval);
 				
 				PUSH_BACK($$,1,"lb $t1 0($s4)");
@@ -1548,6 +1557,9 @@ variable_incr :
 				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
 				break;
 			case array :
+				if(arr->constant){
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+				}
 				$$.instructionEval = arr->stepsToAcces;
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				if(!strcmp($1, "++")){
@@ -1596,6 +1608,9 @@ variable_incr :
 				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
 				break;
 			case array :
+				if(arr->constant){
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+				}
 				$$.instructionEval = arr->stepsToAcces;
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");

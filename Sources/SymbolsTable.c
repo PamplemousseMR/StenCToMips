@@ -91,6 +91,7 @@ Symbol symbolsTableAddArrayBis(Symbol n, char* c){
 		instructionPushBack(rootTree,temp,1);
 		data->nbDimension = 0;
 		data->stepsToAcces = NULL;
+		data->constant = false;
 		result->type = array;
 		result->data = (void*)data;
 		result->next = NULL;

@@ -6,7 +6,7 @@ int main(){
 	int i;
 	int j;
 
-	int tabfgh[4] = {{{1},{2}},{{3},{2}}};
+	const int tabfgh[4] = {{{1},{2}},{{3},{2}}};
 
 	int tab[3] = {1,2,3};
 	for(i=0 ; i<3 ;++i)

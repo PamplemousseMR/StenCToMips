@@ -23,6 +23,7 @@ typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
 	int nbDimension;
+	bool constant;
 	InstructionsList stepsToAcces;
 }Array;
 
