@@ -34,7 +34,7 @@ void instructionListFree(InstructionsList i){
 }
 
 void instructionReAlloc(InstructionsList* i){
-	instructionFree(*i);
+	instructionListFree(*i);
 	instructionListMalloc(i);
 }
 

@@ -678,6 +678,7 @@ unit_init :
 				ERROR("La variable '%s' a besoin d'une valeur constante !",$1); 	
 			}
 			symbolsTableAddSymbolConstUnit(symbolsTable,$1,$3.constInt);
+			instructionListFree($3.instructionEval);
 			instructionListMalloc(&$$);
 		}
 		
@@ -1383,6 +1384,7 @@ evaluation :
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
+
 			instructionListFree($3.instructionEval);
 			if($2[0] == '*'){
 				$$.constInt *= $3.constInt;
