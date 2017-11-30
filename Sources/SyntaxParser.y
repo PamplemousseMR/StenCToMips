@@ -151,7 +151,7 @@
 %type<Line>			else
 %type<Eval>			evaluation				//cas particulier permet de différentier les evaluations constantes ou non
 %type<Eval>			variable_incr			// et de simplifier les expressions constantes ex : 3+4 ->7
-%type<Integer>	 		number					//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
+%type<Integer>	 	number					//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
 %left COMMA
 %left COMPARATOR_OR
@@ -614,6 +614,8 @@ const :
 
 		constanteZone = true;
 		$$ = true;
+
+		free($1);
 	}
 // ------------------------------------------------------------------ DONE
 	| {
@@ -938,31 +940,50 @@ stencils_init_serie :
 //__________________________________________________________________________________
 
 stencil_init :
-// -1-------2------3----4------------------5-------------------------
+// -1--2----3------4-----5------6----7------8----9-------------------
 	ID LEMB NUMBER COMMA NUMBER REMB EQUALS LEMB number_serie_serie REMB {
 		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
 
+		free($1);
 		free($2);
 		free($3);
+		free($4);
 		free($5);
+		free($6);
+		free($7);
+		free($8);
+		free($10);
 	}
-// ---1-------2------3----4------------5-----------------------------
+// ---1--2----3------4-----5------6----7------8----9-----------------
 	| ID LEMB NUMBER COMMA NUMBER REMB EQUALS LEMB number_serie REMB {
 		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
 
+		free($1);
 		free($2);
 		free($3);
+		free($4);
 		free($5);
+		free($6);
+		free($7);
+		free($8);
+		free($10);
 	}
-// ---1--------------------------------------------------------------
+// ---1--2----3------4-----5------6----------------------------------
 	| ID LEMB NUMBER COMMA NUMBER REMB {
 		printf("stencil -> stencil_init\n");
 		
 		instructionListMalloc(&$$);
+
+		free($1);
+		free($2);
+		free($3);
+		free($4);
+		free($5);
+		free($6);
 	}
 	;
 
