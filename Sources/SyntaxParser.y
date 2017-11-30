@@ -476,14 +476,6 @@ return :
 //				Les variables
 //=================================================================================================
 
-stencil :
-// -1--2----3------4-----5------6------------------------------------
-	ID LEMB NUMBER COMMA NUMBER REMB {
-		printf("ID LEMB NUMBER COMA NUMBER REMB -> stencil\n");
-	}
-
-//__________________________________________________________________________________
-
 variable :
 // -1---------------------------------------------------------------- DONE
 	ID {
@@ -591,7 +583,7 @@ hooks :
 	;
 
 //=================================================================================================
-//				Les initialisations de variables et stencil
+//				Les initialisations de variables
 //=================================================================================================
 
 initialisation :
@@ -608,6 +600,8 @@ initialisation :
 		printf("STENCIL stencils_init_serie -> initialisation\n");
 		
 		$$ = $2;
+
+		free($1);
 	}
 	;
 
@@ -646,26 +640,6 @@ variables_init_serie :
 		$$ = $1;
 	}
 	;
-
-//__________________________________________________________________________________
-
-stencils_init_serie :
-// -1------------2-----3--------------------------------------------- DONE
-	stencil_init COMMA stencils_init_serie {
-		printf("stencil_init COMA stencils_init_serie -> stencils_init_serie\n");
-		
-		$$ = $1;
-		instructionConcat($$,$3);
-
-		free($2);
-	}
-// ---1-------------------------------------------------------------- DONE
-	| stencil_init {
-		printf("stencil_init -> stencils_init_serie\n");
-		
-		$$ = $1;
-	}
-	;	
 
 //__________________________________________________________________________________ 
 
@@ -726,7 +700,6 @@ unit_init :
 	}
 	
 //__________________________________________________________________________________
-
 
 array_init :	
 // -1----------------2----------3------------------------------------ DONE
@@ -880,29 +853,6 @@ hooks_init :
 
 //__________________________________________________________________________________
 
-stencil_init :
-// -1-------2------3----4------------------5-------------------------
-	/*stencil EQUALS LEMB number_serie_serie REMB {
-		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
-		
-		instructionListMalloc(&$$);
-	}*/
-// ---1-------2------3----4------------5-----------------------------
-	/*| stencil EQUALS LEMB number_serie REMB {
-		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
-		
-		instructionListMalloc(&$$);
-	}*/
-// ---1--------------------------------------------------------------
-	/*|*/ stencil {
-		printf("stencil -> stencil_init\n");
-		
-		instructionListMalloc(&$$);
-	}
-	;
-
-//__________________________________________________________________________________
-
 number_serie_serie :
 // -1------------------2-----3--------------------------------------- DONE
 	number_serie_serie COMMA number_serie_serie {
@@ -961,6 +911,58 @@ number_serie :
 		PUSH_BACK($$.instructionNumber,1,"li $t1 4");
 		PUSH_BACK($$.instructionNumber,1,"add $v0 $v0 $t1");
 		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($v0)");
+	}
+	;
+
+//=================================================================================================
+//				Les initialisations de stencil
+//=================================================================================================
+
+stencils_init_serie :
+// -1------------2-----3--------------------------------------------- DONE
+	stencil_init COMMA stencils_init_serie {
+		printf("stencil_init COMA stencils_init_serie -> stencils_init_serie\n");
+		
+		$$ = $1;
+		instructionConcat($$,$3);
+
+		free($2);
+	}
+// ---1-------------------------------------------------------------- DONE
+	| stencil_init {
+		printf("stencil_init -> stencils_init_serie\n");
+		
+		$$ = $1;
+	}
+	;	
+//__________________________________________________________________________________
+
+stencil_init :
+// -1-------2------3----4------------------5-------------------------
+	ID LEMB NUMBER COMMA NUMBER REMB EQUALS LEMB number_serie_serie REMB {
+		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
+		
+		instructionListMalloc(&$$);
+
+		free($2);
+		free($3);
+		free($5);
+	}
+// ---1-------2------3----4------------5-----------------------------
+	| ID LEMB NUMBER COMMA NUMBER REMB EQUALS LEMB number_serie REMB {
+		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
+		
+		instructionListMalloc(&$$);
+
+		free($2);
+		free($3);
+		free($5);
+	}
+// ---1--------------------------------------------------------------
+	| ID LEMB NUMBER COMMA NUMBER REMB {
+		printf("stencil -> stencil_init\n");
+		
+		instructionListMalloc(&$$);
 	}
 	;
 
