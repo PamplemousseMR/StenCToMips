@@ -44,6 +44,18 @@
 	Array* actualArrayInit;
 	Function* actualFunction;
 	bool mainFound = false;
+
+	int powYacc(int a, int b)
+	{
+	  if(b<0)      
+        return 1 / powYacc (a,-b);
+      else if(b==0)
+        return 1;
+      else if(b==1)
+        return a;
+      else
+        return a*powYacc(a,b-1);
+	}
 %}
 
 %union {
@@ -133,14 +145,14 @@
 %type<Instruction>	initialisation
 %type<Instruction>	variables_init_serie
 %type<Boolean>		const
-%type<Instruction>	stencils_init_serie
 %type<Instruction>	variable_init
-%type<Instruction>	stencil_init
 %type<Number>		number_serie_serie
 %type<Number>		number_serie
 %type<Instruction>	unit_init
 %type<Instruction>	array_init
 %type<ArrayAffect>	array_affect	
+%type<Instruction>  stencils_init_serie
+%type<Instruction>  stencil_init
 %type<HooksInit>	hooks_init
 %type<Instruction>	affectation
 %type<Instruction>	for
@@ -222,7 +234,11 @@ preprocessor_instruction :
 		printf("DEFINE ID number ENDLINE -> preprocessor_instruction\n");
 		
 		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
-			ERROR("La variable '%s' existe deja !",$2); 	
+			free($1);
+			free($4);
+			ERROR("La variable '%s' existe deja !",$2); 
+			free($2);
+			exit(EXIT_FAILURE);	
 		}
 		symbolsTableAddSymbolConstUnit(symbolsTable,$2,$3);
 
@@ -256,6 +272,10 @@ function :
 		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function\n");
 		
 		if(!$7.willReturn){
+			free($2);
+			free($4);
+			free($5);
+			free($9);
 			ERROR("La fonction %s n'a pas de retour",actualFunction->id);
 		}
 		$$ = $7.instructionLine;
@@ -323,7 +343,10 @@ function_begin :
 // -1----2----------------------------------------------------------- DONE
 	TYPE ID {
 		if( symbolsTableGetSymbolById(functionsTable,$2) != NULL){
+			free($1);
 			ERROR("La fonction '%s' existe déja",$2);
+			free($2);
+			exit(EXIT_FAILURE);
 		}
 		actualFunction = symbolsTableAddFunction(functionsTable,$2)->data;
 
@@ -484,6 +507,8 @@ variable :
 		Symbol s;
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
 			ERROR("La variable '%s' n'existe pas !",$1); 
+			free($1);
+			exit(EXIT_FAILURE);
 		}
 		switch(s->type){
 			case unit :
@@ -491,9 +516,14 @@ variable :
 				break;
 			case array :
 				ERROR("La variable '%s' est un tableau",$1);
+				free($1);
+				exit(EXIT_FAILURE);
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
+				free($1);
+				exit(EXIT_FAILURE);
+				break;
 		}
 		$$ = s;
 
@@ -505,19 +535,31 @@ variable :
 
 		Symbol s;
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
-			ERROR("La variable '%s' n'existe pas !",$1); 
+			free($2);
+			ERROR("La variable '%s' n'existe pas !",$1);
+			free($1);
+			exit(EXIT_FAILURE); 
 		}
 		Array* arr = (Array*)s->data;
 		switch(s->type){
 			case unit :
 			case constUnit : 
-				ERROR("La variable '%s' n'est pas un tableau",$1);				
+				free($2);
+				ERROR("La variable '%s' n'est pas un tableau",$1);
+				free($1);
+				exit(EXIT_FAILURE);				
 				break;
 			case array :
 				if($3.nbValue > arr->nbDimension){
-					ERROR("trop de dimmension pour le tableau '%s'",$1);				
+					free($2);
+					ERROR("trop de dimmension pour le tableau '%s'",$1);
+					free($1);
+					exit(EXIT_FAILURE);				
 				}else if($3.nbValue < arr->nbDimension){
-					ERROR("pas assez de dimmension pour le tableau '%s'",$1);				
+					free($2);
+					ERROR("pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $3.nbValue, arr->nbDimension);
+					free($1);
+					exit(EXIT_FAILURE);				
 				}
 				instructionListMalloc(&(arr->stepsToAcces));
 				
@@ -531,7 +573,11 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
 				break;
 			default :
+				free($2);
 				ERROR("Symbole inatendu '%s'",$1);
+				free($1);
+				exit(EXIT_FAILURE);
+				break;
 		}
 		$$ = s;
 
@@ -589,19 +635,19 @@ hooks :
 initialisation :
 // -1-----2----3----------------------------------------------------- DONE
 	const TYPE variables_init_serie {
-		printf("TYPE variables_init_serie -> initialisation\n");
+		printf("const TYPE variables_init_serie -> initialisation\n");
 		
 		constanteZone = false;
 		$$ = $3;
 		free($2);
 	}
-// ---1-------2------------------------------------------------------ DONE
-	| STENCIL stencils_init_serie {
-		printf("STENCIL stencils_init_serie -> initialisation\n");
+// ---1-----2-------3------------------------------------------------ DONE
+	| const STENCIL stencils_init_serie {
+		printf("const STENCIL stencils_init_serie -> initialisation\n");
 		
-		$$ = $2;
-
-		free($1);
+		constanteZone = false;
+		$$ = $3;
+		free($2);
 	}
 	;
 
@@ -667,7 +713,10 @@ unit_init :
 		printf("ID EQUALS evaluation -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 	
+			free($2);
+			ERROR("La variable '%s' existe deja !",$1); 
+			free($1);
+			exit(EXIT_FAILURE);	
 		}
 		if(!constanteZone){
 			Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
@@ -675,7 +724,10 @@ unit_init :
 			PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
 		}else{
 			if(!$3.constEval){
-				ERROR("La variable '%s' a besoin d'une valeur constante !",$1); 	
+				free($2);
+				ERROR("La variable '%s' a besoin d'une valeur constante !",$1); 
+				free($1);
+				exit(EXIT_FAILURE);	
 			}
 			symbolsTableAddSymbolConstUnit(symbolsTable,$1,$3.constInt);
 			instructionListFree($3.instructionEval);
@@ -691,12 +743,16 @@ unit_init :
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
+			free($1);
+			exit(EXIT_FAILURE);
 		}
 		if(!constanteZone){
 			symbolsTableAddSymbolUnit(symbolsTable,$1,false);
 			instructionListMalloc(&$$);
 		}else{
-			ERROR("La variable '%s' est declaré constante mais n'est pas initialisé",$1); 	
+			ERROR("La variable '%s' est declaré constante mais n'est pas initialisé",$1); 
+			free($1);
+			exit(EXIT_FAILURE);	
 		}
 
 		free($1);
@@ -742,13 +798,17 @@ array_init :
 		labelCounter+=2;
 
 		if(!$2.constHooksInit && !$3.empty){
-			ERROR("impossible d'affecte des valeurs au tableau de taille dynamique");
+			ERROR("impossible d'affecte des valeurs au tableau '%s' de taille dynamique",actualArrayInit->id);
+			exit(EXIT_FAILURE);
 		}else if($3.empty && constanteZone){
-			ERROR("Le tableau est declaré constant mais n'est pas initialisé"); 	
+			ERROR("Le tableau '%s' est declaré constant mais n'est pas initialisé",actualArrayInit->id); 
+			exit(EXIT_FAILURE);	
 		}else if(!$3.empty && $2.nbValue > $3.nbValue){
-			ERROR("pas assez de valeur dans l'initialisation");
+			ERROR("pas assez de valeur dans l'initialisation du tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $2.nbValue, $3.nbValue);
+			exit(EXIT_FAILURE);
 		}else if(!$3.empty && $2.nbValue < $3.nbValue){
-			ERROR("trop de valeur dans l'initialisation");
+			ERROR("trop de valeur dans l'initialisation du tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $2.nbValue, $3.nbValue);
+			exit(EXIT_FAILURE);
 		}else if(!$3.empty && constanteZone){
 			actualArrayInit->constant = true;	
 		}
@@ -803,7 +863,10 @@ array_init_begin :
 // -1--2------------------------------------------------------------- DONE
 	ID LHOO {
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 	
+			free($2);
+			ERROR("La variable '%s' existe deja !",$1); 
+			free($1);
+			exit(EXIT_FAILURE);	
 		}
 		actualArrayInit = symbolsTableAddArray(symbolsTable,$1)->data;
 
@@ -941,49 +1004,97 @@ stencils_init_serie :
 //__________________________________________________________________________________
 
 stencil_init :
-// -1--2----3------4-----5------6----7------8----9-------------------
-	ID LEMB NUMBER COMMA NUMBER REMB EQUALS LEMB number_serie_serie REMB {
-		printf("stencil EQUALS LEMB suite_suite_number REMB -> stencil_init\n");
+// -1--2----3----------4-----5----------6----7-----------------------
+	ID LEMB evaluation COMMA evaluation REMB array_affect {
+		printf("stencil EQUALS LEMB suite_number REMB stencil_affect -> stencil_init\n");
+
+		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
+			free($2);
+			free($4);
+			free($6);
+			ERROR("La variable '%s' existe deja !",$1); 
+			free($1);
+			exit(EXIT_FAILURE);	
+		}
+		Stencil* sten = (Stencil*)symbolsTableAddStencil(symbolsTable,$1);
+
+		if((!$3.constEval || !$5.constEval) && !$7.empty){
+			free($2);
+			free($4);
+			free($6);
+			ERROR("impossible d'affecte des valeurs au stencil '%s' de taille dynamique",$1);
+			free($1);
+			exit(EXIT_FAILURE);
+		}else if($7.empty && constanteZone){
+			free($2);
+			free($4);
+			free($6);
+			ERROR("Le stencil '%s' est declaré constant mais n'est pas initialisé",$1); 
+			free($1);
+			exit(EXIT_FAILURE);	
+		}else if(!$7.empty && $3.constEval && $5.constEval && 
+					powYacc( ($3.constInt*2+1), $5.constInt ) > $7.nbValue 
+				)
+		{
+			free($1);
+			free($2);
+			free($4);
+			free($6);
+			ERROR("pas assez de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), ($5.constInt*2+1) ), $7.nbValue );
+			exit(EXIT_FAILURE);
+		}else if(!$7.empty && $3.constEval && $5.constEval && 
+					powYacc( ($3.constInt*2+1), $5.constInt ) < $7.nbValue 
+				){
+			free($1);
+			free($2);
+			free($4);
+			free($6);
+			ERROR("trop de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), ($5.constInt*2+1) ), $7.nbValue );
+			exit(EXIT_FAILURE);
+		}else if(!$7.empty && constanteZone){
+			sten->constant = true;	
+		}
 		
+		/*$$ = $3.instructionEval;
+		PUSH_BACK($$,1,"move $s1 $t0");
+		instructionConcat($$) 
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
+		
+		
+		PUSH_BACK($$,1,"li $t1 0");
+		PUSH_BACK($$,1,"li $t3 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_BEGIN :",labelCounter);
+		PUSH_BACK($$,1,"bge $t1 $t3 ARRAY_INIT_LOOP_1_%llu_END",labelCounter);
+		
+			PUSH_BACK($$,1,"add $t2 $t1 4");
+			PUSH_BACK($$,1,"li $t4 1");
+			
+			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
+			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
+			
+			PUSH_BACK($$,1,"lb $t5 %s_verificator($t2)",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
+			
+			PUSH_BACK($$,1,"add $t2 $t2 4");
+			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
+			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
+			
+			PUSH_BACK($$,1,"sb $t4 %s_multiplicator($t1)",actualArrayInit->mipsId);
+			
+			PUSH_BACK($$,1,"add $t1 $t1 4");
+		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
+		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
+		labelCounter+=2;
+
+		instructionConcat($$,$3.instructionArray);*/
+
 		instructionListMalloc(&$$);
 
 		free($1);
 		free($2);
-		free($3);
 		free($4);
-		free($5);
-		free($6);
-		free($7);
-		free($8);
-		free($10);
-	}
-// ---1--2----3------4-----5------6----7------8----9-----------------
-	| ID LEMB NUMBER COMMA NUMBER REMB EQUALS LEMB number_serie REMB {
-		printf("stencil EQUALS LEMB suite_number REMB -> stencil_init\n");
-		
-		instructionListMalloc(&$$);
-
-		free($1);
-		free($2);
-		free($3);
-		free($4);
-		free($5);
-		free($6);
-		free($7);
-		free($8);
-		free($10);
-	}
-// ---1--2----3------4-----5------6----------------------------------
-	| ID LEMB NUMBER COMMA NUMBER REMB {
-		printf("stencil -> stencil_init\n");
-		
-		instructionListMalloc(&$$);
-
-		free($1);
-		free($2);
-		free($3);
-		free($4);
-		free($5);
 		free($6);
 	}
 	;
@@ -1007,12 +1118,16 @@ affectation :
 				uni->init = true;
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				free($2);
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 
+				exit(EXIT_FAILURE);				
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+					free($2);
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 	
+					exit(EXIT_FAILURE);			
 				}
 
 				instructionConcat($$,$3.instructionEval);
@@ -1022,7 +1137,10 @@ affectation :
 				instructionStackUnstackS4S5S6($$);
 				break;
 			default :
+				free($2);
 				ERROR("Symbole inatendu '%u'",$1->type);
+				exit(EXIT_FAILURE);
+				break;
 		}
 
 		free($2);
@@ -1038,7 +1156,9 @@ affectation :
 			case unit :
 				$$ = $3.instructionEval;
 				if(uni->init == false){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
+					free($2);
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 
+					exit(EXIT_FAILURE);				
 				}
 				PUSH_BACK($$,1,"lw $t1 %s",uni->mipsId);
 				if(!strcmp($2,"+=")){
@@ -1057,12 +1177,16 @@ affectation :
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				free($2);
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 
+				exit(EXIT_FAILURE);			
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+					free($2);
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					exit(EXIT_FAILURE);				
 				}
 				instructionConcat($$,$3.instructionEval);
 				
@@ -1085,7 +1209,10 @@ affectation :
 				instructionStackUnstackS4S5S6($$);
 				break;
 			default :
+				free($2);
 				ERROR("Symbole inatendu '%u'",$1->type);
+				exit(EXIT_FAILURE);
+				break;
 		}
 
 		free($2);
@@ -1390,12 +1517,16 @@ evaluation :
 				$$.constInt *= $3.constInt;
 			}else if($2[0] == '/') {
 				if($3.constInt == 0){
+					free($2);
 					ERROR("Division par zero interdite");
+					exit(EXIT_FAILURE);
 				}
 				$$.constInt /= $3.constInt;
 			}else{
 				if($3.constInt == 0){
+					free($2);
 					ERROR("Modulo par zero interdit");
+					exit(EXIT_FAILURE);	
 				}
 				$$.constInt %= $3.constInt;
 			}
@@ -1536,16 +1667,24 @@ evaluation :
 		instructionListMalloc(&$$.instructionEval);
 		Symbol sym = symbolsTableGetSymbolById(functionsTable,$1);
 		if( sym == NULL){
+			free($2);
+			free($3);
 			ERROR("Référence inconue vers la fonction '%s' ",$1);
+			free($1);
+			exit(EXIT_FAILURE);	
 		}
 		Function* fun = sym->data;
 		if( sym->type != function ){
+			free($2);
+			free($3);
 			ERROR("Symbole inatendu '%s'",$1);
+			free($1);
+			exit(EXIT_FAILURE);	
 		}
 		$$.constEval = false;
-		//COPIE stackInstructions
+		//COPIE stackInstructions TODO
 		PUSH_BACK($$.instructionEval,1,"jal %s",fun->mipsId);
-		//COPIE unStackInstructions
+		//COPIE unStackInstructions TODO
 
 		free($1);
 		free($2);
@@ -1568,7 +1707,9 @@ variable_incr :
 		switch($2->type){
 			case unit :
 				if( uni->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
+					free($1);
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id);
+					exit(EXIT_FAILURE);	 				
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($1, "++")){
@@ -1579,11 +1720,15 @@ variable_incr :
 				PUSH_BACK($$.instructionEval,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				free($1);
+				ERROR("La variable '%s' a ete declare constante !",cons->id); 
+				exit(EXIT_FAILURE);					
 				break;
 			case array :
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+					free($1);
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					exit(EXIT_FAILURE);					
 				}
 				$$.instructionEval = arr->stepsToAcces;
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
@@ -1597,7 +1742,10 @@ variable_incr :
 				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
 			default :
+				free($1);
 				ERROR("Symbole inatendu '%u'",$2->type);
+				exit(EXIT_FAILURE);	
+				break;
 		}
 
 		free($1);
@@ -1614,7 +1762,9 @@ variable_incr :
 		switch($1->type){
 			case unit :
 				if( uni->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
+					free($2);
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 	
+					exit(EXIT_FAILURE);				
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($2, "++")){
@@ -1630,11 +1780,15 @@ variable_incr :
 				}
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 				
+				free($2);
+				ERROR("La variable '%s' a ete declare constante !",cons->id);
+				exit(EXIT_FAILURE);	 				
 				break;
 			case array :
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 				
+					free($2);
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					exit(EXIT_FAILURE);					
 				}
 				$$.instructionEval = arr->stepsToAcces;
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
@@ -1649,7 +1803,10 @@ variable_incr :
 				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
 			default :
+				free($2);
 				ERROR("Symbole inatendu '%u'",$1->type);
+				exit(EXIT_FAILURE);	
+				break;
 		}
 
 		free($2);
@@ -1666,7 +1823,8 @@ variable_incr :
 		switch($1->type){
 			case unit :
 				if( uni->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 				
+					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 
+					exit(EXIT_FAILURE);				
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				break;
@@ -1682,6 +1840,8 @@ variable_incr :
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
+				exit(EXIT_FAILURE);
+				break;
 		}
 	}
 	;
@@ -1742,5 +1902,4 @@ int main(void)
 void yyerror (char const *s)
 {
 	fprintf(stderr,"error : %s at line %d\n",s,yylineno);
-	exit(EXIT_FAILURE);
 }

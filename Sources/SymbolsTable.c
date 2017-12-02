@@ -107,6 +107,33 @@ Symbol symbolsTableAddArray(SymbolsTable l, char* c){
 	return symbolsTableGetSymbolById(l,c);
 }
 
+Symbol symbolsTableAddStencilBis(Symbol n, char* c){
+	if(n == NULL){
+		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		Stencil* data = (Stencil*)malloc(sizeof(Stencil));
+		strncpy(data->id,c,BUFFER_SIZE);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Stenil",variableCounter++);
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
+		instructionPushBack(rootTree,temp,1);
+		data->nbNeighbour = 0;
+		data->nbDimension = 0;
+		data->stepsToAcces = NULL;
+		data->constant = false;
+		result->type = stencil;
+		result->data = (void*)data;
+		result->next = NULL;
+		return result;
+	}else {
+		n->next = symbolsTableAddArrayBis(n->next, c);
+		return n;
+	}
+}
+
+Symbol symbolsTableAddStencil(SymbolsTable l, char* c){
+	*l = symbolsTableAddStencilBis(*l, c);
+	return symbolsTableGetSymbolById(l,c);
+}
+
 Symbol symbolsTableAddFunctionBis(Symbol n, char* c){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
@@ -160,6 +187,7 @@ Symbol symbolsTableGetSymbolByIdBis(Symbol n, char* c){
 		case unit :
 		case constUnit :
 		case array :
+		case stencil :
 		case function : 
 			if(!strcmp(((Unit*)n->data)->id,c)) return n;
 			break;

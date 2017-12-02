@@ -30,6 +30,15 @@ typedef struct {
 typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
+	int nbNeighbour;
+	int nbDimension;
+	bool constant;
+	InstructionsList stepsToAcces;
+}Stencil;
+
+typedef struct {
+	char id[BUFFER_SIZE];
+	char mipsId[BUFFER_SIZE];
 	int nbArgs;
 	int numOfFirstArg;
 	InstructionsList stackInstructions;
@@ -50,6 +59,7 @@ void symbolsTableFree(SymbolsTable);
 Symbol symbolsTableAddSymbolUnit(SymbolsTable, char*, bool);
 Symbol symbolsTableAddSymbolConstUnit(SymbolsTable, char*, int);
 Symbol symbolsTableAddArray(SymbolsTable, char*);
+Symbol symbolsTableAddStencil(SymbolsTable, char*);
 Symbol symbolsTableAddFunction(SymbolsTable, char*);
 void symbolsTableAddStep(SymbolsTable);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);
