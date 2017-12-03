@@ -1,8 +1,8 @@
-stencils
 operateur stencil
 affectation de stencil
 macro
 switch case default
+verificateur pour les stencil (comme les tableaux)
 const
 & et | binaire
 géré les break et continue

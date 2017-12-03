@@ -44,6 +44,8 @@ Symbol symbolsTableAddSymbolUnitBis(Symbol n, char* c, bool init){
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->init = init;
+		data->constant = false;
+		data->constValue = 0;
 		result->type = unit;
 		result->data = (void*)data;
 		result->next = NULL;
@@ -112,7 +114,7 @@ Symbol symbolsTableAddStencilBis(Symbol n, char* c){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		Stencil* data = (Stencil*)malloc(sizeof(Stencil));
 		strncpy(data->id,c,BUFFER_SIZE);
-		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Stenil",variableCounter++);
+		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Stencil",variableCounter++);
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->nbNeighbour = 0;

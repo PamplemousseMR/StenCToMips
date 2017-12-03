@@ -11,6 +11,8 @@ typedef enum Type{unit,constUnit,step,array,stencil,function} Type;
 typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
+	bool constant;
+	int constValue;
 	bool init;
 }Unit;
 
