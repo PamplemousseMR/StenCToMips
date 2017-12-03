@@ -58,7 +58,7 @@ void symbolsTableMalloc(SymbolsTable*);
 void symbolsTableFree(SymbolsTable);
 
 Symbol symbolsTableAddSymbolUnit(SymbolsTable, char*, bool);
-Symbol symbolsTableAddSymbolConstUnit(SymbolsTable, char*, int);
+Symbol symbolsTableAddSymbolDefine(SymbolsTable, char*, int);
 Symbol symbolsTableAddArray(SymbolsTable, char*);
 Symbol symbolsTableAddStencil(SymbolsTable, char*);
 Symbol symbolsTableAddFunction(SymbolsTable, char*);

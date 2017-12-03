@@ -61,25 +61,24 @@ Symbol symbolsTableAddSymbolUnit(SymbolsTable l, char* c, bool init){
 	return symbolsTableGetSymbolById(l,c);
 }
 
-Symbol symbolsTableAddSymbolConstUnitBis(Symbol n, char* c, int i){
+Symbol symbolsTableAddSymbolDefineBis(Symbol n, char* c, int i){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
 		ConstUnit* data = (ConstUnit*)malloc(sizeof(ConstUnit));
 		strncpy(data->id,c,BUFFER_SIZE);
-		instructionPushBack(rootTree,temp,1);
 		data->value = i;
 		result->type = constUnit;
 		result->data = (void*)data;
 		result->next = NULL;
 		return result;
 	}else {
-		n->next = symbolsTableAddSymbolConstUnitBis(n->next, c, i);
+		n->next = symbolsTableAddSymbolDefineBis(n->next, c, i);
 		return n;
 	}
 }
 
-Symbol symbolsTableAddSymbolConstUnit(SymbolsTable l, char* c, int i){
-	*l = symbolsTableAddSymbolConstUnitBis(*l,c,i);
+Symbol symbolsTableAddSymbolDefine(SymbolsTable l, char* c, int i){
+	*l = symbolsTableAddSymbolDefineBis(*l,c,i);
 	return symbolsTableGetSymbolById(l,c);
 }
 

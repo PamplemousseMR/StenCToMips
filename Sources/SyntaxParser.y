@@ -240,7 +240,7 @@ preprocessor_instruction :
 			free($2);
 			exit(EXIT_FAILURE);	
 		}
-		symbolsTableAddSymbolConstUnit(symbolsTable,$2,$3);
+		symbolsTableAddSymbolDefine(symbolsTable,$2,$3);
 
 		free($1);
 		free($2);
