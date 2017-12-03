@@ -117,14 +117,13 @@ Symbol symbolsTableAddStencilBis(Symbol n, char* c){
 		instructionPushBack(rootTree,temp,1);
 		data->nbNeighbour = 0;
 		data->nbDimension = 0;
-		data->stepsToAcces = NULL;
 		data->constant = false;
 		result->type = stencil;
 		result->data = (void*)data;
 		result->next = NULL;
 		return result;
 	}else {
-		n->next = symbolsTableAddArrayBis(n->next, c);
+		n->next = symbolsTableAddStencilBis(n->next, c);
 		return n;
 	}
 }

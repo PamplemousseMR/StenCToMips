@@ -1016,7 +1016,7 @@ stencil_init :
 			free($1);
 			exit(EXIT_FAILURE);	
 		}
-		Stencil* sten = (Stencil*)symbolsTableAddStencil(symbolsTable,$1);
+		Stencil* sten = (Stencil*)(symbolsTableAddStencil(symbolsTable,$1)->data);
 
 		if((!$3.constEval || !$5.constEval) && !$7.empty){
 			free($2);
@@ -1040,7 +1040,7 @@ stencil_init :
 			free($2);
 			free($4);
 			free($6);
-			ERROR("pas assez de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), ($5.constInt*2+1) ), $7.nbValue );
+			ERROR("pas assez de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), $5.constInt ), $7.nbValue );
 			exit(EXIT_FAILURE);
 		}else if(!$7.empty && $3.constEval && $5.constEval && 
 					powYacc( ($3.constInt*2+1), $5.constInt ) < $7.nbValue 
@@ -1049,48 +1049,35 @@ stencil_init :
 			free($2);
 			free($4);
 			free($6);
-			ERROR("trop de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), ($5.constInt*2+1) ), $7.nbValue );
+			ERROR("trop de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), $5.constInt ), $7.nbValue );
 			exit(EXIT_FAILURE);
 		}else if(!$7.empty && constanteZone){
+			sten->nbNeighbour = $3.constInt;
+			sten->nbDimension = $5.constInt;
 			sten->constant = true;	
 		}
 		
-		/*$$ = $3.instructionEval;
-		PUSH_BACK($$,1,"move $s1 $t0");
-		instructionConcat($$) 
+		$$ = $3.instructionEval;
+		PUSH_BACK($$,1,"li $t1 2");
+		PUSH_BACK($$,1,"li $t2 1");
+		PUSH_BACK($$,1,"mul $s4 $t0 $t1");
+		PUSH_BACK($$,1,"add $s4 $s4 $t2");
+		instructionConcat($$,$5.instructionEval);
+		PUSH_BACK($$,1,"li $t1 1");
+		PUSH_BACK($$,1,"li $t2 1");
+		PUSH_BACK($$,1,"STENCIL_LOOP_%llu_BEGIN :",labelCounter);
+		PUSH_BACK($$,1,"beq $t0 $zero STENCIL_LOOP_%llu_END",labelCounter);
+		PUSH_BACK($$,1,"mul $t1 $t1 $s4");
+		PUSH_BACK($$,1,"sub $t0 $t0 $t2");
+		PUSH_BACK($$,1,"j STENCIL_LOOP_%llu_BEGIN",labelCounter);
+		PUSH_BACK($$,1,"STENCIL_LOOP_%llu_END :",labelCounter);
+		labelCounter++;
+		PUSH_BACK($$,1,"sll $a0 $t1 2"); 
 		PUSH_BACK($$,1,"li $v0 9");
 		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
-		
-		
-		PUSH_BACK($$,1,"li $t1 0");
-		PUSH_BACK($$,1,"li $t3 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_BEGIN :",labelCounter);
-		PUSH_BACK($$,1,"bge $t1 $t3 ARRAY_INIT_LOOP_1_%llu_END",labelCounter);
-		
-			PUSH_BACK($$,1,"add $t2 $t1 4");
-			PUSH_BACK($$,1,"li $t4 1");
-			
-			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
-			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
-			
-			PUSH_BACK($$,1,"lb $t5 %s_verificator($t2)",actualArrayInit->mipsId);
-			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
-			
-			PUSH_BACK($$,1,"add $t2 $t2 4");
-			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
-			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
-			
-			PUSH_BACK($$,1,"sb $t4 %s_multiplicator($t1)",actualArrayInit->mipsId);
-			
-			PUSH_BACK($$,1,"add $t1 $t1 4");
-		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
-		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
-		labelCounter+=2;
+		PUSH_BACK($$,1,"sw $v0 %s",sten->mipsId);
 
-		instructionConcat($$,$3.instructionArray);*/
-
-		instructionListMalloc(&$$);
+		instructionConcat($$,$7.instructionArray);
 
 		free($1);
 		free($2);
@@ -1901,5 +1888,5 @@ int main(void)
 
 void yyerror (char const *s)
 {
-	fprintf(stderr,"error : %s at line %d\n",s,yylineno);
+	fprintf(stderr,"erreur : %s a la ligne %d\n",s,yylineno);
 }

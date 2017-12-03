@@ -6,7 +6,13 @@ int main(){
 	int i;
 	int j;
 
-	const int tabfgh[4] = {{{1},{2}},{{3},{2}}};
+	const int tabfgh[4] = {{{1},{2}},{{1+1+1*1+2*4},{2}}};
+	for(i=0 ; i<4 ;++i)
+	{
+		printi(tabfgh[i]);
+		printf("\n");
+	}
+	printf("\n");
 
 	int tab[3] = {1,2,3};
 	for(i=0 ; i<3 ;++i)
