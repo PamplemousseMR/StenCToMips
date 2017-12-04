@@ -201,14 +201,14 @@ programme :
 		
 		instructionConcat(rootTree,$2);
 		
-		PUSH_BACK(rootTree,0,"\n#####\n\nOUTOFBOUND :\n");
+		PUSH_BACK(rootTree,0,"\n#####\n\nOUTOFBOUND :");
 		PUSH_BACK(rootTree,1,"la $a0 string_outOfBound");
 		PUSH_BACK(rootTree,1,"li $v0 4");
 		PUSH_BACK(rootTree,1,"syscall");
 		PUSH_BACK(rootTree,1,"li $a0 -1"); //exit failure !
 		PUSH_BACK(rootTree,1,"j EXIT");
 		
-		PUSH_BACK(rootTree,0,"\n#####\n\nEXIT :\n");
+		PUSH_BACK(rootTree,0,"\n#####\n\nEXIT :");
 		PUSH_BACK(rootTree,1,"li $v0 10");
 		PUSH_BACK(rootTree,1,"syscall");
 	}
@@ -283,10 +283,6 @@ function :
 		PUSH_FORWARD($$,1,"sub $sp $sp 4");
 		PUSH_FORWARD($$,1,"#---------- save for return ----------");
 		PUSH_FORWARD($$,0,"\n%s :",actualFunction->mipsId);
-		PUSH_BACK($$,1,"#---------- default return ----------");
-		PUSH_BACK($$,1,"lw $ra 0($sp)");
-		PUSH_BACK($$,1,"add $sp $sp 4");
-		PUSH_BACK($$,1,"jr $ra");
 
 		free($2);
 		free($4);
@@ -951,6 +947,8 @@ number_serie_comma :
 		$$ = $1;
 		$$.nbValue += $3.nbValue;
 		instructionConcat($$.instructionNumber,$3.instructionNumber);
+		
+		free($2);
 	}
 	| number_serie_serie {
 		$$ = $1;
@@ -1296,16 +1294,34 @@ for :
 	FOR LBRA affectations_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
 		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
-		$$ = $3;	
-		PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
-		instructionConcat($$,$5.instructionEval);
-		PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
-		instructionConcat($$,$10.instructionLine);
-		instructionConcat($$,$7);
-		PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
-		PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
-		labelCounter++;
-
+		if($5.constEval){
+			if($5.constInt){
+				fprintf(stdout,"WARNING boucle infini à la ligne %d\n",yylineno);
+				$$ = $3;
+				PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
+				instructionConcat($$,$10.instructionLine);
+				instructionConcat($$,$7);
+				PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
+				labelCounter++;
+				instructionListFree($5.instructionEval);
+			}else{
+				$$ = $3;
+				instructionListFree($5.instructionEval);
+				instructionListFree($7);
+				instructionListFree($10.instructionLine);
+			}
+		}else{
+			$$ = $3;	
+			PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
+			instructionConcat($$,$5.instructionEval);
+			PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
+			instructionConcat($$,$10.instructionLine);
+			instructionConcat($$,$7);
+			PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
+			PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
+			labelCounter++;
+		}
+		
 		free($1);
 		free($2);
 		free($4);
@@ -1364,13 +1380,27 @@ while :
 	WHILE LBRA evaluation RBRA step_begin ligne step_end {
 		printf("WHILE LBRA evaluation RBA ligne -> while\n");
 		
-		$$ = $3.instructionEval;
-		PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
-		PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
-		instructionConcat($$,$6.instructionLine);
-		PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
-		PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
-		labelCounter++;
+		if($3.constEval){
+			if($3.constInt){
+				fprintf(stdout,"WARNING boucle infini à la ligne %d\n",yylineno);
+				$$ = $6.instructionLine;
+				PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
+				PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
+				instructionListFree($3.instructionEval);
+			}else{
+				instructionListFree($3.instructionEval);
+				instructionListFree($6.instructionLine);
+				instructionListMalloc(&$$);
+			}
+		}else{
+			$$ = $3.instructionEval;
+			PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
+			PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
+			instructionConcat($$,$6.instructionLine);
+			PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
+			PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
+			labelCounter++;
+		}
 
 		free($1);
 		free($2);
@@ -1385,15 +1415,28 @@ if :
 	IF LBRA evaluation RBRA step_begin ligne step_end else {
 		printf("IF LBRA evaluation RBRA ligne else -> if\n");
 		
-		$$.instructionLine = $3.instructionEval;
-		PUSH_BACK($$.instructionLine,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
-		instructionConcat($$.instructionLine,$6.instructionLine);
-		PUSH_BACK($$.instructionLine,1,"j IF_COND_%llu_END",labelCounter);
-		PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_FALSE :",labelCounter);
-		instructionConcat($$.instructionLine,$8.instructionLine);
-		PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_END :",labelCounter);
-		labelCounter++;
-		$$.willReturn = $6.willReturn && $8.willReturn;
+		if($3.constEval){
+			instructionListFree($3.instructionEval);
+			if($3.constInt){
+				$$.instructionLine = $6.instructionLine;
+				$$.willReturn = $6.willReturn;
+				instructionListFree($8.instructionLine);
+			}else{
+				$$.instructionLine = $8.instructionLine;
+				$$.willReturn = $8.willReturn;
+				instructionListFree($6.instructionLine);
+			}
+		}else{
+			$$.instructionLine = $3.instructionEval;
+			PUSH_BACK($$.instructionLine,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
+			instructionConcat($$.instructionLine,$6.instructionLine);
+			PUSH_BACK($$.instructionLine,1,"j IF_COND_%llu_END",labelCounter);
+			PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_FALSE :",labelCounter);
+			instructionConcat($$.instructionLine,$8.instructionLine);
+			PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_END :",labelCounter);
+			labelCounter++;
+			$$.willReturn = $6.willReturn && $8.willReturn;
+		}
 
 		free($1);
 		free($2);
