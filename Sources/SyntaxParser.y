@@ -924,9 +924,7 @@ hooks_init :
 //__________________________________________________________________________________
 
 number_serie_serie :
-	LEMB number_serie_comma REMB {
-		instructionListMalloc(&$$.instructionNumber);
-		
+	LEMB number_serie_comma REMB {	
 		$$ = $2;
 		
 		free($1);
