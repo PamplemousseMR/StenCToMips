@@ -1124,6 +1124,7 @@ affectation :
 		printf("variable EQUALS evaluation -> affectation\n");
 
 		Array* arr = (Array*)$1->data;
+		Stencil* sten = (Stencil*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
@@ -1156,6 +1157,20 @@ affectation :
 				
 				instructionStackUnstackS4S5S6($$);
 				break;
+			case stencil :
+				$$ = sten->stepsToAcces;
+				if(sten->constant){
+					free($2);
+					ERROR("La variable '%s' a ete declare constante !",sten->id); 	
+					exit(EXIT_FAILURE);			
+				}
+
+				instructionConcat($$,$3.instructionEval);
+				
+				PUSH_BACK($$,1,"sw $t0 0($s4)");
+				
+				instructionStackUnstackS4S5S6($$);
+				break;
 			default :
 				free($2);
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1171,6 +1186,7 @@ affectation :
 
 		Array* arr = (Array*)$1->data;
 		Unit* uni = (Unit*)$1->data;
+		Stencil* sten = (Stencil*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
@@ -1211,6 +1227,33 @@ affectation :
 				if(arr->constant){
 					free($2);
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					exit(EXIT_FAILURE);				
+				}
+				instructionConcat($$,$3.instructionEval);
+				
+				PUSH_BACK($$,1,"lb $t1 0($s4)");
+				if(!strcmp($2,"+=")){
+					PUSH_BACK($$,1,"add $t0 $t1 $t0");
+				}else if(!strcmp($2,"-=")){
+					PUSH_BACK($$,1,"sub $t0 $t1 $t0");
+				}else if(!strcmp($2,"*=")){
+					PUSH_BACK($$,1,"mul $t0 $t1 $t0");
+				}else if(!strcmp($2,"/=")){
+					PUSH_BACK($$,1,"div $t0 $t1 $t0");
+				}else if(!strcmp($2,"%=")){
+					PUSH_BACK($$,1,"div $t2 $t1 $t0");
+					PUSH_BACK($$,1,"mul $t2 $t2 $t0");
+					PUSH_BACK($$,1,"sub $t0 $t1 $t2");
+				}
+				PUSH_BACK($$,1,"sw $t0 0($s4)");
+				
+				instructionStackUnstackS4S5S6($$);
+				break;
+			case stencil :
+				$$ = sten->stepsToAcces;
+				if(sten->constant){
+					free($2);
+					ERROR("La variable '%s' a ete declare constante !",sten->id); 
 					exit(EXIT_FAILURE);				
 				}
 				instructionConcat($$,$3.instructionEval);
