@@ -221,7 +221,7 @@ preprocessor_instructions_serie :
 	preprocessor_instruction preprocessor_instructions_serie {
 		printf("preprocessor_instruction preprocessor_instructions_serie -> preprocessor_instructions_serie\n");
 	}
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------ DONE
 	| {
 	}
 	;
@@ -294,9 +294,11 @@ function :
 //__________________________________________________________________________________
 
 argument_list : 
+// -1----------------------------------------------------------------
 	argument_init_serie {
 		//ARGS
 	}
+// ---1--------------------------------------------------------------
 	| { //NO ARGS
 	} 
 	;
@@ -924,12 +926,14 @@ hooks_init :
 //__________________________________________________________________________________
 
 number_serie_serie :
+// -1----2------------------3---------------------------------------- DONE
 	LEMB number_serie_comma REMB {	
 		$$ = $2;
 		
 		free($1);
 		free($3);
 	}
+// ---1----2------------3-------------------------------------------- DONE
 	| LEMB number_serie REMB {
 		printf("LEMB number_serie REMB -> number_serie_serie\n");
 
@@ -941,6 +945,7 @@ number_serie_serie :
 	;
 
 number_serie_comma : 
+// -1------------------2-----3--------------------------------------- DONE
 	number_serie_serie COMMA number_serie_comma {
 		$$ = $1;
 		$$.nbValue += $3.nbValue;
@@ -948,6 +953,7 @@ number_serie_comma :
 		
 		free($2);
 	}
+// ---1-------------------------------------------------------------- DONE
 	| number_serie_serie {
 		$$ = $1;
 	}
@@ -1005,7 +1011,7 @@ stencils_init_serie :
 //__________________________________________________________________________________
 
 stencil_init :
-// -1--2----3----------4-----5----------6----7-----------------------
+// -1--2----3----------4-----5----------6----7----------------------- DONE
 	ID LEMB evaluation COMMA evaluation REMB array_affect {
 		printf("stencil EQUALS LEMB suite_number REMB stencil_affect -> stencil_init\n");
 
