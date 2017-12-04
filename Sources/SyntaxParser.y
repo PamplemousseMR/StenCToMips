@@ -518,7 +518,8 @@ variable :
 		}
 		switch(s->type){
 			case unit :
-			case constUnit : 				
+			case constUnit :
+			case stencil : 				
 				break;
 			case array :
 				ERROR("La variable '%s' est un tableau",$1);
@@ -547,6 +548,7 @@ variable :
 			exit(EXIT_FAILURE); 
 		}
 		Array* arr = (Array*)s->data;
+		Stencil* sten = (Stencil*)s->data;
 		switch(s->type){
 			case unit :
 			case constUnit : 
@@ -578,6 +580,23 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"lw $t1 %s",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
 				break;
+			case stencil :
+				instructionListMalloc(&(sten->stepsToAcces));
+				
+				PUSH_BACK(sten->stepsToAcces,1,"li $s4 0");
+				PUSH_BACK(sten->stepsToAcces,1,"lw $s5 %s_multiplicator",sten->mipsId);
+				PUSH_BACK(sten->stepsToAcces,1,"lw $s6 %s_verificator",sten->mipsId);
+				instructionConcat(sten->stepsToAcces,$3.instructionNumber);
+				
+				PUSH_BACK(sten->stepsToAcces,1,"sll $s4 $s4 2");
+				PUSH_BACK(sten->stepsToAcces,1,"lw $t1 %s",sten->mipsId);
+				PUSH_BACK(sten->stepsToAcces,1,"add $s4 $s4 $t1");
+				break;
+				/*free($2);
+				ERROR("Stencil TODO '%s'",$1);
+				free($1);
+				exit(EXIT_FAILURE);
+				break;*/
 			default :
 				free($2);
 				ERROR("Symbole inatendu '%s'",$1);
@@ -1059,15 +1078,21 @@ stencil_init :
 		PUSH_BACK($$,1,"sw $v0 %s_multiplicator",sten->mipsId);
 
 		PUSH_BACK(rootTree,1,"%s_verificator : .word 0",sten->mipsId);
-		PUSH_BACK($$,1,"sw $s4 %s_verificator",sten->mipsId);
+		PUSH_BACK($$,1,"sll $a0 $s5 2"); 
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s_verificator",sten->mipsId);
 
 		PUSH_BACK($$,1,"lw $t1 %s_multiplicator",sten->mipsId);
+		PUSH_BACK($$,1,"lw $t4 %s_verificator",sten->mipsId);
 		PUSH_BACK($$,1,"sll $t2 $s5 2");
 		PUSH_BACK($$,1,"add $t2 $t2 $t1");
 		PUSH_BACK($$,1,"sub $t2 $t2 4");
 		PUSH_BACK($$,1,"li $t3 1");
 		PUSH_BACK($$,1,"STENCIL_INIT_LOOP_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"blt $t2 $t1 STENCIL_INIT_LOOP_%llu_END",labelCounter);
+			PUSH_BACK($$,1,"sb $s4 0($t4)");
+			PUSH_BACK($$,1,"add $t4 $t4 4");
 			PUSH_BACK($$,1,"sb $t3 0($t2)");
 			PUSH_BACK($$,1,"sub $t2 $t2 4");
 			PUSH_BACK($$,1,"mul $t3 $t3 $s4");
@@ -1709,6 +1734,7 @@ variable_incr :
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
 		Array* arr = (Array*)$2->data;
+		Stencil* sten = (Stencil*)$2->data;
 		Unit* uni = (Unit*)$2->data;
 		ConstUnit* cons = (ConstUnit*)$2->data;
 		switch($2->type){
@@ -1753,6 +1779,23 @@ variable_incr :
 				
 				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
+			case stencil :
+				if(sten->constant){
+					free($1);
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					exit(EXIT_FAILURE);					
+				}
+				$$.instructionEval = sten->stepsToAcces;
+				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				if(!strcmp($1, "++")){
+					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
+				}else{
+					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
+				}
+				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
+				
+				instructionStackUnstackS4S5S6($$.instructionEval);
+				break;
 			default :
 				free($1);
 				ERROR("Symbole inatendu '%u'",$2->type);
@@ -1769,6 +1812,7 @@ variable_incr :
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
 		Array* arr = (Array*)$1->data;
+		Stencil* sten = (Stencil*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
@@ -1819,6 +1863,24 @@ variable_incr :
 				
 				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
+			case stencil :
+				if(sten->constant){
+					free($2);
+					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					exit(EXIT_FAILURE);					
+				}
+				$$.instructionEval = sten->stepsToAcces;
+				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");
+				if(!strcmp($2, "++")){
+					PUSH_BACK($$.instructionEval,1,"add $t1 $t1 1");
+				}else{
+					PUSH_BACK($$.instructionEval,1,"sub $t1 $t1 1");
+				}
+				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
+				
+				instructionStackUnstackS4S5S6($$.instructionEval);
+				break;
 			default :
 				free($2);
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1835,6 +1897,7 @@ variable_incr :
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
 		Array* arr = (Array*)$1->data;
+		Stencil* sten = (Stencil*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
@@ -1851,6 +1914,11 @@ variable_incr :
 				$$.constInt = cons->value;
 				break;
 			case array :
+				$$.instructionEval = arr->stepsToAcces;
+				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				instructionStackUnstackS4S5S6($$.instructionEval);
+				break;
+			case stencil :
 				$$.instructionEval = arr->stepsToAcces;
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				instructionStackUnstackS4S5S6($$.instructionEval);

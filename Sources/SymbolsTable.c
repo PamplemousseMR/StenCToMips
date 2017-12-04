@@ -119,6 +119,7 @@ Symbol symbolsTableAddStencilBis(Symbol n, char* c){
 		data->nbNeighbour = 0;
 		data->nbDimension = 0;
 		data->constant = false;
+		data->stepsToAcces = NULL;
 		result->type = stencil;
 		result->data = (void*)data;
 		result->next = NULL;
