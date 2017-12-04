@@ -1980,6 +1980,77 @@ variable_incr :
 
 		free($2);
 	}
+// ---1--------2----------------3------------------------------------
+	| variable OPERATOR_STENCIL variable {
+		printf("variable OPERATOR_STENCIL variable -> variable_incr\n");
+
+		instructionListMalloc(&$$.instructionEval);
+		$$.constEval = false;
+
+		Array* arr2 = (Array*)$3->data;
+		Stencil* sten2 = (Stencil*)$3->data;
+		Unit* uni2 = (Unit*)$3->data;
+		ConstUnit* cons2 = (ConstUnit*)$3->data;
+
+		switch($3->type){
+			case unit :
+				free($2);
+				ERROR("La variable '%s' n'est pas un tableaux ",uni2->id); 
+				exit(EXIT_FAILURE);	
+				break;
+			case constUnit :
+				free($2);
+				ERROR("La variable '%s' n'est pas un tableaux ",cons2->id); 
+				exit(EXIT_FAILURE);	
+				break;
+			case stencil :
+				free($2);
+				ERROR("La variable '%s' n'est pas un tableaux ",cons2->id); 
+				exit(EXIT_FAILURE);	
+				break;
+			case array :
+				break;
+			default :
+				free($2);
+				ERROR("Symbole inatendu '%u'",$1->type);
+				exit(EXIT_FAILURE);
+				break;
+		}
+
+		Array* arr1 = (Array*)$1->data;
+		Stencil* sten1 = (Stencil*)$1->data;
+		Unit* uni1 = (Unit*)$1->data;
+		ConstUnit* cons1 = (ConstUnit*)$1->data;
+
+		switch($1->type){
+			case unit :
+				free($2);
+				ERROR("La variable '%s' n'est pas un stencil ",uni1->id); 
+				exit(EXIT_FAILURE);	
+				break;
+			case constUnit :
+				free($2);
+				ERROR("La variable '%s' n'est pas un stencil ",cons1->id); 
+				exit(EXIT_FAILURE);	
+				break;
+			case array :
+				free($2);
+				ERROR("La variable '%s' n'est pas un stencil ",arr1->id); 
+				exit(EXIT_FAILURE);	
+				break;
+			case stencil :
+				ERROR("TODO operateur stencil"); 
+				exit(EXIT_FAILURE);	
+				break;
+			default :
+				free($2);
+				ERROR("Symbole inatendu '%u'",$1->type);
+				exit(EXIT_FAILURE);
+				break;
+		}
+
+		free($2);
+	}
 // ---1-------------------------------------------------------------- DONE
 	| variable {
 		printf("variable -> variable_incr\n");
