@@ -267,8 +267,8 @@ functions_serie :
 //__________________________________________________________________________________
 	
 function : 	
-// -1--------------2----3------------------------4----5----6----------7- DONE TODO args
-	function_begin LBRA argument_init_serie_init RBRA LEMB step_begin instructions_serie step_end REMB {
+// -1--------------2----3-------------4----5----6----------7------------------8--------9 DONE TODO args
+	function_begin LBRA argument_list RBRA LEMB step_begin instructions_serie step_end REMB {
 		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function\n");
 		
 		if(!$7.willReturn){
@@ -309,7 +309,7 @@ argument_list :
 
 argument_init_serie :
 // -1-------------2-----3--------------------------------------------
-    argument_init COMMA argument_init_serie {
+    argument_init_serie COMMA argument_init {
         printf("argument_init COMMA argument_init_serie -> argument_init_serie\n");
     }
 // ---1--------------------------------------------------------------
@@ -335,10 +335,11 @@ argument_init_hooks :
 // -1----2----3------------------------------------------------------
     LHOO RHOO argument_init_hooks {
         printf("LHOO RHOO argument_init_hooks -> argument_init_hooks\n");
+		//return $3+1;
     }
 // ---1----2---------------------------------------------------------
-    | LHOO RHOO {
-        printf("LHOO RHOO -> argument_init_hooks\n");
+    | {
+		//return 0;
     }
     ;
 
