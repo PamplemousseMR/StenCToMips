@@ -147,6 +147,7 @@
 %type<Boolean>		const
 %type<Instruction>	variable_init
 %type<Number>		number_serie_serie
+%type<Number>		number_serie_comma
 %type<Number>		number_serie
 %type<Instruction>	unit_init
 %type<Instruction>	array_init
@@ -165,7 +166,6 @@
 %type<Eval>			variable_incr			// et de simplifier les expressions constantes ex : 3+4 ->7
 %type<Integer>	 	number					//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
 
-%left COMMA
 %left COMPARATOR_OR
 %left COMPARATOR_AND
 %left COMPARATOR_EQUALITY
@@ -826,35 +826,18 @@ array_init :
 //__________________________________________________________________________________
 
 array_affect :
-// -1------2----3------------------4--------------------------------- DONE
-	EQUALS LEMB number_serie_serie REMB {
+// -1------2--------------------------------------------------------- DONE
+	EQUALS number_serie_serie {
 		printf("EQUALS LEMB number_serie_serie REMB -> array_affect\n");
 
-		PUSH_FORWARD($3.instructionNumber,1,"sub $v0 $v0 $t1");
-		PUSH_FORWARD($3.instructionNumber,1,"li $t1 4");
+		PUSH_FORWARD($2.instructionNumber,1,"sub $v0 $v0 $t1");
+		PUSH_FORWARD($2.instructionNumber,1,"li $t1 4");
 
-		$$.nbValue = $3.nbValue;
-		$$.instructionArray = $3.instructionNumber;
+		$$.nbValue = $2.nbValue;
+		$$.instructionArray = $2.instructionNumber;
 		$$.empty = false;
 
 		free($1);
-		free($2);
-		free($4);
-	}
-// ---1------2----3------------4-------------------------------------DONE
-	| EQUALS LEMB number_serie REMB {
-		printf("EQUALS LEMB number_serie REMB -> array_affect\n");
-
-		PUSH_FORWARD($3.instructionNumber,1,"sub $v0 $v0 $t1");
-		PUSH_FORWARD($3.instructionNumber,1,"li $t1 4");
-
-		$$.nbValue = $3.nbValue;
-		$$.instructionArray = $3.instructionNumber;
-		$$.empty = false;
-
-		free($1);
-		free($2);
-		free($4);
 	}
 // ------------------------------------------------------------------ DONE
 	| {
@@ -926,38 +909,35 @@ hooks_init :
 //__________________________________________________________________________________
 
 number_serie_serie :
-// -1------------------2-----3--------------------------------------- DONE
-	number_serie_serie COMMA number_serie_serie {
-		printf("LEMB number_serie REMB COMMA number_serie_serie -> number_serie_serie\n");
-
-		$$.nbValue = $1.nbValue + $3.nbValue;
-		$$.instructionNumber = $1.instructionNumber;
-		instructionConcat($$.instructionNumber,$3.instructionNumber);
-
-		free($2);
-	}
-// ---1----2------------3-------------------------------------------- DONE
-	| LEMB number_serie REMB {
-		printf("LEMB number_serie REMB -> number_serie_serie\n");
-
-		$$.nbValue = $2.nbValue;
-		$$.instructionNumber = $2.instructionNumber;
-
+	LEMB number_serie_comma REMB {
+		instructionListMalloc(&$$.instructionNumber);
+		
+		$$ = $2;
+		
 		free($1);
 		free($3);
 	}
-// ---1----2------------------3-------------------------------------- DONE
-	| LEMB number_serie_serie REMB{
+	| LEMB number_serie REMB {
 		printf("LEMB number_serie REMB -> number_serie_serie\n");
 
-		$$.nbValue = $2.nbValue;
-		$$.instructionNumber = $2.instructionNumber;
+		$$ = $2;
 
 		free($1);
 		free($3);
 	}
 	;
 
+number_serie_comma : 
+	number_serie_serie COMMA number_serie_comma {
+		$$ = $1;
+		$$.nbValue += $3.nbValue;
+		instructionConcat($$.instructionNumber,$3.instructionNumber);
+	}
+	| number_serie_serie {
+		$$ = $1;
+	}
+	;
+	
 //__________________________________________________________________________________
 
 number_serie :
