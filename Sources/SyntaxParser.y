@@ -1852,7 +1852,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 					exit(EXIT_FAILURE);					
 				}
-				$$.instructionEval = arr->stepsToAcces;
+				instructionConcat($$.instructionEval, arr->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
@@ -1869,7 +1869,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 					exit(EXIT_FAILURE);					
 				}
-				$$.instructionEval = sten->stepsToAcces;
+				instructionConcat($$.instructionEval, sten->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
@@ -1935,7 +1935,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 					exit(EXIT_FAILURE);					
 				}
-				$$.instructionEval = arr->stepsToAcces;
+				instructionConcat($$.instructionEval, arr->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");
 				if(!strcmp($2, "++")){
@@ -1953,7 +1953,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 					exit(EXIT_FAILURE);					
 				}
-				$$.instructionEval = sten->stepsToAcces;
+				instructionConcat($$.instructionEval, sten->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");
 				if(!strcmp($2, "++")){
@@ -1998,12 +1998,12 @@ variable_incr :
 				$$.constInt = cons->value;
 				break;
 			case array :
-				$$.instructionEval = arr->stepsToAcces;
+				instructionConcat($$.instructionEval,arr->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
 			case stencil :
-				$$.instructionEval = arr->stepsToAcces;
+				instructionConcat($$.instructionEval,sten->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
 				instructionStackUnstackS4S5S6($$.instructionEval);
 				break;
