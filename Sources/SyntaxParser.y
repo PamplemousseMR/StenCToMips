@@ -544,6 +544,8 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_multiplicator",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"la $s6 %s_verificator",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"li $s7 %d",arr->nbDimension);
+				PUSH_BACK(arr->stepsToAcces,1,"la $t8 %s_accesTable",arr->mipsId);
+				
 				instructionConcat(arr->stepsToAcces,$3.instructionNumber);
 				
 				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
@@ -562,6 +564,8 @@ variable :
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s5 %s_multiplicator",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s6 %s_verificator",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s7 %s_nbDimension",sten->mipsId);
+				PUSH_BACK(sten->stepsToAcces,1,"la $t8 %s_accesTable",sten->mipsId);
+				
 				instructionConcat(sten->stepsToAcces,$3.instructionNumber);
 				
 				PUSH_BACK(sten->stepsToAcces,1,"sll $s4 $s4 2");
@@ -589,6 +593,8 @@ hooks :
 		$$.nbValue = $1.nbValue + 1;
 		$$.instructionNumber = $1.instructionNumber;
 		instructionConcat($$.instructionNumber,$3.instructionEval);
+		PUSH_BACK($$.instructionNumber,1,"ble $s7 $0 OUTOFBOUND");
+		PUSH_BACK($$.instructionNumber,1,"sub $s7 $s7 1");
 		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s6)");
 		PUSH_BACK($$.instructionNumber,1,"add $s6 $s6 4");
 		PUSH_BACK($$.instructionNumber,1,"blt $t0 $0 OUTOFBOUND");
@@ -597,6 +603,8 @@ hooks :
 		PUSH_BACK($$.instructionNumber,1,"add $s5 $s5 4");
 		PUSH_BACK($$.instructionNumber,1,"mul $t1 $t1 $t0");
 		PUSH_BACK($$.instructionNumber,1,"add $s4 $s4 $t1");	
+		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($t8)");
+		PUSH_BACK($$.instructionNumber,1,"add $t8 $t8 4");
 		
 		free($2);
 		free($4);
@@ -607,6 +615,8 @@ hooks :
 		
 		$$.nbValue = 1;
 		$$.instructionNumber = $1.instructionEval;
+		PUSH_BACK($$.instructionNumber,1,"ble $s7 $0 OUTOFBOUND");
+		PUSH_BACK($$.instructionNumber,1,"sub $s7 $s7 1");
 		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s6)");
 		PUSH_BACK($$.instructionNumber,1,"add $s6 $s6 4");
 		PUSH_BACK($$.instructionNumber,1,"blt $t0 $0 OUTOFBOUND");
@@ -615,6 +625,8 @@ hooks :
 		PUSH_BACK($$.instructionNumber,1,"add $s5 $s5 4");
 		PUSH_BACK($$.instructionNumber,1,"mul $t1 $t1 $t0");
 		PUSH_BACK($$.instructionNumber,1,"add $s4 $s4 $t1");	
+		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($t8)");
+		PUSH_BACK($$.instructionNumber,1,"add $t8 $t8 4");
 
 		free($2);
 	}
@@ -691,9 +703,6 @@ variable_init :
 // ---1-------------------------------------------------------------- DONE 
 	| array_init {
 		$$ = $1;
-		
-		PUSH_BACK(rootTree,1,"%s_verificator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
-		PUSH_BACK(rootTree,1,"%s_multiplicator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
 	}
 	;
 
@@ -748,6 +757,11 @@ array_init :
 // -1----------------2----------3------------------------------------ DONE
 	array_init_begin hooks_init array_affect {
 		printf("array_init_begin hooks_init array_affect -> array_init\n");
+			
+		PUSH_BACK(rootTree,1,"%s_verificator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
+		PUSH_BACK(rootTree,1,"%s_multiplicator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
+		PUSH_BACK(rootTree,1,"%s_accesTable : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
+	
 		
 		$$ = $2.instructionHooksInit;
 		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
@@ -1021,6 +1035,12 @@ stencil_init :
 		PUSH_BACK($$,1,"syscall");
 		PUSH_BACK($$,1,"sw $v0 %s_verificator",sten->mipsId);
 
+		PUSH_BACK(rootTree,1,"%s_accesTable : .word 0",sten->mipsId);
+		PUSH_BACK($$,1,"sll $a0 $s5 2"); 
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s_accesTable",sten->mipsId);
+
 		PUSH_BACK($$,1,"lw $t1 %s_multiplicator",sten->mipsId);
 		PUSH_BACK($$,1,"lw $t4 %s_verificator",sten->mipsId);
 		PUSH_BACK($$,1,"sll $t2 $s5 2");
@@ -1087,7 +1107,7 @@ affectation :
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$);
 				break;
 			case stencil :
 				$$ = sten->stepsToAcces;
@@ -1099,7 +1119,7 @@ affectation :
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1167,7 +1187,7 @@ affectation :
 				}
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$);
 				break;
 			case stencil :
 				$$ = sten->stepsToAcces;
@@ -1192,7 +1212,7 @@ affectation :
 				}
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1761,7 +1781,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			case stencil :
 				if(sten->constant){
@@ -1776,7 +1796,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$2->type);
@@ -1833,7 +1853,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			case stencil :
 				if(sten->constant){
@@ -1849,7 +1869,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
 				
-				instructionStackUnstackS4S5S6($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1945,12 +1965,12 @@ variable_incr :
 			case array :
 				instructionConcat($$.instructionEval,arr->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
-				instructionStackUnstackS4S5S6($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			case stencil :
 				instructionConcat($$.instructionEval,sten->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
-				instructionStackUnstackS4S5S6($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);

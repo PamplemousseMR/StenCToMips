@@ -68,7 +68,7 @@ int main(){
 	}
 	printf("\n");
 
-	int rec[array[4][1]][array[2][0]];  // 5 2
+	int rec[array[4][1]][array[2][0]];  // 6 3
 	for(i=0 ; i<array[4][1] ;++i)
 	{
 		for(j=0 ; j<array[2][0] ; ++j)
@@ -81,7 +81,7 @@ int main(){
 	}
 	printf("\n");
 	
-	int test[2][3] = {2,2,2,2,tabb[0][2]+5,2};  // 5 2
+	int test[2][3] = {2,2,2,2,tabb[0][1]+5,2};  
 
 	return 0;
 

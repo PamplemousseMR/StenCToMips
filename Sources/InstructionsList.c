@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "InstructionsList.h"
+extern unsigned long long labelCounter;
 
 static inline Instruction instructionMalloc(char* c, int ind)
 {
@@ -100,13 +101,68 @@ void instructionListPrintFILE(InstructionsList i,FILE * f)
 	}
 }
 
-void instructionStackUnstackS4S5S6(InstructionsList l){
-	instructionPushForward(l,"sw $s6 8($sp)",1);
-	instructionPushForward(l,"sw $s5 4($sp)",1);
-	instructionPushForward(l,"sw $s4 0($sp)",1);
-	instructionPushForward(l,"sub $sp $sp 12",1);
-	instructionPushBack(l,"lw $s4 0($sp)",1);
-	instructionPushBack(l,"lw $s5 4($sp)",1);
-	instructionPushBack(l,"lw $s6 8($sp)",1);
-	instructionPushBack(l,"add $sp $sp 12",1);
+InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l){
+	char tmp[INSTRUCTION_SIZE];
+	InstructionsList result;
+	instructionListMalloc(&result);
+	
+	//enregistrement du tableau d'acces
+	// instructionPushBack(result,"sll $t0 $s7 4",1);
+	// instructionPushBack(result,"add $t0 $t0 $t8",1);
+	// instructionPushBack(result,"sub $t0 $t0 4",1); 		//$t0 = adresse du dernier du tableau
+	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_START :",labelCounter);
+	// instructionPushBack(result,tmp,1);
+	// snprintf(tmp,INSTRUCTION_SIZE,"blt $t0 $t8 STACK_LOOP_%llu_END",labelCounter);
+	// instructionPushBack(result,tmp,1);
+		// instructionPushBack(result,"lb $t2 ($t0)",1);
+		
+		// instructionPushBack(result,"sub $sp $sp 4",1);
+		// instructionPushBack(result,"sw $t2 0($sp)",1);
+		
+		// instructionPushBack(result,"sub $t0 $t0 4",1);
+		// snprintf(tmp,INSTRUCTION_SIZE,"j STACK_LOOP_%llu_START",labelCounter);
+		// instructionPushBack(result,tmp,1);
+	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_END :",labelCounter);
+	// instructionPushBack(result,tmp,1);
+	// labelCounter++;
+	
+	//enregistrement des registres
+	instructionPushBack(result,"sub $sp $sp 20",1);
+	instructionPushBack(result,"sw $s4 0($sp)",1);
+	instructionPushBack(result,"sw $s5 4($sp)",1);
+	instructionPushBack(result,"sw $s6 8($sp)",1);
+	instructionPushBack(result,"sw $s7 12($sp)",1);
+	instructionPushBack(result,"sw $t8 16($sp)",1);
+	
+	//<============L==============================
+	instructionConcat(result,l);
+	//<============L==============================
+
+	//restitution des registres
+	instructionPushBack(result,"lw $s4 0($sp)",1);
+	instructionPushBack(result,"lw $s5 4($sp)",1);
+	instructionPushBack(result,"lw $s6 8($sp)",1);
+	instructionPushBack(result,"lw $s7 12($sp)",1);
+	instructionPushBack(result,"lw $t8 16($sp)",1);
+	instructionPushBack(result,"add $sp $sp 20",1);
+	
+	//restitution du tableau d'acces
+	// instructionPushBack(result,"move $t0 $t8",1);	//t0 pointeur tableau 
+	// instructionPushBack(result,"li $t1 0",1);
+	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_START :",labelCounter);
+	// instructionPushBack(result,tmp,1);
+	// snprintf(tmp,INSTRUCTION_SIZE,"bge $t1 $s7 STACK_LOOP_%llu_END",labelCounter);
+	// instructionPushBack(result,tmp,1);
+		// instructionPushBack(result,"lw $t2 0($sp)",1);
+		// instructionPushBack(result,"add $sp $sp 4",1);
+		// instructionPushBack(result,"sb $t2 ($t0)",1);
+		// instructionPushBack(result,"add $t0 $t0 4",1);
+		// instructionPushBack(result,"add $t1 $t1 1",1);
+		// snprintf(tmp,INSTRUCTION_SIZE,"j STACK_LOOP_%llu_START",labelCounter);
+		// instructionPushBack(result,tmp,1);
+	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_END :",labelCounter);
+	// instructionPushBack(result,tmp,1);
+	// labelCounter++;
+	
+	return result;
 }

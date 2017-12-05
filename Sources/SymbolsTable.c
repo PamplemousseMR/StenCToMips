@@ -253,7 +253,11 @@ void symbolsTableRemoveUntilStep(SymbolsTable l){
 }
 
 // Symbol symbolsTableAddSymboleAlreadyExitBis(Symbol s, void * data, Type type){
-	
+	// if(s == NULL){
+		
+	// }else{
+		
+	// }
 // }
 
 // Symbol symbolsTableAddSymboleAlreadyExit(SymboleTable s, void * data, Type type){
