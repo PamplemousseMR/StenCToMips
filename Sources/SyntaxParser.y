@@ -590,11 +590,6 @@ variable :
 				PUSH_BACK(sten->stepsToAcces,1,"lw $t1 %s",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"add $s4 $s4 $t1");
 				break;
-				/*free($2);
-				ERROR("Stencil TODO '%s'",$1);
-				free($1);
-				exit(EXIT_FAILURE);
-				break;*/
 			default :
 				free($2);
 				ERROR("Symbole inatendu '%s'",$1);
