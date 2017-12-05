@@ -1590,7 +1590,7 @@ evaluation :
 			$$ = $2;
 		}else{
 			instructionListMalloc(&$$.instructionEval);
-			PUSH_BACK($$.instructionEval,1,"sub $sp $sp %d",4*9);
+			PUSH_BACK($$.instructionEval,1,"sub $sp $sp %d",4*4);
 			for(i=0 ; i<=3 ; ++i)
 			{
 				PUSH_BACK($$.instructionEval,1,"sw $s%d %d($sp)",i,i*4);
@@ -1603,7 +1603,7 @@ evaluation :
 			{
 				PUSH_BACK($$.instructionEval,1,"lw $s%d %d($sp)",i,i*4);
 			}
-			PUSH_BACK($$.instructionEval,1,"add $sp $sp %d",4*9);
+			PUSH_BACK($$.instructionEval,1,"add $sp $sp %d",4*4);
 		}
 
 		free($1);

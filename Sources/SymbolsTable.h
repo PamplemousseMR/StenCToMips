@@ -8,6 +8,14 @@
 typedef enum bool{false,true} bool;
 typedef enum Type{unit,constUnit,step,array,stencil,function} Type;
 
+typedef struct s_symbol{
+	Type type; 
+	void* data;
+	struct s_symbol* next;
+}*Symbol;
+
+typedef Symbol* SymbolsTable;
+
 typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
@@ -46,15 +54,8 @@ typedef struct {
 	int numOfFirstArg;
 	InstructionsList stackInstructions;
 	InstructionsList unStackInstructions;
+	SymbolsTable agumentsTable;
 }Function;
-
-typedef struct s_symbol{
-	Type type; 
-	void* data;
-	struct s_symbol* next;
-}*Symbol;
-
-typedef Symbol* SymbolsTable;
 
 void symbolsTableMalloc(SymbolsTable*);
 void symbolsTableFree(SymbolsTable);
@@ -67,5 +68,7 @@ Symbol symbolsTableAddFunction(SymbolsTable, char*);
 void symbolsTableAddStep(SymbolsTable);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);
 void symbolsTableRemoveUntilStep(SymbolsTable);
+
+Symbol symbolsTableAddSymboleAlreadyExit(SymbolsTable, void * ,Type);
 
 #endif
