@@ -1885,58 +1885,49 @@ variable_incr :
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
 
-		/*Array* arr2 = (Array*)$3->data;
-		Stencil* sten2 = (Stencil*)$3->data;
-		Unit* uni2 = (Unit*)$3->data;
-		ConstUnit* cons2 = (ConstUnit*)$3->data;
-
-		switch($3->type){
-			case unit :
-				ERROR("La variable '%s' n'est pas un tableaux ",uni2->id); 
-				break;
-			case constUnit :
-				ERROR("La variable '%s' n'est pas un tableaux ",cons2->id); 
-				break;
-			case stencil :
-				ERROR("La variable '%s' n'est pas un tableaux ",cons2->id); 
-				break;
-			case array :
-				break;
-			default :
-				ERROR("Symbole inatendu '%u'",$1->type);
-				break;
-		}
-
-		Array* arr1 = (Array*)$1->data;
-		Stencil* sten1 = (Stencil*)$1->data;
-		Unit* uni1 = (Unit*)$1->data;
-		ConstUnit* cons1 = (ConstUnit*)$1->data;
-
-		switch($1->type){
-			case unit :
-				ERROR("La variable '%s' n'est pas un stencil ",uni1->id); 
-				break;
-			case constUnit :
-				ERROR("La variable '%s' n'est pas un stencil ",cons1->id); 
-				break;
-			case array :
-				ERROR("La variable '%s' n'est pas un stencil ",arr1->id); 
-				break;
-			case stencil :
-				ERROR("TODO operateur stencil"); 
-				break;
-			default :
-				ERROR("Symbole inatendu '%u'",$1->type);
-				break;
-		}*/
+		Array* arr = NULL;
+		Stencil* sten = NULL;
 
 		if($1->type == stencil && $3->type == array){
-			ERROR("TODO operateur stencil"); 
+			sten = (Stencil*)$1->data;
+			arr = (Array*)$3->data; 
 		}else if($1->type == array && $3->type == stencil){
-			ERROR("TODO operateur stencil"); 
+			sten = (Stencil*)$3->data;
+			arr = (Array*)$1->data;
 		}else{
 			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
 		}
+
+		InstructionsList arrayAccess;
+		instructionListMalloc(&arrayAccess);
+
+		PUSH_BACK(arrayAccess,1,"li $s4 0");
+		PUSH_BACK(arrayAccess,1,"la $s5 %s_multiplicator",arr->mipsId);
+		PUSH_BACK(arrayAccess,1,"la $s6 %s_verificator",arr->mipsId);
+		for(int i=0 ; i<arr->nbDimension ; ++i)
+		{
+			PUSH_BACK(arrayAccess,1,"li $t0 %d",1);
+			PUSH_BACK(arrayAccess,1,"lw $t1 0($s6)");
+			PUSH_BACK(arrayAccess,1,"add $s6 $s6 4");
+			PUSH_BACK(arrayAccess,1,"blt $t0 $0 OUTOFBOUND");
+			PUSH_BACK(arrayAccess,1,"bge $t0 $t1 OUTOFBOUND");
+			PUSH_BACK(arrayAccess,1,"lw $t1 0($s5)");
+			PUSH_BACK(arrayAccess,1,"add $s5 $s5 4");
+			PUSH_BACK(arrayAccess,1,"mul $t1 $t1 $t0");
+			PUSH_BACK(arrayAccess,1,"add $s4 $s4 $t1");	
+		}
+		PUSH_BACK(arrayAccess,1,"sll $s4 $s4 2");
+		PUSH_BACK(arrayAccess,1,"lw $t1 %s",arr->mipsId);
+		PUSH_BACK(arrayAccess,1,"add $s4 $s4 $t1");
+
+		/*PUSH_BACK(arrayAccess,1,"lb $a0 0($s4)");
+		PUSH_BACK(arrayAccess,1,"li $v0 1");
+		PUSH_BACK(arrayAccess,1,"syscall");
+		PUSH_BACK(arrayAccess,1,"li $t0 0");*/
+
+		$$.instructionEval = arrayAccess;
+
+		//instructionListFree(arrayAccess);
 
 		free($2);
 	}
