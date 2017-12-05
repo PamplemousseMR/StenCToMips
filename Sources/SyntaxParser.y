@@ -534,15 +534,16 @@ variable :
 				break;
 			case array :
 				if($3.nbValue > arr->nbDimension){
-					ERROR("trop de dimmension pour le tableau '%s'",$1);			
+					ERROR("trop de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}else if($3.nbValue < arr->nbDimension){
-					ERROR("pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $3.nbValue, arr->nbDimension);			
+					ERROR("pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}
 				instructionListMalloc(&(arr->stepsToAcces));
 				
 				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
 				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_multiplicator",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"la $s6 %s_verificator",arr->mipsId);
+				PUSH_BACK(arr->stepsToAcces,1,"li $s7 %d",arr->nbDimension);
 				instructionConcat(arr->stepsToAcces,$3.instructionNumber);
 				
 				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
@@ -550,11 +551,17 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
 				break;
 			case stencil :
+				if(sten->constEval && $3.nbValue > sten->nbDimension){
+					ERROR("trop de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
+				}else if(sten->constEval &&  $3.nbValue < sten->nbDimension){
+					ERROR("pas assez de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
+				}
 				instructionListMalloc(&(sten->stepsToAcces));
 				
 				PUSH_BACK(sten->stepsToAcces,1,"li $s4 0");
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s5 %s_multiplicator",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s6 %s_verificator",sten->mipsId);
+				PUSH_BACK(sten->stepsToAcces,1,"lw $s7 %s_nbDimension",sten->mipsId);
 				instructionConcat(sten->stepsToAcces,$3.instructionNumber);
 				
 				PUSH_BACK(sten->stepsToAcces,1,"sll $s4 $s4 2");
@@ -983,6 +990,11 @@ stencil_init :
 			sten->nbNeighbour = $3.constInt;
 			sten->nbDimension = $5.constInt;
 			sten->constant = true;	
+			sten->constEval = true;	
+		}else if($3.constEval && $5.constEval){
+			sten->nbNeighbour = $3.constInt;
+			sten->nbDimension = $5.constInt;
+			sten->constEval = true;	
 		}
 		
 		$$ = $3.instructionEval;
@@ -994,6 +1006,9 @@ stencil_init :
 		instructionConcat($$,$5.instructionEval);
 
 		PUSH_BACK($$,1,"move $s5 $t0");	// dim
+		PUSH_BACK(rootTree,1,"%s_nbDimension : .word 0",sten->mipsId);
+		PUSH_BACK($$,1,"sw $s5 %s_nbDimension",sten->mipsId);
+
 		PUSH_BACK(rootTree,1,"%s_multiplicator : .word 0",sten->mipsId);
 		PUSH_BACK($$,1,"sll $a0 $s5 2"); 
 		PUSH_BACK($$,1,"li $v0 9");
@@ -1850,7 +1865,7 @@ variable_incr :
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
 
-		Array* arr2 = (Array*)$3->data;
+		/*Array* arr2 = (Array*)$3->data;
 		Stencil* sten2 = (Stencil*)$3->data;
 		Unit* uni2 = (Unit*)$3->data;
 		ConstUnit* cons2 = (ConstUnit*)$3->data;
@@ -1893,6 +1908,14 @@ variable_incr :
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
 				break;
+		}*/
+
+		if($1->type == stencil && $3->type == array){
+			ERROR("TODO operateur stencil"); 
+		}else if($1->type == array && $3->type == stencil){
+			ERROR("TODO operateur stencil"); 
+		}else{
+			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
 		}
 
 		free($2);
@@ -1992,4 +2015,5 @@ int main(void)
 void yyerror (char const *s)
 {
 	fprintf(stderr,"erreur : %s a la ligne %d\n",s,yylineno);
+	exit(EXIT_SUCCESS);
 }

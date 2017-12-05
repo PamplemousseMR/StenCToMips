@@ -35,6 +35,7 @@ typedef struct {
 	int nbNeighbour;
 	int nbDimension;
 	bool constant;
+	bool constEval;
 	InstructionsList stepsToAcces;
 }Stencil;
 
