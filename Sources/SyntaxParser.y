@@ -1865,51 +1865,6 @@ variable_incr :
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
 
-		/*Array* arr2 = (Array*)$3->data;
-		Stencil* sten2 = (Stencil*)$3->data;
-		Unit* uni2 = (Unit*)$3->data;
-		ConstUnit* cons2 = (ConstUnit*)$3->data;
-
-		switch($3->type){
-			case unit :
-				ERROR("La variable '%s' n'est pas un tableaux ",uni2->id); 
-				break;
-			case constUnit :
-				ERROR("La variable '%s' n'est pas un tableaux ",cons2->id); 
-				break;
-			case stencil :
-				ERROR("La variable '%s' n'est pas un tableaux ",cons2->id); 
-				break;
-			case array :
-				break;
-			default :
-				ERROR("Symbole inatendu '%u'",$1->type);
-				break;
-		}
-
-		Array* arr1 = (Array*)$1->data;
-		Stencil* sten1 = (Stencil*)$1->data;
-		Unit* uni1 = (Unit*)$1->data;
-		ConstUnit* cons1 = (ConstUnit*)$1->data;
-
-		switch($1->type){
-			case unit :
-				ERROR("La variable '%s' n'est pas un stencil ",uni1->id); 
-				break;
-			case constUnit :
-				ERROR("La variable '%s' n'est pas un stencil ",cons1->id); 
-				break;
-			case array :
-				ERROR("La variable '%s' n'est pas un stencil ",arr1->id); 
-				break;
-			case stencil :
-				ERROR("TODO operateur stencil"); 
-				break;
-			default :
-				ERROR("Symbole inatendu '%u'",$1->type);
-				break;
-		}*/
-
 		if($1->type == stencil && $3->type == array){
 			ERROR("TODO operateur stencil"); 
 		}else if($1->type == array && $3->type == stencil){
