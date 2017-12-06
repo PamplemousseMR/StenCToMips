@@ -1901,15 +1901,15 @@ variable_incr :
 			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
 		}		
 
-		$$.instructionEval = arr->stepsToAcces; // TODO ca fonctionne mais il y a des calcules en trop, a refactore
+		$$.instructionEval = arr->stepsToAcces;
 		$$.constEval = false;
 
-		if(maxStencilVar==0) // TODO delete
-			PUSH_BACK(rootTree,1,"string_fordebugonly : .asciiz \"\\n\"");
+		PUSH_FORWARD($$.instructionEval,1,"bne $t0 $t1 OUTOFBOUND");
+		PUSH_FORWARD($$.instructionEval,1,"lw $t0 %s_nbDimension",sten->mipsId);
+		PUSH_FORWARD($$.instructionEval,1,"li $t1 %d",arr->nbDimension);
 
 		for(i=0 ; i<arr->nbDimension ; ++i){
-			if(i>=maxStencilVar)
-			{
+			if(i>=maxStencilVar){
 				snprintf(instructionTempo,BUFFER_SIZE,"stencil_var_%i_end : .word 0",i);
 				instructionPushBack(rootTree,instructionTempo,1);
 
@@ -1918,6 +1918,9 @@ variable_incr :
 				maxStencilVar = i+1;
 			}
 		}
+
+		PUSH_BACK($$.instructionEval,1,"lw $t3 %s",sten->mipsId);
+		PUSH_BACK($$.instructionEval,1,"li $t2 0");
 
 		for(i=0 ; i<arr->nbDimension ; ++i){
 			PUSH_BACK($$.instructionEval,1,"lw $t0 %s_nbNeighbourg",sten->mipsId);	
@@ -1929,23 +1932,10 @@ variable_incr :
 			PUSH_BACK($$.instructionEval,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
 			PUSH_BACK($$.instructionEval,1,"lw $t0 stencil_var_%d_end",i);	
 			PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
-			//print TODO delete
-			/*PUSH_BACK($$.instructionEval,1,"move $a0 $t1");
-			PUSH_BACK($$.instructionEval,1,"li $v0 1");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
-			PUSH_BACK($$.instructionEval,1,"li $v0 4");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
-			PUSH_BACK($$.instructionEval,1,"li $v0 1");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
-			PUSH_BACK($$.instructionEval,1,"li $v0 4");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"syscall");*/
 
 			PUSH_BACK($$.instructionEval,1,"beq $t0 $t1 LOOP_FOR_%llu_END",labelCounter++);
 		}
+
 		int temp = labelCounter;
 
 		{	
@@ -1959,18 +1949,6 @@ variable_incr :
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($t8)");
 				PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
 				PUSH_BACK($$.instructionEval,1,"add $t0 $t0 $t1");
-
-			//print TODO delete
-			/*PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
-			PUSH_BACK($$.instructionEval,1,"li $v0 1");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"li $t0 0");
-			
-			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
-			PUSH_BACK($$.instructionEval,1,"li $v0 4");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"li $t0 0");*/
-
 				PUSH_BACK($$.instructionEval,1,"add $t8 $t8 4");
 				PUSH_BACK($$.instructionEval,1,"ble $s7 $0 OUTOFBOUND");
 				PUSH_BACK($$.instructionEval,1,"sub $s7 $s7 1");
@@ -1987,15 +1965,11 @@ variable_incr :
 			PUSH_BACK($$.instructionEval,1,"lw $t1 %s",arr->mipsId);
 			PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");
 
-			//print TODO delete
-			PUSH_BACK($$.instructionEval,1,"lb $a0 0($s4)");
-			PUSH_BACK($$.instructionEval,1,"li $v0 1");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
-			PUSH_BACK($$.instructionEval,1,"li $v0 4");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-			PUSH_BACK($$.instructionEval,1,"syscall");
-
+			PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
+			PUSH_BACK($$.instructionEval,1,"lw $t1 0($t3)");
+			PUSH_BACK($$.instructionEval,1,"mul $t0 $t0 $t1");
+			PUSH_BACK($$.instructionEval,1,"add $t2 $t2 $t0");
+			PUSH_BACK($$.instructionEval,1,"add $t3 $t3 4");
 		}
 
 		for(i=arr->nbDimension-1 ; i>=0 ; --i){
@@ -2006,6 +1980,8 @@ variable_incr :
 			PUSH_BACK($$.instructionEval,1,"LOOP_FOR_%llu_END :",labelCounter);
 		}
 		labelCounter = temp;
+
+		PUSH_BACK($$.instructionEval,1,"move $t0 $t2");
 
 		free($2);
 	}

@@ -81,12 +81,22 @@ int main(){
 	}
 	printf("\n");
 	
-	int test[2][3] = {2,2,2,2,tabb[0][1]+5,2};  
+	int test[2][3][2] = {2,2,2,2,tabb[0][1]+5,2,5,6,3,5,8,9000};  
+	int k;
+	for(i=0 ; i<2 ;++i)
+	{
+		for(j=0 ; j<3 ; ++j)
+		{
+			for(k=0 ; k<2 ; ++k)
+			{
+				printi(test[i][j][k]);
+				printf(" ");
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+	printf("\n");
 
 	return 0;
-
-	//must throws error
-	// tab = 10;
-	// tabb[1] = 5;
-	// int tabbb[5] = {1}
 }
