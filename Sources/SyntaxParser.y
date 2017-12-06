@@ -193,7 +193,8 @@ programme :
 		}
 		PUSH_FORWARD(rootTree,0,".data");
 		PUSH_BACK(rootTree,1,"string_outOfBound : .asciiz \"\\nExeption : Array index out of bound !\\n\" ");
-		
+		PUSH_BACK(rootTree,1,"division_by_zero : .asciiz \"\\nExeption : Division by zero forbidden !\\n\" ");
+
 		PUSH_BACK(rootTree,0,"\n#####\n\n.globl main");
 		PUSH_BACK(rootTree,0,"\n#####\n\n.text");
 		PUSH_BACK(rootTree,0,"\n#####\n\nmain :");
@@ -205,6 +206,13 @@ programme :
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\nOUTOFBOUND :");
 		PUSH_BACK(rootTree,1,"la $a0 string_outOfBound");
+		PUSH_BACK(rootTree,1,"li $v0 4");
+		PUSH_BACK(rootTree,1,"syscall");
+		PUSH_BACK(rootTree,1,"li $a0 -1"); //exit failure !
+		PUSH_BACK(rootTree,1,"j EXIT");
+
+		PUSH_BACK(rootTree,0,"\n#####\n\nDIVIDEBYZERO :");
+		PUSH_BACK(rootTree,1,"la $a0 division_by_zero");
 		PUSH_BACK(rootTree,1,"li $v0 4");
 		PUSH_BACK(rootTree,1,"syscall");
 		PUSH_BACK(rootTree,1,"li $a0 -1"); //exit failure !
@@ -1622,10 +1630,10 @@ evaluation :
 			if($2[0] == '*'){
 				PUSH_BACK($$.instructionEval,1,"mul $t0 $s0 $t0");
 			}else if($2[0] == '/') {
-				//TODO ajouter une vérification coté mips ?
+				PUSH_BACK($$.instructionEval,1,"beq $0 $t0 DIVIDEBYZERO");
 				PUSH_BACK($$.instructionEval,1,"div $t0 $s0 $t0");
 			}else{
-				//TODO ajouter une vérification coté mips ?
+				PUSH_BACK($$.instructionEval,1,"beq $0 $t0 DIVIDEBYZERO");
 				PUSH_BACK($$.instructionEval,1,"div $t1 $s0 $t0");
 				PUSH_BACK($$.instructionEval,1,"mul $t1 $t1 $t0");
 				PUSH_BACK($$.instructionEval,1,"sub $t0 $s0 $t1");
