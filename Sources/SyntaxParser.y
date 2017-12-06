@@ -1882,9 +1882,6 @@ variable_incr :
 	| variable OPERATOR_STENCIL variable {
 		printf("variable OPERATOR_STENCIL variable -> variable_incr\n");
 
-		instructionListMalloc(&$$.instructionEval);
-		$$.constEval = false;
-
 		Array* arr = NULL;
 		Stencil* sten = NULL;
 
@@ -1896,38 +1893,57 @@ variable_incr :
 			arr = (Array*)$1->data;
 		}else{
 			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
-		}
+		}		
 
-		InstructionsList arrayAccess;
-		instructionListMalloc(&arrayAccess);
+		/*instructionListMalloc(&$$.instructionEval);
+		instructionListFree(arr->stepsToAcces);*/
+		$$.instructionEval = arr->stepsToAcces;
+		$$.constEval = false;				
 
-		PUSH_BACK(arrayAccess,1,"li $s4 0");
-		PUSH_BACK(arrayAccess,1,"la $s5 %s_multiplicator",arr->mipsId);
-		PUSH_BACK(arrayAccess,1,"la $s6 %s_verificator",arr->mipsId);
+		PUSH_BACK($$.instructionEval,1,"li $s4 0");
+		PUSH_BACK($$.instructionEval,1,"la $s5 %s_multiplicator",arr->mipsId);
+		PUSH_BACK($$.instructionEval,1,"la $s6 %s_verificator",arr->mipsId);
+		PUSH_BACK($$.instructionEval,1,"li $s7 %d",arr->nbDimension);
+		PUSH_BACK($$.instructionEval,1,"la $t8 %s_accesTable",arr->mipsId);
 		for(int i=0 ; i<arr->nbDimension ; ++i)
 		{
-			PUSH_BACK(arrayAccess,1,"li $t0 %d",1);
-			PUSH_BACK(arrayAccess,1,"lw $t1 0($s6)");
-			PUSH_BACK(arrayAccess,1,"add $s6 $s6 4");
-			PUSH_BACK(arrayAccess,1,"blt $t0 $0 OUTOFBOUND");
-			PUSH_BACK(arrayAccess,1,"bge $t0 $t1 OUTOFBOUND");
-			PUSH_BACK(arrayAccess,1,"lw $t1 0($s5)");
-			PUSH_BACK(arrayAccess,1,"add $s5 $s5 4");
-			PUSH_BACK(arrayAccess,1,"mul $t1 $t1 $t0");
-			PUSH_BACK(arrayAccess,1,"add $s4 $s4 $t1");	
+			PUSH_BACK($$.instructionEval,1,"lw $t0 0($t8)");
+
+		/*PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
+		PUSH_BACK($$.instructionEval,1,"li $v0 1");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");
+		PUSH_BACK(rootTree,1,"string_%llu : .asciiz \"\\n\"",variableCounter);
+		PUSH_BACK($$.instructionEval,1,"la $a0 string_%llu",variableCounter++);
+		PUSH_BACK($$.instructionEval,1,"li $v0 4");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");*/
+
+			PUSH_BACK($$.instructionEval,1,"add $t8 $t8 4");
+			PUSH_BACK($$.instructionEval,1,"ble $s7 $0 OUTOFBOUND");
+			PUSH_BACK($$.instructionEval,1,"sub $s7 $s7 1");
+			PUSH_BACK($$.instructionEval,1,"lw $t1 0($s6)");
+			PUSH_BACK($$.instructionEval,1,"add $s6 $s6 4");
+			PUSH_BACK($$.instructionEval,1,"blt $t0 $0 OUTOFBOUND");
+			PUSH_BACK($$.instructionEval,1,"bge $t0 $t1 OUTOFBOUND");
+			PUSH_BACK($$.instructionEval,1,"lw $t1 0($s5)");
+			PUSH_BACK($$.instructionEval,1,"add $s5 $s5 4");
+			PUSH_BACK($$.instructionEval,1,"mul $t1 $t1 $t0");
+			PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");		
 		}
-		PUSH_BACK(arrayAccess,1,"sll $s4 $s4 2");
-		PUSH_BACK(arrayAccess,1,"lw $t1 %s",arr->mipsId);
-		PUSH_BACK(arrayAccess,1,"add $s4 $s4 $t1");
+		PUSH_BACK($$.instructionEval,1,"sll $s4 $s4 2");
+		PUSH_BACK($$.instructionEval,1,"lw $t1 %s",arr->mipsId);
+		PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");
 
-		/*PUSH_BACK(arrayAccess,1,"lb $a0 0($s4)");
-		PUSH_BACK(arrayAccess,1,"li $v0 1");
-		PUSH_BACK(arrayAccess,1,"syscall");
-		PUSH_BACK(arrayAccess,1,"li $t0 0");*/
-
-		$$.instructionEval = arrayAccess;
-
-		//instructionListFree(arrayAccess);
+		/*PUSH_BACK($$.instructionEval,1,"lb $a0 0($s4)");
+		PUSH_BACK($$.instructionEval,1,"li $v0 1");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");
+		PUSH_BACK(rootTree,1,"string_%llu : .asciiz \"\\n\"",variableCounter);
+		PUSH_BACK($$.instructionEval,1,"la $a0 string_%llu",variableCounter++);
+		PUSH_BACK($$.instructionEval,1,"li $v0 4");
+		PUSH_BACK($$.instructionEval,1,"syscall");
+		PUSH_BACK($$.instructionEval,1,"li $t0 0");*/
 
 		free($2);
 	}
