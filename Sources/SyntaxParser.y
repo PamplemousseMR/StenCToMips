@@ -781,14 +781,14 @@ array_init :
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
 			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
 			
-			PUSH_BACK($$,1,"lb $t5 %s_verificator($t2)",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"lw $t5 %s_verificator($t2)",actualArrayInit->mipsId);
 			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
 			
 			PUSH_BACK($$,1,"add $t2 $t2 4");
 			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
 			
-			PUSH_BACK($$,1,"sb $t4 %s_multiplicator($t1)",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"sw $t4 %s_multiplicator($t1)",actualArrayInit->mipsId);
 			
 			PUSH_BACK($$,1,"add $t1 $t1 4");
 		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
@@ -865,7 +865,7 @@ hooks_init :
 		instructionConcat($$.instructionHooksInit,$3.instructionEval);
 		PUSH_BACK($$.instructionHooksInit,1,"mul $s4 $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$.instructionHooksInit,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 
@@ -883,7 +883,7 @@ hooks_init :
 		}
 		PUSH_BACK($$.instructionHooksInit,1,"move $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$.instructionHooksInit,1,"sb $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 %s_verificator($t1)",actualArrayInit->mipsId);
 		
 		actualArrayInit->nbDimension++;
 
@@ -1054,9 +1054,9 @@ stencil_init :
 		PUSH_BACK($$,1,"li $t3 1");
 		PUSH_BACK($$,1,"STENCIL_INIT_LOOP_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"blt $t2 $t1 STENCIL_INIT_LOOP_%llu_END",labelCounter);
-			PUSH_BACK($$,1,"sb $s4 0($t4)");
+			PUSH_BACK($$,1,"sw $s4 0($t4)");
 			PUSH_BACK($$,1,"add $t4 $t4 4");
-			PUSH_BACK($$,1,"sb $t3 0($t2)");
+			PUSH_BACK($$,1,"sw $t3 0($t2)");
 			PUSH_BACK($$,1,"sub $t2 $t2 4");
 			PUSH_BACK($$,1,"mul $t3 $t3 $s4");
 		PUSH_BACK($$,1,"j STENCIL_INIT_LOOP_%llu_BEGIN",labelCounter);
@@ -1176,7 +1176,7 @@ affectation :
 				}
 				instructionConcat($$,$3.instructionEval);
 				
-				PUSH_BACK($$,1,"lb $t1 0($s4)");
+				PUSH_BACK($$,1,"lw $t1 0($s4)");
 				if(!strcmp($2,"+=")){
 					PUSH_BACK($$,1,"add $t0 $t1 $t0");
 				}else if(!strcmp($2,"-=")){
@@ -1201,7 +1201,7 @@ affectation :
 				}
 				instructionConcat($$,$3.instructionEval);
 				
-				PUSH_BACK($$,1,"lb $t1 0($s4)");
+				PUSH_BACK($$,1,"lw $t1 0($s4)");
 				if(!strcmp($2,"+=")){
 					PUSH_BACK($$,1,"add $t0 $t1 $t0");
 				}else if(!strcmp($2,"-=")){
@@ -1778,13 +1778,13 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, arr->stepsToAcces);
-				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
 				}else{
 					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"sw $t0 0($s4)");
 				
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
@@ -1793,13 +1793,13 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
-				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
 				}else{
 					PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
 				}
-				PUSH_BACK($$.instructionEval,1,"sb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"sw $t0 0($s4)");
 				
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
@@ -1849,14 +1849,14 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, arr->stepsToAcces);
-				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
-				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t1 0($s4)");
 				if(!strcmp($2, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t1 $t1 1");
 				}else{
 					PUSH_BACK($$.instructionEval,1,"sub $t1 $t1 1");
 				}
-				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"sw $t1 0($s4)");
 				
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
@@ -1865,14 +1865,14 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
-				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
-				PUSH_BACK($$.instructionEval,1,"lb $t1 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t1 0($s4)");
 				if(!strcmp($2, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t1 $t1 1");
 				}else{
 					PUSH_BACK($$.instructionEval,1,"sub $t1 $t1 1");
 				}
-				PUSH_BACK($$.instructionEval,1,"sb $t1 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"sw $t1 0($s4)");
 				
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
@@ -1889,6 +1889,7 @@ variable_incr :
 
 		Array* arr = NULL;
 		Stencil* sten = NULL;
+		int i;
 
 		if($1->type == stencil && $3->type == array){
 			sten = (Stencil*)$1->data;
@@ -1906,7 +1907,7 @@ variable_incr :
 		if(maxStencilVar==0) // TODO delete
 			PUSH_BACK(rootTree,1,"string_fordebugonly : .asciiz \"\\n\"");
 
-		for(int i=0 ; i<arr->nbDimension ; ++i){
+		for(i=0 ; i<arr->nbDimension ; ++i){
 			if(i>=maxStencilVar)
 			{
 				snprintf(instructionTempo,BUFFER_SIZE,"stencil_var_%i_end : .word 0",i);
@@ -1918,7 +1919,7 @@ variable_incr :
 			}
 		}
 
-		for(int i=0 ; i<arr->nbDimension ; ++i){
+		for(i=0 ; i<arr->nbDimension ; ++i){
 			PUSH_BACK($$.instructionEval,1,"lw $t0 %s_nbNeighbourg",sten->mipsId);	
 			PUSH_BACK($$.instructionEval,1,"sub $t1 $zero $t0");
 			PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
@@ -1953,7 +1954,7 @@ variable_incr :
 			PUSH_BACK($$.instructionEval,1,"la $s6 %s_verificator",arr->mipsId);
 			PUSH_BACK($$.instructionEval,1,"li $s7 %d",arr->nbDimension);
 			PUSH_BACK($$.instructionEval,1,"la $t8 %s_accesTable",arr->mipsId);
-			for(int i=0 ; i<arr->nbDimension ; ++i)
+			for(i=0 ; i<arr->nbDimension ; ++i)
 			{
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($t8)");
 				PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
@@ -1997,7 +1998,7 @@ variable_incr :
 
 		}
 
-		for(int i=arr->nbDimension-1 ; i>=0 ; --i){
+		for(i=arr->nbDimension-1 ; i>=0 ; --i){
 			PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
 			PUSH_BACK($$.instructionEval,1,"add $t1 $t1 1");
 			PUSH_BACK($$.instructionEval,1,"sw $t1 stencil_var_%d_beg",i);
@@ -2032,12 +2033,12 @@ variable_incr :
 				break;
 			case array :
 				instructionConcat($$.instructionEval,arr->stepsToAcces);
-				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			case stencil :
 				instructionConcat($$.instructionEval,sten->stepsToAcces);
-				PUSH_BACK($$.instructionEval,1,"lb $t0 0($s4)");
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
 				break;
 			default :
