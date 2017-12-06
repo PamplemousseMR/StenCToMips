@@ -574,7 +574,7 @@ variable :
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s5 %s_multiplicator",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s6 %s_verificator",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"lw $s7 %s_nbDimension",sten->mipsId);
-				PUSH_BACK(sten->stepsToAcces,1,"la $t8 %s_accesTable",sten->mipsId);
+				PUSH_BACK(sten->stepsToAcces,1,"lw $t8 %s_accesTable",sten->mipsId);
 				
 				instructionConcat(sten->stepsToAcces,$3.instructionNumber);
 				
@@ -1942,42 +1942,7 @@ variable_incr :
 			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
 		}		
 		
-		// int main(){
-			
-			// :
-			// tab[5];
-		// }
-		
-		// i=3 j=2 k=5 ( i j k )
-		
-		
-		// gx[gx $ tab[2]] 
-		
-		//stack sten
-		if(sten->stepsToAcces != NULL)
-			instrcutionListFree(sten->stepsToAcces);
-		
-		////stack arr
 		$$.instructionEval = arr->stepsToAcces;	
-		PUSH_BACK($$.instructionEval,1,"li $t0 %d",arr->nbDimension);
-		PUSH_BACK($$.instructionEval,1,"la $t1 %s_accesTable",arr->mipsId);
-		PUSH_BACK($$.instructionEval,1,"lw $t2 %s_accesTable",sten->mipsId);
-		
-		PUSH_BACK($$.instructionEval,1,"STENCIL_COPY_LOOP_%llu_BEGIN :",labelCounter);
-		PUSH_BACK($$.instructionEval,1,"ble $t0 $0 STENCIL_COPY_LOOP_%llu_END",labelCounter);
-		
-		PUSH_BACK($$.instructionEval,1,"lw $t3 ($t1)");
-		PUSH_BACK($$.instructionEval,1,"add $t1 $t1 4");
-		PUSH_BACK($$.instructionEval,1,"sw $t3 ($t2)");
-		PUSH_BACK($$.instructionEval,1,"add $2 $t2 4");
-		PUSH_BACK($$.instructionEval,1,"sub $t0 $t0 1");
-		
-		PUSH_BACK($$.instructionEval,1,"STENCIL_COPY_LOOP_%llu_END :",labelCounter);
-		labelCounter++;
-		////unstack arr
-		$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,sArr);
-		
-		
 		$$.constEval = false;
 
 		PUSH_FORWARD($$.instructionEval,1,"bne $t0 $t1 OUTOFBOUND");
@@ -2060,7 +2025,7 @@ variable_incr :
 		PUSH_BACK($$.instructionEval,1,"move $t0 $t2");
 		
 		//unstack sten
-		$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,sSten);
+		$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,sArr);
 
 		free($2);
 	}

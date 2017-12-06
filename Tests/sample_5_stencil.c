@@ -11,7 +11,9 @@ int main()
 
 	printf("-------\n");
 
-	printi(gx $ tab[2][2][2]);
+	
+	printi( gx $ tab[2][tab[1][1][1]+tab[4][0][3]][gx[0][0][0]+1] );
+	
 	printf("\n");
 
 	int tab2[5] = { 42, 21, 7, 314, 127 };
