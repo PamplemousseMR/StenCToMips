@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "InstructionsList.h"
+#include "SymbolsTable.h"
 extern unsigned long long labelCounter;
 
 static inline Instruction instructionMalloc(char* c, int ind)
@@ -101,30 +102,46 @@ void instructionListPrintFILE(InstructionsList i,FILE * f)
 	}
 }
 
-InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l){
+InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l,void * s){
 	char tmp[INSTRUCTION_SIZE];
 	InstructionsList result;
 	instructionListMalloc(&result);
 	
+	Symbol s2 = s;
+	Array* arr = (Array*)s2->data;
+	Stencil* sten = (Stencil*)s2->data;
 	//enregistrement du tableau d'acces
-	// instructionPushBack(result,"sll $t0 $s7 4",1);
-	// instructionPushBack(result,"add $t0 $t0 $t8",1);
-	// instructionPushBack(result,"sub $t0 $t0 4",1); 		//$t0 = adresse du dernier du tableau
-	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_START :",labelCounter);
-	// instructionPushBack(result,tmp,1);
-	// snprintf(tmp,INSTRUCTION_SIZE,"blt $t0 $t8 STACK_LOOP_%llu_END",labelCounter);
-	// instructionPushBack(result,tmp,1);
-		// instructionPushBack(result,"lb $t2 ($t0)",1);
+	
+	//recupère la taille du tableau d'acces du symbole s à stocker 
+	if(s2->type == array){
+		snprintf(tmp,INSTRUCTION_SIZE,"li $t1 %d",arr->nbDimension);
+		instructionPushBack(result,tmp,1);
+		snprintf(tmp,INSTRUCTION_SIZE,"la $t2 %s_accesTable",arr->mipsId);
+		instructionPushBack(result,tmp,1);
+	} else {
+		snprintf(tmp,INSTRUCTION_SIZE,"lw $t1 %s_nbDimension",sten->mipsId);
+		instructionPushBack(result,tmp,1);
+		snprintf(tmp,INSTRUCTION_SIZE,"lw $t2 %s_accesTable",sten->mipsId);
+		instructionPushBack(result,tmp,1);
+	}
+	instructionPushBack(result,"sll $t1 $t1 2",1);
+	instructionPushBack(result,"add $t1 $t1 $t2",1);
+	instructionPushBack(result,"sub $t1 $t1 4",1); 		//$t0 = adresse du dernier du tableau
+	snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_START :",labelCounter);
+	instructionPushBack(result,tmp,1);
+	snprintf(tmp,INSTRUCTION_SIZE,"blt $t1 $t2 STACK_LOOP_%llu_END",labelCounter);
+	instructionPushBack(result,tmp,1);
+		instructionPushBack(result,"lw $t3 ($t1)",1);
 		
-		// instructionPushBack(result,"sub $sp $sp 4",1);
-		// instructionPushBack(result,"sw $t2 0($sp)",1);
+		instructionPushBack(result,"sub $sp $sp 4",1);
+		instructionPushBack(result,"sw $t3 0($sp)",1);
 		
-		// instructionPushBack(result,"sub $t0 $t0 4",1);
-		// snprintf(tmp,INSTRUCTION_SIZE,"j STACK_LOOP_%llu_START",labelCounter);
-		// instructionPushBack(result,tmp,1);
-	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_END :",labelCounter);
-	// instructionPushBack(result,tmp,1);
-	// labelCounter++;
+		instructionPushBack(result,"sub $t1 $t1 4",1);
+		snprintf(tmp,INSTRUCTION_SIZE,"j STACK_LOOP_%llu_START",labelCounter);
+		instructionPushBack(result,tmp,1);
+	snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_END :",labelCounter);
+	instructionPushBack(result,tmp,1);
+	labelCounter++;
 	
 	//enregistrement des registres
 	instructionPushBack(result,"sub $sp $sp 20",1);
@@ -147,22 +164,35 @@ InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l){
 	instructionPushBack(result,"add $sp $sp 20",1);
 	
 	//restitution du tableau d'acces
-	// instructionPushBack(result,"move $t0 $t8",1);	//t0 pointeur tableau 
-	// instructionPushBack(result,"li $t1 0",1);
-	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_START :",labelCounter);
-	// instructionPushBack(result,tmp,1);
-	// snprintf(tmp,INSTRUCTION_SIZE,"bge $t1 $s7 STACK_LOOP_%llu_END",labelCounter);
-	// instructionPushBack(result,tmp,1);
-		// instructionPushBack(result,"lw $t2 0($sp)",1);
-		// instructionPushBack(result,"add $sp $sp 4",1);
-		// instructionPushBack(result,"sb $t2 ($t0)",1);
-		// instructionPushBack(result,"add $t0 $t0 4",1);
-		// instructionPushBack(result,"add $t1 $t1 1",1);
-		// snprintf(tmp,INSTRUCTION_SIZE,"j STACK_LOOP_%llu_START",labelCounter);
-		// instructionPushBack(result,tmp,1);
-	// snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_END :",labelCounter);
-	// instructionPushBack(result,tmp,1);
-	// labelCounter++;
+	
+	//recupère la taille du tableau d'acces du symbole s à stocker 
+	if(s2->type == array){
+		snprintf(tmp,INSTRUCTION_SIZE,"li $t2 %d",arr->nbDimension);
+		instructionPushBack(result,tmp,1);
+		snprintf(tmp,INSTRUCTION_SIZE,"la $t1 %s_accesTable",arr->mipsId);
+		instructionPushBack(result,tmp,1);
+	} else {
+		snprintf(tmp,INSTRUCTION_SIZE,"lw $t2 %s_nbDimension",sten->mipsId);
+		instructionPushBack(result,tmp,1);
+		snprintf(tmp,INSTRUCTION_SIZE,"lw $t1 %s_accesTable",sten->mipsId);
+		instructionPushBack(result,tmp,1);
+	}
+	
+	snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_START :",labelCounter);
+	instructionPushBack(result,tmp,1);
+	snprintf(tmp,INSTRUCTION_SIZE,"ble $t2 $0 STACK_LOOP_%llu_END",labelCounter);
+	instructionPushBack(result,tmp,1);
+		instructionPushBack(result,"lw $t3 0($sp)",1);
+		instructionPushBack(result,"add $sp $sp 4",1);
+		instructionPushBack(result,"sw $t3 ($t1)",1);
+		instructionPushBack(result,"add $t1 $t1 4",1);
+		
+		instructionPushBack(result,"sub $t2 $t2 1",1);
+		snprintf(tmp,INSTRUCTION_SIZE,"j STACK_LOOP_%llu_START",labelCounter);
+		instructionPushBack(result,tmp,1);
+	snprintf(tmp,INSTRUCTION_SIZE,"STACK_LOOP_%llu_END :",labelCounter);
+	instructionPushBack(result,tmp,1);
+	labelCounter++;
 	
 	return result;
 }
