@@ -31,6 +31,7 @@
 	unsigned long long labelCounter = 0;
 	unsigned long long variableCounter = 0;
 	bool constanteZone = false;
+	int maxStencilVar = 0;
 
 	int yylex();
 	void yyerror(char const*);
@@ -1012,6 +1013,10 @@ stencil_init :
 		}
 		
 		$$ = $3.instructionEval;
+
+		PUSH_BACK(rootTree,1,"%s_nbNeighbourg : .word 0",sten->mipsId);
+		PUSH_BACK($$,1,"sw $t0 %s_nbNeighbourg",sten->mipsId);
+
 		PUSH_BACK($$,1,"li $t1 2");
 		PUSH_BACK($$,1,"li $t2 1");
 		PUSH_BACK($$,1,"mul $s4 $t0 $t1");
@@ -1895,55 +1900,111 @@ variable_incr :
 			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
 		}		
 
-		/*instructionListMalloc(&$$.instructionEval);
-		instructionListFree(arr->stepsToAcces);*/
-		$$.instructionEval = arr->stepsToAcces;
-		$$.constEval = false;				
+		$$.instructionEval = arr->stepsToAcces; // TODO ca fonctionne mais il y a des calcules en trop, a refactore
+		$$.constEval = false;
 
-		PUSH_BACK($$.instructionEval,1,"li $s4 0");
-		PUSH_BACK($$.instructionEval,1,"la $s5 %s_multiplicator",arr->mipsId);
-		PUSH_BACK($$.instructionEval,1,"la $s6 %s_verificator",arr->mipsId);
-		PUSH_BACK($$.instructionEval,1,"li $s7 %d",arr->nbDimension);
-		PUSH_BACK($$.instructionEval,1,"la $t8 %s_accesTable",arr->mipsId);
-		for(int i=0 ; i<arr->nbDimension ; ++i)
-		{
-			PUSH_BACK($$.instructionEval,1,"lw $t0 0($t8)");
+		if(maxStencilVar==0) // TODO delete
+			PUSH_BACK(rootTree,1,"string_fordebugonly : .asciiz \"\\n\"");
 
-		/*PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
-		PUSH_BACK($$.instructionEval,1,"li $v0 1");
-		PUSH_BACK($$.instructionEval,1,"syscall");
-		PUSH_BACK($$.instructionEval,1,"li $t0 0");
-		PUSH_BACK(rootTree,1,"string_%llu : .asciiz \"\\n\"",variableCounter);
-		PUSH_BACK($$.instructionEval,1,"la $a0 string_%llu",variableCounter++);
-		PUSH_BACK($$.instructionEval,1,"li $v0 4");
-		PUSH_BACK($$.instructionEval,1,"syscall");
-		PUSH_BACK($$.instructionEval,1,"li $t0 0");*/
+		for(int i=0 ; i<arr->nbDimension ; ++i){
+			if(i>=maxStencilVar)
+			{
+				snprintf(instructionTempo,BUFFER_SIZE,"stencil_var_%i_end : .word 0",i);
+				instructionPushBack(rootTree,instructionTempo,1);
 
-			PUSH_BACK($$.instructionEval,1,"add $t8 $t8 4");
-			PUSH_BACK($$.instructionEval,1,"ble $s7 $0 OUTOFBOUND");
-			PUSH_BACK($$.instructionEval,1,"sub $s7 $s7 1");
-			PUSH_BACK($$.instructionEval,1,"lw $t1 0($s6)");
-			PUSH_BACK($$.instructionEval,1,"add $s6 $s6 4");
-			PUSH_BACK($$.instructionEval,1,"blt $t0 $0 OUTOFBOUND");
-			PUSH_BACK($$.instructionEval,1,"bge $t0 $t1 OUTOFBOUND");
-			PUSH_BACK($$.instructionEval,1,"lw $t1 0($s5)");
-			PUSH_BACK($$.instructionEval,1,"add $s5 $s5 4");
-			PUSH_BACK($$.instructionEval,1,"mul $t1 $t1 $t0");
-			PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");		
+				snprintf(instructionTempo,BUFFER_SIZE,"stencil_var_%i_beg : .word 0",i);
+				instructionPushBack(rootTree,instructionTempo,1);
+				maxStencilVar = i+1;
+			}
 		}
-		PUSH_BACK($$.instructionEval,1,"sll $s4 $s4 2");
-		PUSH_BACK($$.instructionEval,1,"lw $t1 %s",arr->mipsId);
-		PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");
 
-		/*PUSH_BACK($$.instructionEval,1,"lb $a0 0($s4)");
-		PUSH_BACK($$.instructionEval,1,"li $v0 1");
-		PUSH_BACK($$.instructionEval,1,"syscall");
-		PUSH_BACK($$.instructionEval,1,"li $t0 0");
-		PUSH_BACK(rootTree,1,"string_%llu : .asciiz \"\\n\"",variableCounter);
-		PUSH_BACK($$.instructionEval,1,"la $a0 string_%llu",variableCounter++);
-		PUSH_BACK($$.instructionEval,1,"li $v0 4");
-		PUSH_BACK($$.instructionEval,1,"syscall");
-		PUSH_BACK($$.instructionEval,1,"li $t0 0");*/
+		for(int i=0 ; i<arr->nbDimension ; ++i){
+			PUSH_BACK($$.instructionEval,1,"lw $t0 %s_nbNeighbourg",sten->mipsId);	
+			PUSH_BACK($$.instructionEval,1,"sub $t1 $zero $t0");
+			PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
+			PUSH_BACK($$.instructionEval,1,"sw $t0 stencil_var_%d_end",i);	
+			PUSH_BACK($$.instructionEval,1,"sw $t1 stencil_var_%d_beg",i);
+
+			PUSH_BACK($$.instructionEval,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
+			PUSH_BACK($$.instructionEval,1,"lw $t0 stencil_var_%d_end",i);	
+			PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
+			//print TODO delete
+			/*PUSH_BACK($$.instructionEval,1,"move $a0 $t1");
+			PUSH_BACK($$.instructionEval,1,"li $v0 1");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
+			PUSH_BACK($$.instructionEval,1,"li $v0 4");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
+			PUSH_BACK($$.instructionEval,1,"li $v0 1");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
+			PUSH_BACK($$.instructionEval,1,"li $v0 4");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"syscall");*/
+
+			PUSH_BACK($$.instructionEval,1,"beq $t0 $t1 LOOP_FOR_%llu_END",labelCounter++);
+		}
+		int temp = labelCounter;
+
+		{	
+			PUSH_BACK($$.instructionEval,1,"li $s4 0");
+			PUSH_BACK($$.instructionEval,1,"la $s5 %s_multiplicator",arr->mipsId);
+			PUSH_BACK($$.instructionEval,1,"la $s6 %s_verificator",arr->mipsId);
+			PUSH_BACK($$.instructionEval,1,"li $s7 %d",arr->nbDimension);
+			PUSH_BACK($$.instructionEval,1,"la $t8 %s_accesTable",arr->mipsId);
+			for(int i=0 ; i<arr->nbDimension ; ++i)
+			{
+				PUSH_BACK($$.instructionEval,1,"lw $t0 0($t8)");
+				PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
+				PUSH_BACK($$.instructionEval,1,"add $t0 $t0 $t1");
+
+			//print TODO delete
+			/*PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
+			PUSH_BACK($$.instructionEval,1,"li $v0 1");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");
+			
+			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
+			PUSH_BACK($$.instructionEval,1,"li $v0 4");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"li $t0 0");*/
+
+				PUSH_BACK($$.instructionEval,1,"add $t8 $t8 4");
+				PUSH_BACK($$.instructionEval,1,"ble $s7 $0 OUTOFBOUND");
+				PUSH_BACK($$.instructionEval,1,"sub $s7 $s7 1");
+				PUSH_BACK($$.instructionEval,1,"lw $t1 0($s6)");
+				PUSH_BACK($$.instructionEval,1,"add $s6 $s6 4");
+				PUSH_BACK($$.instructionEval,1,"blt $t0 $0 OUTOFBOUND");
+				PUSH_BACK($$.instructionEval,1,"bge $t0 $t1 OUTOFBOUND");
+				PUSH_BACK($$.instructionEval,1,"lw $t1 0($s5)");
+				PUSH_BACK($$.instructionEval,1,"add $s5 $s5 4");
+				PUSH_BACK($$.instructionEval,1,"mul $t1 $t1 $t0");
+				PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");		
+			}
+			PUSH_BACK($$.instructionEval,1,"sll $s4 $s4 2");
+			PUSH_BACK($$.instructionEval,1,"lw $t1 %s",arr->mipsId);
+			PUSH_BACK($$.instructionEval,1,"add $s4 $s4 $t1");
+
+			//print TODO delete
+			PUSH_BACK($$.instructionEval,1,"lb $a0 0($s4)");
+			PUSH_BACK($$.instructionEval,1,"li $v0 1");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"la $a0 string_fordebugonly");
+			PUSH_BACK($$.instructionEval,1,"li $v0 4");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+			PUSH_BACK($$.instructionEval,1,"syscall");
+
+		}
+
+		for(int i=arr->nbDimension-1 ; i>=0 ; --i){
+			PUSH_BACK($$.instructionEval,1,"lw $t1 stencil_var_%d_beg",i);
+			PUSH_BACK($$.instructionEval,1,"add $t1 $t1 1");
+			PUSH_BACK($$.instructionEval,1,"sw $t1 stencil_var_%d_beg",i);
+			PUSH_BACK($$.instructionEval,1,"j LOOP_FOR_%llu_BEGIN",--labelCounter);
+			PUSH_BACK($$.instructionEval,1,"LOOP_FOR_%llu_END :",labelCounter);
+		}
+		labelCounter = temp;
 
 		free($2);
 	}
