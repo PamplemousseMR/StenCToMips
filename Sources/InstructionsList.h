@@ -25,5 +25,5 @@ void instructionIncr(InstructionsList, int);	//incrémente de n tout les nbInden
 
 void instructionListPrintFILE(InstructionsList,FILE*);
 
-InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList);
+InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList,void*);
 #endif

@@ -1112,7 +1112,7 @@ affectation :
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				$$ = instructionStackUnstackS4S5S6S7T8($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			case stencil :
 				$$ = sten->stepsToAcces;
@@ -1124,7 +1124,7 @@ affectation :
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				$$ = instructionStackUnstackS4S5S6S7T8($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1192,7 +1192,7 @@ affectation :
 				}
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				$$ = instructionStackUnstackS4S5S6S7T8($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			case stencil :
 				$$ = sten->stepsToAcces;
@@ -1217,7 +1217,7 @@ affectation :
 				}
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
-				$$ = instructionStackUnstackS4S5S6S7T8($$);
+				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -1786,7 +1786,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sw $t0 0($s4)");
 				
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$2);
 				break;
 			case stencil :
 				if(sten->constant){
@@ -1801,7 +1801,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sw $t0 0($s4)");
 				
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$2);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$2->type);
@@ -1858,7 +1858,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sw $t1 0($s4)");
 				
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			case stencil :
 				if(sten->constant){
@@ -1874,7 +1874,7 @@ variable_incr :
 				}
 				PUSH_BACK($$.instructionEval,1,"sw $t1 0($s4)");
 				
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -2034,12 +2034,12 @@ variable_incr :
 			case array :
 				instructionConcat($$.instructionEval,arr->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			case stencil :
 				instructionConcat($$.instructionEval,sten->stepsToAcces);
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval);
+				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
