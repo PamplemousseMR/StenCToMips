@@ -158,6 +158,7 @@
 %type<HooksInit>	hooks_init
 %type<Instruction>	affectation
 %type<Instruction>	for
+%type<Instruction>	for_init_serie
 %type<Instruction>	affectations_serie
 %type<Instruction>	evaluations_serie
 %type<Instruction>	while
@@ -1233,8 +1234,8 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3------------------4----5----------6----7-----------------8----9----------10----11 DONE
-	FOR LBRA affectations_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
+// -1---2----3--------------4----5----------6----7-----------------8----9----------10----11 DONE
+	FOR LBRA for_init_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
 		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
 		if($5.constEval){
@@ -1275,6 +1276,23 @@ for :
 
 //__________________________________________________________________________________
 
+for_init_serie :
+// -1---------------------------------------------------------------- DONE
+	affectations_serie {
+		$$ = $1;
+	}
+// ---1-----2----3--------------------------------------------------- DONE
+	| const TYPE variables_init_serie {
+		printf("const TYPE variables_init_serie -> affectations_serie\n");
+		
+		constanteZone = false;
+		$$ = $3;
+
+		free($2);
+	}
+
+//__________________________________________________________________________________
+
 affectations_serie :
 // -1------------------2-----3--------------------------------------- DONE
 	affectations_serie COMMA affectation{
@@ -1285,11 +1303,13 @@ affectations_serie :
 
 		free($2);
 	}
+// ---1-------------------------------------------------------------- DONE
 	| affectation {
 		printf("affectation -> affectations_serie\n");
 
 		$$ = $1;
-	};
+	}
+	;
 
 //__________________________________________________________________________________
 
@@ -1300,6 +1320,14 @@ evaluations_serie :
 
 		$$ = $1;
 		instructionConcat($$,$3.instructionEval);
+
+		free($2);
+	}
+	| evaluations_serie COMMA affectation{
+		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
+
+		$$ = $1;
+		instructionConcat($$,$3);
 
 		free($2);
 	}

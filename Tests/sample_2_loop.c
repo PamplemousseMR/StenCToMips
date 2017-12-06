@@ -34,5 +34,13 @@ int main(){
 		int k =0;
 	}
 
+	for(int ll=0,jj=3 ; ll<5 ; jj+=4, ll++)
+	{
+		printi(ll);
+		printf(" ");
+		printi(jj);
+		printf("\n");
+	}
+
 	return 0;
 }

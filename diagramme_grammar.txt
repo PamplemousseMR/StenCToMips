@@ -1,7 +1,5 @@
-operateur stencil
 macro
 switch case default
-verificateur pour les stencil (comme les tableaux)
 & et | binaire
 géré les break et continue
 commentaire /* */ marche pas
