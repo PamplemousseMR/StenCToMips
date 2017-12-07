@@ -203,6 +203,7 @@ programme :
 		PUSH_BACK(rootTree,1,"j EXIT");
 		
 		instructionConcat(rootTree,$2);
+		$2 = NULL;
 		
 		PUSH_BACK(rootTree,0,"\n#####\n\nOUTOFBOUND :");
 		PUSH_BACK(rootTree,1,"la $a0 string_outOfBound");
@@ -264,6 +265,7 @@ functions_serie :
 		$$ = $1;
 		PUSH_BACK($$,0,"\n");
 		instructionConcat($$,$2);
+		$2 = NULL;
 	}
 // ------------------------------------------------------------------ DONE
 	| function {
@@ -365,6 +367,7 @@ instructions_serie :
 		
 		$$ = $1;
 		instructionConcat($$.instructionLine,$2.instructionLine);
+		$2.instructionLine = NULL;
 		$$.willReturn = $1.willReturn || $2.willReturn;
 	}
 // ------------------------------------------------------------------ DONE
@@ -382,6 +385,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
+		$2 = NULL;
 		$$.willReturn = false;
 	}
 // ---1------------------2------------------------------------------- DONE
@@ -390,6 +394,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
+		$2 = NULL;
 		$$.willReturn = false;
 	}
 // ---1------------------2------------------------------------------- DONE
@@ -398,6 +403,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2.instructionLine);
+		$2.instructionLine = NULL;
 		$$.willReturn = $2.willReturn;
 	}
 // ---1----2----------3------------------4--------5------------------ DONE
@@ -418,6 +424,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
+		$2 = NULL;
 		$$.willReturn = false;
 
 		free($3);
@@ -428,6 +435,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
+		$2 = NULL;
 		$$.willReturn = false;
 
 		free($3);
@@ -438,6 +446,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2);
+		$2 = NULL;
 		$$.willReturn = true;
 
 		free($3);
@@ -448,6 +457,7 @@ ligne :
 		
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2.instructionEval);
+		$2.instructionEval = NULL;
 		$$.willReturn = false;
 
 		free($3);
@@ -557,7 +567,8 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"la $t8 %s_accesTable",arr->mipsId);
 				
 				instructionConcat(arr->stepsToAcces,$3.instructionNumber);
-				
+				$3.instructionNumber = NULL;
+
 				PUSH_BACK(arr->stepsToAcces,1,"sll $s4 $s4 2");
 				PUSH_BACK(arr->stepsToAcces,1,"lw $t1 %s",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
@@ -568,6 +579,10 @@ variable :
 				}else if(sten->constEval &&  $3.nbValue < sten->nbDimension){
 					ERROR("pas assez de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
 				}
+
+				if(sten->stepsToAcces != NULL){
+					instructionListFree(sten->stepsToAcces);
+				}
 				instructionListMalloc(&(sten->stepsToAcces));
 				
 				PUSH_BACK(sten->stepsToAcces,1,"li $s4 0");
@@ -577,7 +592,8 @@ variable :
 				PUSH_BACK(sten->stepsToAcces,1,"lw $t8 %s_accesTable",sten->mipsId);
 				
 				instructionConcat(sten->stepsToAcces,$3.instructionNumber);
-				
+				$3.instructionNumber = NULL;
+
 				PUSH_BACK(sten->stepsToAcces,1,"sll $s4 $s4 2");
 				PUSH_BACK(sten->stepsToAcces,1,"lw $t1 %s",sten->mipsId);
 				PUSH_BACK(sten->stepsToAcces,1,"add $s4 $s4 $t1");
@@ -603,6 +619,7 @@ hooks :
 		$$.nbValue = $1.nbValue + 1;
 		$$.instructionNumber = $1.instructionNumber;
 		instructionConcat($$.instructionNumber,$3.instructionEval);
+		$3.instructionEval = NULL;
 		PUSH_BACK($$.instructionNumber,1,"ble $s7 $0 OUTOFBOUND");
 		PUSH_BACK($$.instructionNumber,1,"sub $s7 $s7 1");
 		PUSH_BACK($$.instructionNumber,1,"lw $t1 0($s6)");
@@ -692,6 +709,7 @@ variables_init_serie :
 		
 		$$ = $1;
 		instructionConcat($$,$3);
+		$3 = NULL;
 
 		free($2);
 	}
@@ -817,6 +835,7 @@ array_init :
 		}
 
 		instructionConcat($$,$3.instructionArray);
+		$3.instructionArray = NULL;
 	}
 	;
 
@@ -872,6 +891,7 @@ hooks_init :
 			$$.nbValue = $1.nbValue*$3.constInt;
 		}
 		instructionConcat($$.instructionHooksInit,$3.instructionEval);
+		$3.instructionEval = NULL;
 		PUSH_BACK($$.instructionHooksInit,1,"mul $s4 $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
 		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 %s_verificator($t1)",actualArrayInit->mipsId);
@@ -927,7 +947,8 @@ number_serie_comma :
 		$$ = $1;
 		$$.nbValue += $3.nbValue;
 		instructionConcat($$.instructionNumber,$3.instructionNumber);
-		
+		$3.instructionNumber = NULL;
+
 		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
@@ -946,6 +967,8 @@ number_serie :
 		$$.nbValue = $1.nbValue+1;
 
 		instructionConcat($$.instructionNumber,$3.instructionEval);
+		$3.instructionEval = NULL;
+
 		PUSH_BACK($$.instructionNumber,1,"li $t1 4");
 		PUSH_BACK($$.instructionNumber,1,"add $v0 $v0 $t1");
 		PUSH_BACK($$.instructionNumber,1,"sw $t0 0($v0)");
@@ -975,7 +998,8 @@ stencils_init_serie :
 		
 		$$ = $1;
 		instructionConcat($$,$3);
-
+		$3 = NULL;
+		
 		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
@@ -1032,6 +1056,7 @@ stencil_init :
 		PUSH_BACK($$,1,"add $s4 $s4 $t2"); // value
 
 		instructionConcat($$,$5.instructionEval);
+		$5.instructionEval = NULL;
 
 		PUSH_BACK($$,1,"move $s5 $t0");	// dim
 		PUSH_BACK(rootTree,1,"%s_nbDimension : .word 0",sten->mipsId);
@@ -1078,6 +1103,7 @@ stencil_init :
 		labelCounter++;
 
 		instructionConcat($$,$7.instructionArray);
+		$7.instructionArray = NULL;
 
 		free($1);
 		free($2);
@@ -1118,6 +1144,7 @@ affectation :
 				}
 
 				instructionConcat($$,$3.instructionEval);
+				$3.instructionEval = NULL;
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
@@ -1130,6 +1157,7 @@ affectation :
 				}
 
 				instructionConcat($$,$3.instructionEval);
+				$3.instructionEval = NULL;
 				
 				PUSH_BACK($$,1,"sw $t0 0($s4)");
 				
@@ -1184,6 +1212,7 @@ affectation :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$,$3.instructionEval);
+				$3.instructionEval = NULL;
 				
 				PUSH_BACK($$,1,"lw $t1 0($s4)");
 				if(!strcmp($2,"+=")){
@@ -1209,6 +1238,7 @@ affectation :
 					ERROR("La variable '%s' a ete declare constante !",sten->id); 
 				}
 				instructionConcat($$,$3.instructionEval);
+				$3.instructionEval = NULL;
 				
 				PUSH_BACK($$,1,"lw $t1 0($s4)");
 				if(!strcmp($2,"+=")){
@@ -1252,7 +1282,9 @@ for :
 				$$ = $3;
 				PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
 				instructionConcat($$,$10.instructionLine);
+				$10.instructionLine = NULL;
 				instructionConcat($$,$7);
+				$7 = NULL;
 				PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 				labelCounter++;
 				instructionListFree($5.instructionEval);
@@ -1266,9 +1298,12 @@ for :
 			$$ = $3;	
 			PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
 			instructionConcat($$,$5.instructionEval);
+			$5.instructionEval = NULL;
 			PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
 			instructionConcat($$,$10.instructionLine);
+			$10.instructionLine = NULL;
 			instructionConcat($$,$7);
+			$7 = NULL;
 			PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 			PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 			labelCounter++;
@@ -1308,6 +1343,7 @@ affectations_serie :
 
 		$$ = $1;
 		instructionConcat($$,$3);
+		$3 = NULL;
 
 		free($2);
 	}
@@ -1328,6 +1364,7 @@ evaluations_serie :
 
 		$$ = $1;
 		instructionConcat($$,$3.instructionEval);
+		$3.instructionEval = NULL;
 
 		free($2);
 	}
@@ -1336,6 +1373,7 @@ evaluations_serie :
 
 		$$ = $1;
 		instructionConcat($$,$3);
+		$3 = NULL;
 
 		free($2);
 	}
@@ -1376,6 +1414,7 @@ while :
 			PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
 			PUSH_BACK($$,1,"beq $0 $t0 LOOP_WHILE_%llu_END",labelCounter);
 			instructionConcat($$,$6.instructionLine);
+			$6.instructionLine = NULL;
 			PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
 			PUSH_BACK($$,1,"LOOP_WHILE_%llu_END :",labelCounter);		
 			labelCounter++;
@@ -1409,9 +1448,11 @@ if :
 			$$.instructionLine = $3.instructionEval;
 			PUSH_BACK($$.instructionLine,1,"beq $0 $t0 IF_COND_%llu_FALSE",labelCounter);
 			instructionConcat($$.instructionLine,$6.instructionLine);
+			$6.instructionLine = NULL;
 			PUSH_BACK($$.instructionLine,1,"j IF_COND_%llu_END",labelCounter);
 			PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_FALSE :",labelCounter);
 			instructionConcat($$.instructionLine,$8.instructionLine);
+			$8.instructionLine = NULL;
 			PUSH_BACK($$.instructionLine,1,"IF_COND_%llu_END :",labelCounter);
 			labelCounter++;
 			$$.willReturn = $6.willReturn && $8.willReturn;
@@ -1459,6 +1500,7 @@ evaluation :
 		}else{
 			PUSH_BACK($$.instructionEval,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
 			instructionConcat($$.instructionEval,$3.instructionEval);
+			$3.instructionEval = NULL;
 			PUSH_BACK($$.instructionEval,1,"bne $0 $t0 COMP_OR_%llu_RETURN_TRUE",labelCounter); //si $t0 != 0 => TRUE
 			PUSH_BACK($$.instructionEval,1,"li $t0 0");	
 			PUSH_BACK($$.instructionEval,1,"j COMP_OR_%llu_FIN",labelCounter);
@@ -1484,6 +1526,7 @@ evaluation :
 		}else{
 			PUSH_BACK($$.instructionEval,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
 			instructionConcat($$.instructionEval,$3.instructionEval);
+			$3.instructionEval = NULL;
 			PUSH_BACK($$.instructionEval,1,"beq $0 $t0 COMP_AND_%llu_RETURN_FALSE",labelCounter); //si $t0 == 0 => FALSE
 			PUSH_BACK($$.instructionEval,1,"li $t0 1");	
 			PUSH_BACK($$.instructionEval,1,"j COMP_AND_%llu_FIN",labelCounter);
@@ -1513,6 +1556,7 @@ evaluation :
 		}else{
 			PUSH_BACK($$.instructionEval,1,"move $s3 $t0");
 			instructionConcat($$.instructionEval,$3.instructionEval);
+			$3.instructionEval = NULL;
 			char inst[4];
 			if(!strcmp($2,"==")){
 				strcpy(inst,"beq");
@@ -1553,6 +1597,7 @@ evaluation :
 		}else{
 			PUSH_BACK($$.instructionEval,1,"move $s2 $t0");
 			instructionConcat($$.instructionEval,$3.instructionEval);
+			$3.instructionEval = NULL;
 			if(!strcmp($2,"<")){
 				strcpy(inst,"blt");
 			}else if(!strcmp($2,"<=")){
@@ -1591,6 +1636,7 @@ evaluation :
 		}else{
 			PUSH_FORWARD($3.instructionEval,1,"move $s1 $t0");
 			instructionConcat($$.instructionEval,$3.instructionEval);
+			$3.instructionEval = NULL;
 			if($2[0] == '+'){
 				PUSH_BACK($$.instructionEval,1,"add $t0 $s1 $t0");
 			}else{
@@ -1627,6 +1673,7 @@ evaluation :
 		}else{
 			PUSH_FORWARD($3.instructionEval,1,"move $s0 $t0");
 			instructionConcat($$.instructionEval,$3.instructionEval);
+			$3.instructionEval = NULL;
 			if($2[0] == '*'){
 				PUSH_BACK($$.instructionEval,1,"mul $t0 $s0 $t0");
 			}else if($2[0] == '/') {
@@ -1660,6 +1707,7 @@ evaluation :
 			PUSH_FORWARD($2.instructionEval,1,"#(");
 			PUSH_BACK($2.instructionEval,1,"#)");
 			instructionConcat($$.instructionEval,$2.instructionEval);
+			$2.instructionEval = NULL;
 			for(i=0 ; i<=3 ; ++i)
 			{
 				PUSH_BACK($$.instructionEval,1,"lw $s%d %d($sp)",i,i*4);
@@ -1814,6 +1862,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, arr->stepsToAcces);
+				arr->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
@@ -1829,6 +1878,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
+				sten->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				if(!strcmp($1, "++")){
 					PUSH_BACK($$.instructionEval,1,"add $t0 $t0 1");
@@ -1885,6 +1935,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, arr->stepsToAcces);
+				arr->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				PUSH_BACK($$.instructionEval,1,"lw $t1 0($s4)");
 				if(!strcmp($2, "++")){
@@ -1901,6 +1952,7 @@ variable_incr :
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
+				sten->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				PUSH_BACK($$.instructionEval,1,"lw $t1 0($s4)");
 				if(!strcmp($2, "++")){
@@ -1942,6 +1994,10 @@ variable_incr :
 			ERROR("Les variables ne peuvent pas utilise l'operateur stencil "); 
 		}		
 		
+		if(sten->stepsToAcces != NULL){
+			instructionListFree(sten->stepsToAcces);
+		}
+
 		$$.instructionEval = arr->stepsToAcces;	
 		$$.constEval = false;
 
@@ -2053,11 +2109,13 @@ variable_incr :
 				break;
 			case array :
 				instructionConcat($$.instructionEval,arr->stepsToAcces);
+				arr->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			case stencil :
 				instructionConcat($$.instructionEval,sten->stepsToAcces);
+				sten->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
