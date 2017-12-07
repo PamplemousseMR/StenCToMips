@@ -583,6 +583,7 @@ variable :
 				if(sten->stepsToAcces != NULL){
 					instructionListFree(sten->stepsToAcces);
 				}
+
 				instructionListMalloc(&(sten->stepsToAcces));
 				
 				PUSH_BACK(sten->stepsToAcces,1,"li $s4 0");
@@ -1151,6 +1152,9 @@ affectation :
 				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			case stencil :
+				if(sten->stepsToAcces == NULL){
+					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+				}
 				$$ = sten->stepsToAcces;
 				if(sten->constant){
 					ERROR("La variable '%s' a ete declare constante !",sten->id); 	
@@ -1233,6 +1237,9 @@ affectation :
 				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			case stencil :
+				if(sten->stepsToAcces == NULL){
+					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+				}
 				$$ = sten->stepsToAcces;
 				if(sten->constant){
 					ERROR("La variable '%s' a ete declare constante !",sten->id); 
@@ -1877,6 +1884,9 @@ variable_incr :
 				if(sten->constant){
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
+				if(sten->stepsToAcces == NULL){
+					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
 				sten->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
@@ -1951,6 +1961,9 @@ variable_incr :
 				if(sten->constant){
 					ERROR("La variable '%s' a ete declare constante !",arr->id); 
 				}
+				if(sten->stepsToAcces == NULL){
+					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
 				sten->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
@@ -1995,7 +2008,7 @@ variable_incr :
 		}		
 		
 		if(sten->stepsToAcces != NULL){
-			instructionListFree(sten->stepsToAcces);
+			ERROR("Le stencil '%s' a des crochets !",sten->id); 	
 		}
 
 		$$.instructionEval = arr->stepsToAcces;	
@@ -2114,6 +2127,9 @@ variable_incr :
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			case stencil :
+				if(sten->stepsToAcces == NULL){
+					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+				}
 				instructionConcat($$.instructionEval,sten->stepsToAcces);
 				sten->stepsToAcces = NULL;
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
