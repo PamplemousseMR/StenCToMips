@@ -753,9 +753,7 @@ unit_init :
 			if(!$3.constEval){
 				ERROR("La variable '%s' a besoin d'une valeur constante",$1); 
 			}
-			Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
-			((Unit*)result->data)->constant = true;
-			((Unit*)result->data)->constValue = $3.constInt;
+			Symbol result = symbolsTableAddSymbolDefine(symbolsTable,$1,$3.constInt);
 			instructionListFree($3.instructionEval);
 			instructionListMalloc(&$$);
 		}
@@ -1128,9 +1126,6 @@ affectation :
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				if(((Unit*)$1->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante",cons->id); 
-				}
 				$$ = $3.instructionEval;
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				uni->init = true;
@@ -1184,9 +1179,6 @@ affectation :
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				if(((Unit*)$1->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante",cons->id); 
-				}
 				$$ = $3.instructionEval;
 				if(uni->init == false){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 
@@ -1279,48 +1271,48 @@ affectation :
 //=================================================================================================
 
 for :
-// -1---2----3--------------4----5----------6----7-----------------8----9----------10----11 DONE
-	FOR LBRA for_init_serie SEMI evaluation SEMI evaluations_serie RBRA step_begin ligne step_end {
+// -1---2----------3----4--------------5----6----------7----8-----------------9----10----11-- DONE
+	FOR step_begin LBRA for_init_serie SEMI evaluation SEMI evaluations_serie RBRA ligne step_end {
 		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
-		if($5.constEval){
-			if($5.constInt){
+		if($6.constEval){
+			if($6.constInt){
 				fprintf(stdout,"WARNING boucle infini à la ligne %d\n",yylineno);
-				$$ = $3;
+				$$ = $4;
 				PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
 				instructionConcat($$,$10.instructionLine);
 				$10.instructionLine = NULL;
-				instructionConcat($$,$7);
-				$7 = NULL;
+				instructionConcat($$,$8);
+				$8 = NULL;
 				PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 				labelCounter++;
-				instructionListFree($5.instructionEval);
+				instructionListFree($6.instructionEval);
 			}else{
-				$$ = $3;
-				instructionListFree($5.instructionEval);
-				instructionListFree($7);
+				$$ = $4;
+				instructionListFree($6.instructionEval);
+				instructionListFree($8);
 				instructionListFree($10.instructionLine);
 			}
 		}else{
-			$$ = $3;	
+			$$ = $4;	
 			PUSH_BACK($$,1,"LOOP_FOR_%llu_BEGIN :",labelCounter);
-			instructionConcat($$,$5.instructionEval);
-			$5.instructionEval = NULL;
+			instructionConcat($$,$6.instructionEval);
+			$6.instructionEval = NULL;
 			PUSH_BACK($$,1,"beq $0 $t0 LOOP_FOR_%llu_END",labelCounter);
 			instructionConcat($$,$10.instructionLine);
 			$10.instructionLine = NULL;
-			instructionConcat($$,$7);
-			$7 = NULL;
+			instructionConcat($$,$8);
+			$8 = NULL;
 			PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 			PUSH_BACK($$,1,"LOOP_FOR_%llu_END :",labelCounter);
 			labelCounter++;
 		}
 		
 		free($1);
-		free($2);
-		free($4);
-		free($6);
-		free($8);
+		free($3);
+		free($5);
+		free($7);
+		free($9);
 	}
 	;
 
@@ -1847,9 +1839,6 @@ variable_incr :
 		ConstUnit* cons = (ConstUnit*)$2->data;
 		switch($2->type){
 			case unit :
-				if(((Unit*)$2->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante",cons->id); 
-				}
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id);
 				}
@@ -1918,9 +1907,6 @@ variable_incr :
 		ConstUnit* cons = (ConstUnit*)$1->data;
 		switch($1->type){
 			case unit :
-				if(((Unit*)$1->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante",cons->id); 
-				}
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 	
 				}

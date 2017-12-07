@@ -50,8 +50,6 @@ Symbol symbolsTableAddSymbolUnitBis(Symbol n, char* c, bool init){
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->init = init;
-		data->constant = false;
-		data->constValue = 0;
 		result->type = unit;
 		result->data = (void*)data;
 		result->next = NULL;
