@@ -19,8 +19,6 @@ typedef Symbol* SymbolsTable;
 typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
-	bool constant;
-	int constValue;
 	bool init;
 }Unit;
 

@@ -22,6 +22,7 @@ static inline void instructionFree(InstructionsList i)
 	{
 		instructionFree(&((*i)->next));
 		free(*i);
+		*i = NULL;
 	}
 }
 
@@ -33,6 +34,7 @@ void instructionListMalloc(InstructionsList* i){
 void instructionListFree(InstructionsList i){
 	instructionFree(i);
 	free(i);
+	i = NULL;
 }
 
 void instructionReAlloc(InstructionsList* i){
@@ -78,6 +80,7 @@ void instructionConcat(InstructionsList i1, InstructionsList i2)
 		end->next = (*i2);
 	}
 	free(i2);
+	i2 = NULL;
 }
 
 void instructionIncr(InstructionsList i, int ind)

@@ -18,19 +18,25 @@ void symbolsTableMalloc(SymbolsTable* l){
 void symbolsTableFreeBis(Symbol n){
 	if(n != NULL){
 		symbolsTableFreeBis(n->next);
+		n->next = NULL;
 		if(n->data != NULL){
 			if(n->type == function){
 				instructionListFree(((Function*)n->data)->stackInstructions);
+				((Function*)n->data)->stackInstructions = NULL;
 				instructionListFree(((Function*)n->data)->unStackInstructions);
+				((Function*)n->data)->unStackInstructions = NULL;
 			}
 			free(n->data);
+			n->data = NULL;
 		}
 		free(n);
+		n = NULL;
 	}
 }
 
 void symbolsTableFree(SymbolsTable l){
 	symbolsTableFreeBis(*l);
+	*l = NULL;
 	free(l);
 	l = NULL;
 }
@@ -44,8 +50,6 @@ Symbol symbolsTableAddSymbolUnitBis(Symbol n, char* c, bool init){
 		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
 		instructionPushBack(rootTree,temp,1);
 		data->init = init;
-		data->constant = false;
-		data->constValue = 0;
 		result->type = unit;
 		result->data = (void*)data;
 		result->next = NULL;
