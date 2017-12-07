@@ -245,7 +245,7 @@ preprocessor_instruction :
 		printf("DEFINE ID number ENDLINE -> preprocessor_instruction\n");
 		
 		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
-			ERROR("La variable '%s' existe deja !",$2); 
+			ERROR("La variable '%s' existe deja",$2); 
 		}
 		symbolsTableAddSymbolDefine(symbolsTable,$2,$3);
 
@@ -519,7 +519,7 @@ variable :
 
 		Symbol s;
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
-			ERROR("La variable '%s' n'existe pas !",$1); 
+			ERROR("La variable '%s' n'existe pas",$1); 
 		}
 		switch(s->type){
 			case unit :
@@ -543,7 +543,7 @@ variable :
 
 		Symbol s;
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
-			ERROR("La variable '%s' n'existe pas !",$1); 
+			ERROR("La variable '%s' n'existe pas",$1); 
 		}
 		Array* arr = (Array*)s->data;
 		Stencil* sten = (Stencil*)s->data;
@@ -554,9 +554,9 @@ variable :
 				break;
 			case array :
 				if($3.nbValue > arr->nbDimension){
-					ERROR("trop de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
+					ERROR("Trop de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}else if($3.nbValue < arr->nbDimension){
-					ERROR("pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
+					ERROR("Pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}
 				instructionListMalloc(&(arr->stepsToAcces));
 				
@@ -575,9 +575,9 @@ variable :
 				break;
 			case stencil :
 				if(sten->constEval && $3.nbValue > sten->nbDimension){
-					ERROR("trop de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
+					ERROR("Trop de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
 				}else if(sten->constEval &&  $3.nbValue < sten->nbDimension){
-					ERROR("pas assez de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
+					ERROR("Pas assez de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
 				}
 
 				if(sten->stepsToAcces != NULL){
@@ -743,7 +743,7 @@ unit_init :
 		printf("ID EQUALS evaluation -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 	
+			ERROR("La variable '%s' existe deja",$1); 	
 		}
 		if(!constanteZone){
 			Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
@@ -751,7 +751,7 @@ unit_init :
 			PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
 		}else{
 			if(!$3.constEval){
-				ERROR("La variable '%s' a besoin d'une valeur constante !",$1); 
+				ERROR("La variable '%s' a besoin d'une valeur constante",$1); 
 			}
 			Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
 			((Unit*)result->data)->constant = true;
@@ -768,7 +768,7 @@ unit_init :
 		printf("ID -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 	
+			ERROR("La variable '%s' existe deja",$1); 	
 		}
 		if(!constanteZone){
 			symbolsTableAddSymbolUnit(symbolsTable,$1,false);
@@ -824,13 +824,13 @@ array_init :
 		labelCounter++;
 
 		if(!$2.constHooksInit && !$3.empty){
-			ERROR("impossible d'affecte des valeurs au tableau '%s' de taille dynamique",actualArrayInit->id);
+			ERROR("Impossible d'affecte des valeurs au tableau '%s' de taille dynamique",actualArrayInit->id);
 		}else if($3.empty && constanteZone){
 			ERROR("Le tableau '%s' est declaré constant mais n'est pas initialisé",actualArrayInit->id); 
 		}else if(!$3.empty && $2.nbValue > $3.nbValue){
-			ERROR("pas assez de valeur dans l'initialisation du tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $2.nbValue, $3.nbValue);
+			ERROR("Pas assez de valeur dans l'initialisation du tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $2.nbValue, $3.nbValue);
 		}else if(!$3.empty && $2.nbValue < $3.nbValue){
-			ERROR("trop de valeur dans l'initialisation du tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $2.nbValue, $3.nbValue);
+			ERROR("Trop de valeur dans l'initialisation du tableau '%s', attendu : %d, actuel : %d",actualArrayInit->id, $2.nbValue, $3.nbValue);
 		}else if(!$3.empty && constanteZone){
 			actualArrayInit->constant = true;	
 		}
@@ -869,7 +869,7 @@ array_init_begin :
 // -1--2------------------------------------------------------------- DONE
 	ID LHOO {
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 	
+			ERROR("La variable '%s' existe deja",$1); 	
 		}
 		actualArrayInit = symbolsTableAddArray(symbolsTable,$1)->data;
 
@@ -1018,23 +1018,23 @@ stencil_init :
 		printf("stencil EQUALS LEMB suite_number REMB stencil_affect -> stencil_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
-			ERROR("La variable '%s' existe deja !",$1); 
+			ERROR("La variable '%s' existe deja",$1); 
 		}
 		Stencil* sten = (Stencil*)(symbolsTableAddStencil(symbolsTable,$1)->data);
 
 		if((!$3.constEval || !$5.constEval) && !$7.empty){
-			ERROR("impossible d'affecte des valeurs au stencil '%s' de taille dynamique",$1);
+			ERROR("Impossible d'affecte des valeurs au stencil '%s' de taille dynamique",$1);
 		}else if($7.empty && constanteZone){
 			ERROR("Le stencil '%s' est declaré constant mais n'est pas initialisé",$1); ;	
 		}else if(!$7.empty && $3.constEval && $5.constEval && 
 					powYacc( ($3.constInt*2+1), $5.constInt ) > $7.nbValue 
 				)
 		{
-			ERROR("pas assez de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), $5.constInt ), $7.nbValue );
+			ERROR("Pas assez de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), $5.constInt ), $7.nbValue );
 		}else if(!$7.empty && $3.constEval && $5.constEval && 
 					powYacc( ($3.constInt*2+1), $5.constInt ) < $7.nbValue 
 				){
-			ERROR("trop de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), $5.constInt ), $7.nbValue );
+			ERROR("Trop de valeur dans l'initialisation, attendu : %d, actuel : %d",powYacc( ($3.constInt*2+1), $5.constInt ), $7.nbValue );
 		}else if(!$7.empty && constanteZone){
 			sten->nbNeighbour = $3.constInt;
 			sten->nbDimension = $5.constInt;
@@ -1129,19 +1129,19 @@ affectation :
 		switch($1->type){
 			case unit :
 				if(((Unit*)$1->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante !",cons->id); 
+					ERROR("La variable '%s' a ete declare constante",cons->id); 
 				}
 				$$ = $3.instructionEval;
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				uni->init = true;
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 
+				ERROR("La variable '%s' a ete declare constante",cons->id); 
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 	
+					ERROR("Le tableau '%s' a ete declare constante",arr->id); 	
 				}
 
 				instructionConcat($$,$3.instructionEval);
@@ -1153,11 +1153,11 @@ affectation :
 				break;
 			case stencil :
 				if(sten->stepsToAcces == NULL){
-					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				$$ = sten->stepsToAcces;
 				if(sten->constant){
-					ERROR("La variable '%s' a ete declare constante !",sten->id); 	
+					ERROR("Le stencil '%s' a ete declare constante",sten->id); 	
 				}
 
 				instructionConcat($$,$3.instructionEval);
@@ -1185,11 +1185,11 @@ affectation :
 		switch($1->type){
 			case unit :
 				if(((Unit*)$1->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante !",cons->id); 
+					ERROR("La variable '%s' a ete declare constante",cons->id); 
 				}
 				$$ = $3.instructionEval;
 				if(uni->init == false){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 
+					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 
 				}
 				PUSH_BACK($$,1,"lw $t1 %s",uni->mipsId);
 				if(!strcmp($2,"+=")){
@@ -1208,12 +1208,12 @@ affectation :
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 
+				ERROR("La variable '%s' a ete declare constante",cons->id); 
 				break;
 			case array :
 				$$ = arr->stepsToAcces;
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					ERROR("Le tableau '%s' a ete declare constante",arr->id); 
 				}
 				instructionConcat($$,$3.instructionEval);
 				$3.instructionEval = NULL;
@@ -1238,11 +1238,11 @@ affectation :
 				break;
 			case stencil :
 				if(sten->stepsToAcces == NULL){
-					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				$$ = sten->stepsToAcces;
 				if(sten->constant){
-					ERROR("La variable '%s' a ete declare constante !",sten->id); 
+					ERROR("Le stencil '%s' a ete declare constante",sten->id); 
 				}
 				instructionConcat($$,$3.instructionEval);
 				$3.instructionEval = NULL;
@@ -1848,10 +1848,10 @@ variable_incr :
 		switch($2->type){
 			case unit :
 				if(((Unit*)$2->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante !",cons->id); 
+					ERROR("La variable '%s' a ete declare constante",cons->id); 
 				}
 				if( uni->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id);
+					ERROR("La variable '%s' est utilise mais pas initialise",uni->id);
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($1, "++")){
@@ -1862,11 +1862,11 @@ variable_incr :
 				PUSH_BACK($$.instructionEval,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id); 
+				ERROR("La variable '%s' a ete declare constante",cons->id); 
 				break;
 			case array :
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					ERROR("Le tebleau '%s' a ete declare constante",arr->id); 
 				}
 				instructionConcat($$.instructionEval, arr->stepsToAcces);
 				arr->stepsToAcces = NULL;
@@ -1882,10 +1882,10 @@ variable_incr :
 				break;
 			case stencil :
 				if(sten->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					ERROR("Le stencil '%s' a ete declare constante",arr->id); 
 				}
 				if(sten->stepsToAcces == NULL){
-					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
 				sten->stepsToAcces = NULL;
@@ -1919,10 +1919,10 @@ variable_incr :
 		switch($1->type){
 			case unit :
 				if(((Unit*)$1->data)->constant == true){
-					ERROR("La variable '%s' a ete declare constante !",cons->id); 
+					ERROR("La variable '%s' a ete declare constante",cons->id); 
 				}
 				if( uni->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 	
+					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 	
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				if(!strcmp($2, "++")){
@@ -1938,11 +1938,11 @@ variable_incr :
 				}
 				break;
 			case constUnit :
-				ERROR("La variable '%s' a ete declare constante !",cons->id);
+				ERROR("La variable '%s' a ete declare constante",cons->id);
 				break;
 			case array :
 				if(arr->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					ERROR("Le tableau '%s' a ete declare constante",arr->id); 
 				}
 				instructionConcat($$.instructionEval, arr->stepsToAcces);
 				arr->stepsToAcces = NULL;
@@ -1959,10 +1959,10 @@ variable_incr :
 				break;
 			case stencil :
 				if(sten->constant){
-					ERROR("La variable '%s' a ete declare constante !",arr->id); 
+					ERROR("Le stencil '%s' a ete declare constante",arr->id); 
 				}
 				if(sten->stepsToAcces == NULL){
-					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				instructionConcat($$.instructionEval, sten->stepsToAcces);
 				sten->stepsToAcces = NULL;
@@ -2008,7 +2008,7 @@ variable_incr :
 		}		
 		
 		if(sten->stepsToAcces != NULL){
-			ERROR("Le stencil '%s' a des crochets !",sten->id); 	
+			ERROR("Le stencil '%s' a des crochets",sten->id); 	
 		}
 
 		$$.instructionEval = arr->stepsToAcces;	
@@ -2111,7 +2111,7 @@ variable_incr :
 		switch($1->type){
 			case unit :
 				if( uni->init == false ){
-					ERROR("La variable '%s' est utilise mais pas initialise !",uni->id); 
+					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				break;
@@ -2128,7 +2128,7 @@ variable_incr :
 				break;
 			case stencil :
 				if(sten->stepsToAcces == NULL){
-					ERROR("Le stencil '%s' a besoin de crochet !",sten->id); 	
+					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				instructionConcat($$.instructionEval,sten->stepsToAcces);
 				sten->stepsToAcces = NULL;
