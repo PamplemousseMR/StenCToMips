@@ -730,6 +730,14 @@ unit_init :
 			Symbol result = symbolsTableAddSymbolUnit(symbolsTable,$1,true);
 			$$ = $3.instructionEval;
 			PUSH_BACK($$,1,"sw $t0 %s",((Unit*)result->data)->mipsId);
+			
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"sw $t1 0($sp)");
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"lw $t1 %s",((Unit*)result->data)->mipsId);
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"sub $sp $sp 4");
+			
+			PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+			PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s",((Unit*)result->data)->mipsId);
+			PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
 		}else{
 			if(!$3.constEval){
 				ERROR("La variable '%s' a besoin d'une valeur constante !",$1); 
@@ -746,14 +754,23 @@ unit_init :
 	}
 // ---1-------------------------------------------------------------- DONE
 	| ID {
+		Symbol s;
 		printf("ID -> variable_init\n");
 
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja !",$1); 	
 		}
 		if(!constanteZone){
-			symbolsTableAddSymbolUnit(symbolsTable,$1,false);
+			s = symbolsTableAddSymbolUnit(symbolsTable,$1,false);
 			instructionListMalloc(&$$);
+			
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"sw $t1 0($sp)");
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"lw $t1 %s",((Unit*)s->data)->mipsId);
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"sub $sp $sp 4");
+			
+			PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+			PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s",((Unit*)s->data)->mipsId);
+			PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
 		}else{
 			ERROR("La variable '%s' est declaré constante mais n'est pas initialisé",$1); 
 		}
@@ -817,6 +834,83 @@ array_init :
 		}
 
 		instructionConcat($$,$3.instructionArray);
+
+		//BEGIN STACK
+		InstructionsList temp;
+		instructionListMalloc(&temp);
+		PUSH_BACK(temp,1,"li $t1 %d",actualArrayInit->nbDimension);	
+		PUSH_BACK(temp,1,"la $t2 %s_verificator",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"la $t3 %s_multiplicator",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"la $t4 %s_accesTable",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"FUN_STACK_LOOP_%llu_BEGIN : ",labelCounter);
+		PUSH_BACK(temp,1,"ble $t1 $0 FUN_STACK_LOOP_%llu_END",labelCounter);
+		
+		PUSH_BACK(temp,1,"lw $t5 ($t2)");
+		PUSH_BACK(temp,1,"add $t2 $t2 4");
+		PUSH_BACK(temp,1,"sub $sp $sp 4");
+		PUSH_BACK(temp,1,"sw $t5 0($sp)");
+		
+		PUSH_BACK(temp,1,"lw $t5 ($t3)");
+		PUSH_BACK(temp,1,"add $t3 $t3 4");
+		PUSH_BACK(temp,1,"sub $sp $sp 4");
+		PUSH_BACK(temp,1,"sw $t5 0($sp)");
+		
+		PUSH_BACK(temp,1,"lw $t5 ($t4)");
+		PUSH_BACK(temp,1,"add $t4 $t4 4");
+		PUSH_BACK(temp,1,"sub $sp $sp 4");
+		PUSH_BACK(temp,1,"sw $t5 0($sp)");
+		
+		PUSH_BACK(temp,1,"sub $t1 $t1 1");
+		
+		
+		PUSH_BACK(temp,1,"j FUN_STACK_LOOP_%llu_BEGIN",labelCounter);
+		PUSH_BACK(temp,1,"FUN_STACK_LOOP_%llu_END : ",labelCounter);
+		
+		PUSH_BACK(temp,1,"lw $t5 %s",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"sub $sp $sp 4");
+		PUSH_BACK(temp,1,"sw $t5 0($sp)");	
+		instructionConcat(temp,actualFunction->stackInstructions);
+		actualFunction->stackInstructions = temp;
+		//END STACK
+		
+		
+		//BEGIN UNSTACK
+		//POUR INFO on pourrait free ici
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s",actualArrayInit->mipsId);	
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"li $t1 %d",actualArrayInit->nbDimension);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sll $t1 $t1 2");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sub $t1 $t1 4");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"la $t2 %s_verificator",actualArrayInit->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $t2 $t2 $t1");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"la $t3 %s_multiplicator",actualArrayInit->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $t3 $t3 $t1");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"la $t4 %s_accesTable",actualArrayInit->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $t4 $t4 $t1");
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"FUN_UNSTACK_LOOP_%llu_BEGIN :",labelCounter);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"blt $t1 $0 FUN_UNSTACK_LOOP_%llu_END",labelCounter);
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t5 0($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t5 ($t4)");
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t5 0($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t5 ($t3)");
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t5 0($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t5 ($t2)");
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sub $t1 $t1 4");
+		
+		PUSH_BACK(actualFunction->unStackInstructions,1,"j FUN_UNSTACK_LOOP_%llu_BEGIN",labelCounter);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"FUN_UNSTACK_LOOP_%llu_END :",labelCounter);
+		labelCounter++;
+		//END UNSTACK
 	}
 	;
 
@@ -1078,11 +1172,44 @@ stencil_init :
 		labelCounter++;
 
 		instructionConcat($$,$7.instructionArray);
-
+		
 		free($1);
 		free($2);
 		free($4);
 		free($6);
+		
+		//BEGIN STACK
+		InstructionsList temp;
+		instructionListMalloc(&temp);
+		PUSH_BACK(temp,1,"sub $sp $sp %d",5*4);	
+		PUSH_BACK(temp,1,"lw $t1 %s_nbDimension",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 0($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_nbNeighbourg",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 4($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_multiplicator",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 8($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_verificator",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 12($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_accesTable",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 16($sp)");
+		instructionConcat(temp,actualFunction->stackInstructions);
+		actualFunction->stackInstructions = temp;
+		//END STACK
+		
+		//BEGIN UNSTACK
+		//POUR INFO on pourrait free ici
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_nbDimension",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 4($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_nbNeighbourg",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 8($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_multiplicator",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 12($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_verificator",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 16($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_accesTable",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp %d",5*4);
+		//END UNSTACK
 	}
 	;
 
@@ -1767,9 +1894,9 @@ evaluation :
 			ERROR("Symbole inatendu '%s'",$1);
 		}
 		$$.constEval = false;
-		//COPIE stackInstructions TODO
+		instructionCopy($$.instructionEval,fun->stackInstructions);
 		PUSH_BACK($$.instructionEval,1,"jal %s",fun->mipsId);
-		//COPIE unStackInstructions TODO
+		instructionCopy($$.instructionEval,fun->unStackInstructions);
 
 		free($1);
 		free($2);

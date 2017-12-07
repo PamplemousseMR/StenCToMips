@@ -89,6 +89,18 @@ void instructionIncr(InstructionsList i, int ind)
 	}	
 }
 
+void instructionCopy(InstructionsList dest, InstructionsList source){
+	InstructionsList listeTemp;
+	Instruction temp = (*source);
+	
+	instructionListMalloc(&listeTemp);
+	while(temp != NULL){
+		instructionPushBack(listeTemp,temp->code,temp->indentation);
+		temp = temp->next;
+	}
+	instructionConcat(dest,listeTemp);
+}
+
 void instructionListPrintFILE(InstructionsList i,FILE * f)
 {
 	int ind;
