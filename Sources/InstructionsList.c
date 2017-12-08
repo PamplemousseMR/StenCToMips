@@ -32,7 +32,9 @@ void instructionListMalloc(InstructionsList* i){
 }
 
 void instructionListFree(InstructionsList i){
+	if(i == NULL) return;
 	instructionFree(i);
+	*i = NULL;
 	free(i);
 	i = NULL;
 }

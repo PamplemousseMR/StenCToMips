@@ -580,10 +580,6 @@ variable :
 					ERROR("Pas assez de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
 				}
 
-				if(sten->stepsToAcces != NULL){
-					instructionListFree(sten->stepsToAcces);
-				}
-
 				instructionListMalloc(&(sten->stepsToAcces));
 				
 				PUSH_BACK(sten->stepsToAcces,1,"li $s4 0");
@@ -855,14 +851,16 @@ array_init :
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
 			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
 			
-			PUSH_BACK($$,1,"lw $t5 ($s6)");
+			PUSH_BACK($$,1,"lw $t5 0($s6)");
+			PUSH_BACK($$,1,"add $s6 $s6 4");
 			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
 			
 			PUSH_BACK($$,1,"add $t2 $t2 4");
 			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
 			
-			PUSH_BACK($$,1,"sw $t4 ($s5)");
+			PUSH_BACK($$,1,"sw $t4 0($s5)");
+			PUSH_BACK($$,1,"add $s5 $s5 4");
 			
 			PUSH_BACK($$,1,"add $t1 $t1 4");
 		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
@@ -2092,6 +2090,9 @@ variable_incr :
 		if(sten->stepsToAcces != NULL){
 			ERROR("Le stencil '%s' a des crochets",sten->id); 	
 		}
+
+		instructionListFree(sten->stepsToAcces);
+		sten->stepsToAcces = NULL;
 
 		$$.instructionEval = arr->stepsToAcces;	
 		$$.constEval = false;
