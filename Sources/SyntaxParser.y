@@ -561,10 +561,10 @@ variable :
 				instructionListMalloc(&(arr->stepsToAcces));
 				
 				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
-				PUSH_BACK(arr->stepsToAcces,1,"la $s5 %s_multiplicator",arr->mipsId);
-				PUSH_BACK(arr->stepsToAcces,1,"la $s6 %s_verificator",arr->mipsId);
+				PUSH_BACK(arr->stepsToAcces,1,"lw $s5 %s_multiplicator",arr->mipsId);
+				PUSH_BACK(arr->stepsToAcces,1,"lw $s6 %s_verificator",arr->mipsId);
 				PUSH_BACK(arr->stepsToAcces,1,"li $s7 %d",arr->nbDimension);
-				PUSH_BACK(arr->stepsToAcces,1,"la $t8 %s_accesTable",arr->mipsId);
+				PUSH_BACK(arr->stepsToAcces,1,"lw $t8 %s_accesTable",arr->mipsId);
 				
 				instructionConcat(arr->stepsToAcces,$3.instructionNumber);
 				$3.instructionNumber = NULL;
@@ -801,42 +801,6 @@ array_init :
 // -1----------------2----------3------------------------------------ DONE
 	array_init_begin hooks_init array_affect {
 		printf("array_init_begin hooks_init array_affect -> array_init\n");
-			
-		PUSH_BACK(rootTree,1,"%s_verificator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
-		PUSH_BACK(rootTree,1,"%s_multiplicator : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
-		PUSH_BACK(rootTree,1,"%s_accesTable : .space %d",actualArrayInit->mipsId,actualArrayInit->nbDimension*4);
-	
-		
-		$$ = $2.instructionHooksInit;
-		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
-		PUSH_BACK($$,1,"li $v0 9");
-		PUSH_BACK($$,1,"syscall");
-		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
-		
-		PUSH_BACK($$,1,"li $t1 0");
-		PUSH_BACK($$,1,"li $t3 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_BEGIN :",labelCounter);
-		PUSH_BACK($$,1,"bge $t1 $t3 ARRAY_INIT_LOOP_1_%llu_END",labelCounter);
-		
-			PUSH_BACK($$,1,"add $t2 $t1 4");
-			PUSH_BACK($$,1,"li $t4 1");
-			
-			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
-			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
-			
-			PUSH_BACK($$,1,"lw $t5 %s_verificator($t2)",actualArrayInit->mipsId);
-			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
-			
-			PUSH_BACK($$,1,"add $t2 $t2 4");
-			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
-			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
-			
-			PUSH_BACK($$,1,"sw $t4 %s_multiplicator($t1)",actualArrayInit->mipsId);
-			
-			PUSH_BACK($$,1,"add $t1 $t1 4");
-		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
-		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
-		labelCounter++;
 
 		if(!$2.constHooksInit && !$3.empty){
 			ERROR("Impossible d'affecte des valeurs au tableau '%s' de taille dynamique",actualArrayInit->id);
@@ -849,6 +813,61 @@ array_init :
 		}else if(!$3.empty && constanteZone){
 			actualArrayInit->constant = true;	
 		}
+			
+		instructionListMalloc(&$$);
+		PUSH_BACK(rootTree,1,"%s_verificator : .word 0",actualArrayInit->mipsId);
+		PUSH_BACK($$,1,"li $a0 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s_verificator",actualArrayInit->mipsId);
+		
+		PUSH_BACK(rootTree,1,"%s_multiplicator : .word 0",actualArrayInit->mipsId);
+		PUSH_BACK($$,1,"li $a0 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s_multiplicator",actualArrayInit->mipsId);
+		
+		PUSH_BACK(rootTree,1,"%s_accesTable : .word 0",actualArrayInit->mipsId);
+		PUSH_BACK($$,1,"li $a0 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s_accesTable",actualArrayInit->mipsId);
+		
+		PUSH_BACK($$,1,"lw $s6 %s_verificator",actualArrayInit->mipsId);
+		
+		instructionConcat($$,$2.instructionHooksInit);
+		
+		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
+		PUSH_BACK($$,1,"li $v0 9");
+		PUSH_BACK($$,1,"syscall");
+		PUSH_BACK($$,1,"sw $v0 %s",actualArrayInit->mipsId);
+		
+		PUSH_BACK($$,1,"li $t1 0");
+		PUSH_BACK($$,1,"li $t3 %d",actualArrayInit->nbDimension*4);
+		PUSH_BACK($$,1,"lw $s5 %s_multiplicator",actualArrayInit->mipsId);		
+		PUSH_BACK($$,1,"lw $s6 %s_verificator",actualArrayInit->mipsId);
+		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_BEGIN :",labelCounter);
+		PUSH_BACK($$,1,"bge $t1 $t3 ARRAY_INIT_LOOP_1_%llu_END",labelCounter);
+		
+			PUSH_BACK($$,1,"add $t2 $t1 4");
+			PUSH_BACK($$,1,"li $t4 1");
+			
+			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
+			PUSH_BACK($$,1,"bge $t2 $t3 ARRAY_INIT_LOOP_2_%llu_END",labelCounter);
+			
+			PUSH_BACK($$,1,"lw $t5 ($s6)");
+			PUSH_BACK($$,1,"mul $t4 $t4 $t5");
+			
+			PUSH_BACK($$,1,"add $t2 $t2 4");
+			PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_2_%llu_BEGIN",labelCounter);
+			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_END :",labelCounter);	
+			
+			PUSH_BACK($$,1,"sw $t4 ($s5)");
+			
+			PUSH_BACK($$,1,"add $t1 $t1 4");
+		PUSH_BACK($$,1,"j ARRAY_INIT_LOOP_1_%llu_BEGIN",labelCounter);
+		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_END :",labelCounter);
+		labelCounter++;
 
 		instructionConcat($$,$3.instructionArray);
 		$3.instructionArray = NULL;
@@ -856,78 +875,26 @@ array_init :
 		//BEGIN STACK
 		InstructionsList temp;
 		instructionListMalloc(&temp);
-		PUSH_BACK(temp,1,"li $t1 %d",actualArrayInit->nbDimension);	
-		PUSH_BACK(temp,1,"la $t2 %s_verificator",actualArrayInit->mipsId);
-		PUSH_BACK(temp,1,"la $t3 %s_multiplicator",actualArrayInit->mipsId);
-		PUSH_BACK(temp,1,"la $t4 %s_accesTable",actualArrayInit->mipsId);
-		PUSH_BACK(temp,1,"FUN_STACK_LOOP_%llu_BEGIN : ",labelCounter);
-		PUSH_BACK(temp,1,"ble $t1 $0 FUN_STACK_LOOP_%llu_END",labelCounter);
-		
-		PUSH_BACK(temp,1,"lw $t5 ($t2)");
-		PUSH_BACK(temp,1,"add $t2 $t2 4");
-		PUSH_BACK(temp,1,"sub $sp $sp 4");
-		PUSH_BACK(temp,1,"sw $t5 0($sp)");
-		
-		PUSH_BACK(temp,1,"lw $t5 ($t3)");
-		PUSH_BACK(temp,1,"add $t3 $t3 4");
-		PUSH_BACK(temp,1,"sub $sp $sp 4");
-		PUSH_BACK(temp,1,"sw $t5 0($sp)");
-		
-		PUSH_BACK(temp,1,"lw $t5 ($t4)");
-		PUSH_BACK(temp,1,"add $t4 $t4 4");
-		PUSH_BACK(temp,1,"sub $sp $sp 4");
-		PUSH_BACK(temp,1,"sw $t5 0($sp)");
-		
-		PUSH_BACK(temp,1,"sub $t1 $t1 1");
-		
-		
-		PUSH_BACK(temp,1,"j FUN_STACK_LOOP_%llu_BEGIN",labelCounter);
-		PUSH_BACK(temp,1,"FUN_STACK_LOOP_%llu_END : ",labelCounter);
-		
-		PUSH_BACK(temp,1,"lw $t5 %s",actualArrayInit->mipsId);
-		PUSH_BACK(temp,1,"sub $sp $sp 4");
-		PUSH_BACK(temp,1,"sw $t5 0($sp)");	
+		PUSH_BACK(temp,1,"sub $sp $sp %d",3*4);	
+		PUSH_BACK(temp,1,"lw $t1 %s_multiplicator",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 0($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_verificator",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 4($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_accesTable",actualArrayInit->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 8($sp)");
 		instructionConcat(temp,actualFunction->stackInstructions);
 		actualFunction->stackInstructions = temp;
 		//END STACK
 		
-		
 		//BEGIN UNSTACK
 		//POUR INFO on pourrait free ici
 		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s",actualArrayInit->mipsId);	
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"li $t1 %d",actualArrayInit->nbDimension);
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sll $t1 $t1 2");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sub $t1 $t1 4");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"la $t2 %s_verificator",actualArrayInit->mipsId);
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $t2 $t2 $t1");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"la $t3 %s_multiplicator",actualArrayInit->mipsId);
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $t3 $t3 $t1");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"la $t4 %s_accesTable",actualArrayInit->mipsId);
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $t4 $t4 $t1");
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"FUN_UNSTACK_LOOP_%llu_BEGIN :",labelCounter);
-		PUSH_BACK(actualFunction->unStackInstructions,1,"blt $t1 $0 FUN_UNSTACK_LOOP_%llu_END",labelCounter);
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t5 0($sp)");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t5 ($t4)");
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t5 0($sp)");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t5 ($t3)");
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t5 0($sp)");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t5 ($t2)");
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"sub $t1 $t1 4");
-		
-		PUSH_BACK(actualFunction->unStackInstructions,1,"j FUN_UNSTACK_LOOP_%llu_BEGIN",labelCounter);
-		PUSH_BACK(actualFunction->unStackInstructions,1,"FUN_UNSTACK_LOOP_%llu_END :",labelCounter);
-		labelCounter++;
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_multiplicator",actualArrayInit->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 4($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_verificator",actualArrayInit->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 8($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_accesTable",actualArrayInit->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp %d",3*4);
 		//END UNSTACK
 	}
 	;
@@ -987,7 +954,8 @@ hooks_init :
 		$3.instructionEval = NULL;
 		PUSH_BACK($$.instructionHooksInit,1,"mul $s4 $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 %s_verificator($t1)",actualArrayInit->mipsId);
+		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 ($s6)");
+		PUSH_BACK($$.instructionHooksInit,1,"add $s6 $s6 4");
 		
 		actualArrayInit->nbDimension++;
 
@@ -1005,8 +973,9 @@ hooks_init :
 		}
 		PUSH_BACK($$.instructionHooksInit,1,"move $s4 $t0"); //la taille du tableau
 		PUSH_BACK($$.instructionHooksInit,1,"li $t1 %d",actualArrayInit->nbDimension*4);
-		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 %s_verificator($t1)",actualArrayInit->mipsId);
-		
+		PUSH_BACK($$.instructionHooksInit,1,"sw $t0 ($s6)");
+		PUSH_BACK($$.instructionHooksInit,1,"add $s6 $s6 4");
+				
 		actualArrayInit->nbDimension++;
 
 		free($2);
@@ -2163,10 +2132,10 @@ variable_incr :
 
 		{	
 			PUSH_BACK($$.instructionEval,1,"li $s4 0");
-			PUSH_BACK($$.instructionEval,1,"la $s5 %s_multiplicator",arr->mipsId);
-			PUSH_BACK($$.instructionEval,1,"la $s6 %s_verificator",arr->mipsId);
+			PUSH_BACK($$.instructionEval,1,"lw $s5 %s_multiplicator",arr->mipsId);
+			PUSH_BACK($$.instructionEval,1,"lw $s6 %s_verificator",arr->mipsId);
 			PUSH_BACK($$.instructionEval,1,"li $s7 %d",arr->nbDimension);
-			PUSH_BACK($$.instructionEval,1,"la $t8 %s_accesTable",arr->mipsId);
+			PUSH_BACK($$.instructionEval,1,"lw $t8 %s_accesTable",arr->mipsId);
 			for(i=0 ; i<arr->nbDimension ; ++i)
 			{
 				PUSH_BACK($$.instructionEval,1,"lw $t0 0($t8)");
