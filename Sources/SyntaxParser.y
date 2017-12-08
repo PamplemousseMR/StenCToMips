@@ -841,11 +841,12 @@ array_init :
 		PUSH_BACK($$,1,"li $t1 0");
 		PUSH_BACK($$,1,"li $t3 %d",actualArrayInit->nbDimension*4);
 		PUSH_BACK($$,1,"lw $s5 %s_multiplicator",actualArrayInit->mipsId);		
-		PUSH_BACK($$,1,"lw $s6 %s_verificator",actualArrayInit->mipsId);
 		PUSH_BACK($$,1,"ARRAY_INIT_LOOP_1_%llu_BEGIN :",labelCounter);
 		PUSH_BACK($$,1,"bge $t1 $t3 ARRAY_INIT_LOOP_1_%llu_END",labelCounter);
 		
 			PUSH_BACK($$,1,"add $t2 $t1 4");
+			PUSH_BACK($$,1,"lw $s6 %s_verificator",actualArrayInit->mipsId);
+			PUSH_BACK($$,1,"add $s6 $s6 $t2");
 			PUSH_BACK($$,1,"li $t4 1");
 			
 			PUSH_BACK($$,1,"ARRAY_INIT_LOOP_2_%llu_BEGIN :",labelCounter);
