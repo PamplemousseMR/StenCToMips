@@ -580,6 +580,10 @@ variable :
 					ERROR("Pas assez de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
 				}
 
+				if(sten->stepsToAcces != NULL){
+					instructionListFree(sten->stepsToAcces);
+					sten->stepsToAcces = NULL;
+				}
 				instructionListMalloc(&(sten->stepsToAcces));
 				
 				PUSH_BACK(sten->stepsToAcces,1,"li $s4 0");
@@ -759,6 +763,7 @@ unit_init :
 			}
 			Symbol result = symbolsTableAddSymbolDefine(symbolsTable,$1,$3.constInt);
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			instructionListMalloc(&$$);
 		}
 		
@@ -832,6 +837,7 @@ array_init :
 		PUSH_BACK($$,1,"lw $s6 %s_verificator",actualArrayInit->mipsId);
 		
 		instructionConcat($$,$2.instructionHooksInit);
+		$2.instructionHooksInit = NULL;
 		
 		PUSH_BACK($$,1,"sll $a0 $s4 2"); 
 		PUSH_BACK($$,1,"li $v0 9");
@@ -882,6 +888,7 @@ array_init :
 		PUSH_BACK(temp,1,"lw $t1 %s_accesTable",actualArrayInit->mipsId);
 		PUSH_BACK(temp,1,"sw $t1 8($sp)");
 		instructionConcat(temp,actualFunction->stackInstructions);
+		actualFunction->stackInstructions = NULL;
 		actualFunction->stackInstructions = temp;
 		//END STACK
 		
@@ -1186,6 +1193,7 @@ stencil_init :
 		PUSH_BACK(temp,1,"lw $t1 %s_accesTable",sten->mipsId);
 		PUSH_BACK(temp,1,"sw $t1 16($sp)");
 		instructionConcat(temp,actualFunction->stackInstructions);
+		actualFunction->stackInstructions = NULL;
 		actualFunction->stackInstructions = temp;
 		//END STACK
 		
@@ -1246,6 +1254,7 @@ affectation :
 					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				$$ = sten->stepsToAcces;
+				sten->stepsToAcces = NULL;
 				if(sten->constant){
 					ERROR("Le stencil '%s' a ete declare constante",sten->id); 	
 				}
@@ -1328,6 +1337,7 @@ affectation :
 					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
 				$$ = sten->stepsToAcces;
+				sten->stepsToAcces = NULL;
 				if(sten->constant){
 					ERROR("Le stencil '%s' a ete declare constante",sten->id); 
 				}
@@ -1382,11 +1392,15 @@ for :
 				PUSH_BACK($$,1,"j LOOP_FOR_%llu_BEGIN",labelCounter);
 				labelCounter++;
 				instructionListFree($6.instructionEval);
+				$6.instructionEval = NULL;
 			}else{
 				$$ = $4;
 				instructionListFree($6.instructionEval);
+				$6.instructionEval = NULL;
 				instructionListFree($8);
+				$8 = NULL;
 				instructionListFree($10.instructionLine);
+				$10.instructionLine = NULL;
 			}
 		}else{
 			$$ = $4;	
@@ -1498,9 +1512,12 @@ while :
 				PUSH_FORWARD($$,1,"LOOP_WHILE_%llu_BEGIN :",labelCounter);
 				PUSH_BACK($$,1,"j LOOP_WHILE_%llu_BEGIN",labelCounter);
 				instructionListFree($3.instructionEval);
+				$3.instructionEval = NULL;
 			}else{
 				instructionListFree($3.instructionEval);
+				$3.instructionEval = NULL;
 				instructionListFree($6.instructionLine);
+				$6.instructionLine = NULL;
 				instructionListMalloc(&$$);
 			}
 		}else{
@@ -1529,14 +1546,17 @@ if :
 		
 		if($3.constEval){
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			if($3.constInt){
 				$$.instructionLine = $6.instructionLine;
 				$$.willReturn = $6.willReturn;
 				instructionListFree($8.instructionLine);
+				$6.instructionLine = NULL;
 			}else{
 				$$.instructionLine = $8.instructionLine;
 				$$.willReturn = $8.willReturn;
 				instructionListFree($6.instructionLine);
+				$6.instructionLine = NULL;
 			}
 		}else{
 			$$.instructionLine = $3.instructionEval;
@@ -1589,6 +1609,7 @@ evaluation :
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			$$.constInt = $1.constInt || $1.constInt;
 			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
 		}else{
@@ -1615,6 +1636,7 @@ evaluation :
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			$$.constInt = $1.constInt && $1.constInt;
 			PUSH_BACK($$.instructionEval,1,"li $t0 %d",$$.constInt);
 		}else{
@@ -1641,6 +1663,7 @@ evaluation :
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			if(!strcmp($2,"==")){
 				$$.constInt = $1.constInt == $1.constInt;
 			}else if(!strcmp($2,"!=")){
@@ -1678,6 +1701,7 @@ evaluation :
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			if(!strcmp($2,"<")){
 				$$.constInt = $1.constInt < $3.constInt;
 			}else if(!strcmp($2,"<=")){
@@ -1721,6 +1745,7 @@ evaluation :
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			if($2[0] == '+'){
 				$$.constInt += $3.constInt;
 			}else{
@@ -1750,6 +1775,7 @@ evaluation :
 			instructionReAlloc(&$$.instructionEval);
 
 			instructionListFree($3.instructionEval);
+			$3.instructionEval = NULL;
 			if($2[0] == '*'){
 				$$.constInt *= $3.constInt;
 			}else if($2[0] == '/') {
@@ -2091,9 +2117,6 @@ variable_incr :
 		if(sten->stepsToAcces != NULL){
 			ERROR("Le stencil '%s' a des crochets",sten->id); 	
 		}
-
-		instructionListFree(sten->stepsToAcces);
-		sten->stepsToAcces = NULL;
 
 		$$.instructionEval = arr->stepsToAcces;	
 		$$.constEval = false;
