@@ -32,7 +32,9 @@ void instructionListMalloc(InstructionsList* i){
 }
 
 void instructionListFree(InstructionsList i){
+	if(i == NULL) return;
 	instructionFree(i);
+	*i = NULL;
 	free(i);
 	i = NULL;
 }
@@ -131,7 +133,7 @@ InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l,void * s){
 	if(s2->type == array){
 		snprintf(tmp,INSTRUCTION_SIZE,"li $t1 %d",arr->nbDimension);
 		instructionPushBack(result,tmp,1);
-		snprintf(tmp,INSTRUCTION_SIZE,"la $t2 %s_accesTable",arr->mipsId);
+		snprintf(tmp,INSTRUCTION_SIZE,"lw $t2 %s_accesTable",arr->mipsId);
 		instructionPushBack(result,tmp,1);
 	} else {
 		snprintf(tmp,INSTRUCTION_SIZE,"lw $t1 %s_nbDimension",sten->mipsId);
@@ -184,7 +186,7 @@ InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l,void * s){
 	if(s2->type == array){
 		snprintf(tmp,INSTRUCTION_SIZE,"li $t2 %d",arr->nbDimension);
 		instructionPushBack(result,tmp,1);
-		snprintf(tmp,INSTRUCTION_SIZE,"la $t1 %s_accesTable",arr->mipsId);
+		snprintf(tmp,INSTRUCTION_SIZE,"lw $t1 %s_accesTable",arr->mipsId);
 		instructionPushBack(result,tmp,1);
 	} else {
 		snprintf(tmp,INSTRUCTION_SIZE,"lw $t2 %s_nbDimension",sten->mipsId);
