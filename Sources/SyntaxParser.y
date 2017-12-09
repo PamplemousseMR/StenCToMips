@@ -652,14 +652,26 @@ variable :
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
 			ERROR("La variable '%s' n'existe pas",$1); 
 		}
+		Array* arr = NULL;
+		Stencil* sten = NULL;
 		switch(s->type){
 			case unit :
 			case constUnit :
+				break;
 			case stencil : 	
-				((Stencil*)s->data)->stepsToAcces = NULL;	
+				sten = (Stencil*)s->data;
+				if(sten->stepsToAcces != NULL){
+					fprintf(stdout,"ASRdfSDF\n");
+					/*instructionListFree(sten->stepsToAcces);*/
+					/*sten->stepsToAcces = NULL;*/
+				}
 				break;		
 			case array :
-				((Array*)s->data)->stepsToAcces = NULL;			
+				arr = (Array*)s->data;
+				if(arr->stepsToAcces != NULL){
+					instructionListFree(arr->stepsToAcces);
+					arr->stepsToAcces = NULL;
+				}	
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
@@ -678,7 +690,7 @@ variable :
 			ERROR("La variable '%s' n'existe pas",$1); 
 		}
 		Array* arr = NULL;
-		Stencil* sten = (Stencil*)s->data;
+		Stencil* sten = NULL;
 		switch(s->type){
 			case unit :
 			case constUnit : 
@@ -691,11 +703,7 @@ variable :
 				}else if($3.nbValue < arr->nbDimension){
 					ERROR("Pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}
-				
-				if(sten->stepsToAcces != NULL){
-					instructionListFree(sten->stepsToAcces);
-					sten->stepsToAcces = NULL;
-				}
+			
 				instructionListMalloc(&(arr->stepsToAcces));
 				
 				PUSH_BACK(arr->stepsToAcces,1,"li $s4 0");
@@ -903,7 +911,7 @@ unit_init :
 			if(!$3.constEval){
 				ERROR("La variable '%s' a besoin d'une valeur constante",$1); 
 			}
-			Symbol result = symbolsTableAddSymbolDefine(symbolsTable,$1,$3.constInt);
+			symbolsTableAddSymbolDefine(symbolsTable,$1,$3.constInt);
 			instructionListFree($3.instructionEval);
 			$3.instructionEval = NULL;
 			instructionListMalloc(&$$);
@@ -2107,7 +2115,6 @@ evaluation :
 // ---1-------------2---------3-------------------------------------- DONE
 	| function_call arguments RBRA {
 		printf("variable -> variable_incr\n");
-		int i;
 		
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
@@ -2290,19 +2297,17 @@ variable_incr :
 	| variable OPERATOR_STENCIL variable {
 		printf("variable OPERATOR_STENCIL variable -> variable_incr\n");
 
-		Symbol sArr,sSten;
+		Symbol sArr;
 		Array* arr = NULL;
 		Stencil* sten = NULL;
 		int i;
 
 		if($1->type == stencil && $3->type == array){
 			sten = (Stencil*)$1->data;
-			sSten = $1;
 			arr = (Array*)$3->data; 
 			sArr = $3;
 		}else if($1->type == array && $3->type == stencil){
 			sten = (Stencil*)$3->data;
-			sSten = $3;
 			arr = (Array*)$1->data;
 			sArr = $1;
 		}else{
@@ -2491,7 +2496,7 @@ function_call :
 			ERROR("Symbole inatendu '%s'",$1);
 		}
 		
-		if(funCallLength = 0){
+		if(funCallLength == 0){
 			funCallStack = (void**) malloc(sizeof(void*));
 			funCallStack[funCallLength++] = fun;
 		}else{

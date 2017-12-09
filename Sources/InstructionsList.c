@@ -9,6 +9,7 @@ extern unsigned long long labelCounter;
 static inline Instruction instructionMalloc(char* c, int ind)
 {
 	Instruction i = (Instruction)malloc(sizeof(struct s_instruction));
+	memset(i, 0, sizeof(struct s_instruction));
 	strncpy(i->code,c,INSTRUCTION_SIZE);
 	i->indentation = ind;
 	i->next = NULL;
@@ -27,7 +28,8 @@ static inline void instructionFree(InstructionsList i)
 }
 
 void instructionListMalloc(InstructionsList* i){
-	*i = (InstructionsList)malloc(sizeof(struct s_instruction**));
+	*i = (InstructionsList)malloc(sizeof(struct s_instruction*));
+	memset(*i, 0, sizeof(struct s_instruction*));
 	**i = NULL;
 }
 
