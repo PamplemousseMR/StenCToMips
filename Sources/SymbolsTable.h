@@ -49,10 +49,9 @@ typedef struct {
 	char id[BUFFER_SIZE];
 	char mipsId[BUFFER_SIZE];
 	int nbArgs;
-	int numOfFirstArg;
 	InstructionsList stackInstructions;
 	InstructionsList unStackInstructions;
-	SymbolsTable agumentsTable;
+	SymbolsTable argumentsTable;
 }Function;
 
 void symbolsTableMalloc(SymbolsTable*);
@@ -67,6 +66,6 @@ void symbolsTableAddStep(SymbolsTable);
 Symbol symbolsTableGetSymbolById(SymbolsTable, char*);
 void symbolsTableRemoveUntilStep(SymbolsTable);
 
-Symbol symbolsTableAddSymboleAlreadyExit(SymbolsTable, void * ,Type);
-
+void symbolsTableAddSymboleAlreadyExist(SymbolsTable, Symbol);
+Symbol getSymbolByIdx(SymbolsTable, int);
 #endif

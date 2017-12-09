@@ -45,6 +45,11 @@
 	Array* actualArrayInit;
 	Function* actualFunction;
 	bool mainFound = false;
+	
+	void ** funCallStack;
+	int funCallLength = 0;
+	
+	void checkNULLSymbol(Symbol);
 
 	int powYacc(int a, int b)
 	{
@@ -69,6 +74,7 @@
 
 	struct s_eval{
 		InstructionsList instructionEval;
+		Symbol symbolEval;
 		bool constEval;
 		int constInt;
 	} Eval;
@@ -94,6 +100,11 @@
 		InstructionsList instructionLine;
 		bool willReturn;
 	} Line;
+	
+	struct s_Args{
+		InstructionsList instructionArgs;
+		int nbArgs;
+	}Args;
 	
 }
 
@@ -137,6 +148,7 @@
 
 %type<Instruction>	functions_serie
 %type<Instruction>	function
+%type<Integer>		argument_init_hooks
 %type<Line>			instructions_serie
 %type<Line>			ligne
 %type<Instruction>	write_ligne_number
@@ -167,6 +179,9 @@
 %type<Eval>			evaluation				//cas particulier permet de différentier les evaluations constantes ou non
 %type<Eval>			variable_incr			// et de simplifier les expressions constantes ex : 3+4 ->7
 %type<Integer>	 	number					//cas particulier renvoie un String contenant "i"|"+i"|"-i" 
+%type<Args>			arguments
+%type<Args>			arguments_serie
+
 
 %left COMPARATOR_OR
 %left COMPARATOR_AND
@@ -275,8 +290,8 @@ functions_serie :
 //__________________________________________________________________________________
 	
 function : 	
-// -1--------------2----3-------------4----5----6----------7------------------8--------9 DONE TODO args
-	function_begin LBRA argument_list RBRA LEMB step_begin instructions_serie step_end REMB {
+// -1--------------2----3----------4-------------5----6----7------------------8--------9 DONE
+	function_begin LBRA step_begin argument_list RBRA LEMB instructions_serie step_end REMB {
 		printf("TYPE ID LBRA RBRA LEMB instructions_serie REMB -> function\n");
 		
 		if(!$7.willReturn){
@@ -289,8 +304,8 @@ function :
 		PUSH_FORWARD($$,0,"\n%s :",actualFunction->mipsId);
 
 		free($2);
-		free($4);
 		free($5);
+		free($6);
 		free($9);
 	}
 	;
@@ -298,11 +313,11 @@ function :
 //__________________________________________________________________________________
 
 argument_list : 
-// -1----------------------------------------------------------------
+// -1---------------------------------------------------------------- DONE
 	argument_init_serie {
 		//ARGS
 	}
-// ---1--------------------------------------------------------------
+// ---1-------------------------------------------------------------- DONE
 	| { //NO ARGS
 	} 
 	;
@@ -310,11 +325,12 @@ argument_list :
 //__________________________________________________________________________________
 
 argument_init_serie :
-// -1-------------2-----3--------------------------------------------
+// -1-------------2-----3-------------------------------------------- DONE
     argument_init_serie COMMA argument_init {
         printf("argument_init COMMA argument_init_serie -> argument_init_serie\n");
+		free($2);
     }
-// ---1--------------------------------------------------------------
+// ---1-------------------------------------------------------------- DONE
     | argument_init {
         printf("argument_init -> argument_init_serie\n");
     }
@@ -323,25 +339,138 @@ argument_init_serie :
 //__________________________________________________________________________________
 
 argument_init :
-// -1----2--3--------------------------------------------------------
+// -1----2--3-------------------------------------------------------- DONE
     TYPE ID argument_init_hooks {
         printf("TYPE ID argument_init_hooks-> argument_init\n");
 		
-		//if($3 >0) blabla
+		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
+			ERROR("La variable %s existe déja",$2);
+		}
+		
+		Symbol save;
+		Array* arr;
+		if($3 == 0){ //param unit
+			save = symbolsTableAddSymbolUnit(symbolsTable,$2,true);
+			
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"sw $t1 0($sp)");
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"lw $t1 %s",((Unit*)save->data)->mipsId);
+			PUSH_FORWARD(actualFunction->stackInstructions,1,"sub $sp $sp 4");
+			
+			PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+			PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s",((Unit*)save->data)->mipsId);
+			PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp 4");
+		}else{ //param array
+			save = symbolsTableAddArray(symbolsTable,$2);
+			arr = (Array*)save->data;
+			arr->nbDimension = $3;
+			
+			PUSH_BACK(rootTree,1,"%s_verificator : .word 0",arr->mipsId);
+			PUSH_BACK(rootTree,1,"%s_multiplicator : .word 0",arr->mipsId);
+			PUSH_BACK(rootTree,1,"%s_accesTable : .word 0",arr->mipsId);
+			
+			//BEGIN STACK
+			InstructionsList temp;
+			instructionListMalloc(&temp);
+			PUSH_BACK(temp,1,"sub $sp $sp %d",3*4);	
+			PUSH_BACK(temp,1,"lw $t1 %s_multiplicator",arr->mipsId);
+			PUSH_BACK(temp,1,"sw $t1 0($sp)");
+			PUSH_BACK(temp,1,"lw $t1 %s_verificator",arr->mipsId);
+			PUSH_BACK(temp,1,"sw $t1 4($sp)");
+			PUSH_BACK(temp,1,"lw $t1 %s_accesTable",arr->mipsId);
+			PUSH_BACK(temp,1,"sw $t1 8($sp)");
+			instructionConcat(temp,actualFunction->stackInstructions);
+			actualFunction->stackInstructions = NULL;
+			actualFunction->stackInstructions = temp;
+			//END STACK
+			
+			//BEGIN UNSTACK
+			//POUR INFO on pourrait free ici
+			PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+			PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_multiplicator",arr->mipsId);
+			PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 4($sp)");
+			PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_verificator",arr->mipsId);
+			PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 8($sp)");
+			PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_accesTable",arr->mipsId);
+			PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp %d",3*4);
+			//END UNSTACK
+		}
+		symbolsTableAddSymboleAlreadyExist(actualFunction->argumentsTable,save);
+		actualFunction->nbArgs++;
+		
+		free($1);
+		free($2);
     }
+// ---1-------2------------------------------------------------------ DONE
+	| STENCIL ID {
+		
+		if(symbolsTableGetSymbolById(symbolsTable,$2) != NULL){
+			ERROR("La variable %s existe déja",$2);	
+		}
+		
+		Symbol save = symbolsTableAddStencil(symbolsTable,$2);
+		Stencil* sten = (Stencil*) save->data;
+		PUSH_BACK(rootTree,1,"%s_verificator : .word 0",sten->mipsId);
+		PUSH_BACK(rootTree,1,"%s_multiplicator : .word 0",sten->mipsId);
+		PUSH_BACK(rootTree,1,"%s_accesTable : .word 0",sten->mipsId);
+		PUSH_BACK(rootTree,1,"%s_nbDimension : .word 0",sten->mipsId);
+		PUSH_BACK(rootTree,1,"%s_nbNeighbourg : .word 0",sten->mipsId);
+				
+		symbolsTableAddSymboleAlreadyExist(actualFunction->argumentsTable,save);
+		actualFunction->nbArgs++;
+		
+		//BEGIN STACK
+		InstructionsList temp;
+		instructionListMalloc(&temp);
+		PUSH_BACK(temp,1,"sub $sp $sp %d",5*4);	
+		PUSH_BACK(temp,1,"lw $t1 %s_nbDimension",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 0($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_nbNeighbourg",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 4($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_multiplicator",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 8($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_verificator",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 12($sp)");
+		PUSH_BACK(temp,1,"lw $t1 %s_accesTable",sten->mipsId);
+		PUSH_BACK(temp,1,"sw $t1 16($sp)");
+		instructionConcat(temp,actualFunction->stackInstructions);
+		actualFunction->stackInstructions = NULL;
+		actualFunction->stackInstructions = temp;
+		//END STACK
+		
+		//BEGIN UNSTACK
+		//POUR INFO on pourrait free ici
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 0($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_nbDimension",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 4($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_nbNeighbourg",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 8($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_multiplicator",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 12($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_verificator",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"lw $t1 16($sp)");
+		PUSH_BACK(actualFunction->unStackInstructions,1,"sw $t1 %s_accesTable",sten->mipsId);
+		PUSH_BACK(actualFunction->unStackInstructions,1,"add $sp $sp %d",5*4);
+		//END UNSTACK
+		
+		free($1);
+		free($2);
+	}
     ;
 
 //__________________________________________________________________________________
 
 argument_init_hooks :
-// -1----2----3------------------------------------------------------
+// -1----2----3------------------------------------------------------ DONE
     LHOO RHOO argument_init_hooks {
         printf("LHOO RHOO argument_init_hooks -> argument_init_hooks\n");
-		//return $3+1;
+		$$ = $3+1;
+		
+		free($1);
+		free($2);
     }
-// ---1----2---------------------------------------------------------
+// ---1----2--------------------------------------------------------- DONE
     | {
-		//return 0;
+		$$ = 0;
     }
     ;
 
@@ -455,6 +584,7 @@ ligne :
 	| write_ligne_number evaluation SEMI {
 		printf("evaluation SEMI -> ligne\n");
 		
+		checkNULLSymbol($2.symbolEval);
 		$$.instructionLine = $1;
 		instructionConcat($$.instructionLine,$2.instructionEval);
 		$2.instructionEval = NULL;
@@ -499,6 +629,7 @@ return :
 	RETURN evaluation {
 		printf("RETURN evaluation -> return\n");
 
+		checkNULLSymbol($2.symbolEval);
 		$$ = $2.instructionEval;
 		PUSH_BACK($$,1,"lw $ra 0($sp)");
 		PUSH_BACK($$,1,"add $sp $sp 4");
@@ -525,9 +656,7 @@ variable :
 			case unit :
 			case constUnit :
 			case stencil : 				
-				break;
 			case array :
-				ERROR("La variable '%s' est un tableau",$1);
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
@@ -557,6 +686,11 @@ variable :
 					ERROR("Trop de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}else if($3.nbValue < arr->nbDimension){
 					ERROR("Pas assez de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
+				}
+				
+				if(sten->stepsToAcces != NULL){
+					instructionListFree(sten->stepsToAcces);
+					sten->stepsToAcces = NULL;
 				}
 				instructionListMalloc(&(arr->stepsToAcces));
 				
@@ -617,6 +751,7 @@ hooks :
 	hooks LHOO evaluation RHOO {
 		printf("hooks LHOO evaluation RHOO -> hooks\n");
 		
+		checkNULLSymbol($3.symbolEval);
 		$$.nbValue = $1.nbValue + 1;
 		$$.instructionNumber = $1.instructionNumber;
 		instructionConcat($$.instructionNumber,$3.instructionEval);
@@ -641,6 +776,7 @@ hooks :
 	| evaluation RHOO {
 		printf("evaluation RHOO -> hooks\n");
 		
+		checkNULLSymbol($1.symbolEval);
 		$$.nbValue = 1;
 		$$.instructionNumber = $1.instructionEval;
 		PUSH_BACK($$.instructionNumber,1,"ble $s7 $0 OUTOFBOUND");
@@ -742,6 +878,7 @@ unit_init :
 	ID EQUALS evaluation {
 		printf("ID EQUALS evaluation -> variable_init\n");
 
+		checkNULLSymbol($3.symbolEval);
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja",$1); 	
 		}
@@ -950,6 +1087,7 @@ hooks_init :
 	hooks_init LHOO evaluation RHOO{
 		printf("LHOO evaluation RHOO hooks_init -> hooks_init\n");
 		
+		checkNULLSymbol($3.symbolEval);
 		$$.instructionHooksInit = $1.instructionHooksInit;
 		if(!$3.constEval){
 			$$.constHooksInit = false;
@@ -972,6 +1110,7 @@ hooks_init :
 	| evaluation RHOO {
 		printf("LHOO evaluation RHOO -> hooks_init\n");
 		
+		checkNULLSymbol($1.symbolEval);
 		$$.instructionHooksInit = $1.instructionEval;
 		if($1.constEval){
 			$$.constHooksInit = true;
@@ -1032,6 +1171,7 @@ number_serie :
 	number_serie COMMA evaluation {
 		printf("number COMMA number_serie -> number_serie\n");
 
+		checkNULLSymbol($3.symbolEval);
 		$$.nbValue = $1.nbValue+1;
 
 		instructionConcat($$.instructionNumber,$3.instructionEval);
@@ -1047,6 +1187,7 @@ number_serie :
 	| evaluation {
 		printf("number -> number_serie\n");
 
+		checkNULLSymbol($1.symbolEval);
 		$$.nbValue = 1;
 
 		PUSH_BACK($$.instructionNumber,1,"li $t1 4");
@@ -1084,6 +1225,7 @@ stencil_init :
 	ID LEMB evaluation COMMA evaluation REMB array_affect {
 		printf("stencil EQUALS LEMB suite_number REMB stencil_affect -> stencil_init\n");
 
+		checkNULLSymbol($3.symbolEval);checkNULLSymbol($5.symbolEval);
 		if(symbolsTableGetSymbolById(symbolsTable,$1) != NULL){
 			ERROR("La variable '%s' existe deja",$1); 
 		}
@@ -1223,6 +1365,7 @@ affectation :
 	variable EQUALS evaluation {
 		printf("variable EQUALS evaluation -> affectation\n");
 
+		checkNULLSymbol($3.symbolEval);
 		Array* arr = (Array*)$1->data;
 		Stencil* sten = (Stencil*)$1->data;
 		Unit* uni = (Unit*)$1->data;
@@ -1277,6 +1420,7 @@ affectation :
 	| variable AFFECT evaluation {
 		printf("variable AFFECT evaluation -> affectation\n");
 
+		checkNULLSymbol($3.symbolEval);
 		Array* arr = (Array*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		Stencil* sten = (Stencil*)$1->data;
@@ -1380,6 +1524,7 @@ for :
 	FOR step_begin LBRA for_init_serie SEMI evaluation SEMI evaluations_serie RBRA ligne step_end {
 		printf("FOR LBRA affectations_serie SEMI evaluation SEMI evaluation RBRA ligne -> for\n");
 		
+		checkNULLSymbol($6.symbolEval);
 		if($6.constEval){
 			if($6.constInt){
 				fprintf(stdout,"WARNING boucle infini à la ligne %d\n",yylineno);
@@ -1467,16 +1612,18 @@ affectations_serie :
 
 evaluations_serie :
 // -1-----------------2-----3---------------------------------------- DONE
-	evaluations_serie COMMA evaluation{
+	evaluations_serie COMMA evaluation {
 		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
 
+		checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		instructionConcat($$,$3.instructionEval);
 		$3.instructionEval = NULL;
 
 		free($2);
 	}
-	| evaluations_serie COMMA affectation{
+// ---1-----------------2-----3-------------------------------------- DONE
+	| evaluations_serie COMMA affectation {
 		printf("evaluations_serie evaluation COMMA -> evaluations_serie\n");
 
 		$$ = $1;
@@ -1489,6 +1636,7 @@ evaluations_serie :
 	| evaluation {
 		printf("evaluation -> evaluations_serie\n");
 
+		checkNULLSymbol($1.symbolEval);
 		$$ = $1.instructionEval;
 	}
 // ---1-------------------------------------------------------------- DONE
@@ -1505,6 +1653,7 @@ while :
 	WHILE LBRA evaluation RBRA step_begin ligne step_end {
 		printf("WHILE LBRA evaluation RBA ligne -> while\n");
 		
+		checkNULLSymbol($3.symbolEval);
 		if($3.constEval){
 			if($3.constInt){
 				fprintf(stdout,"WARNING boucle infini à la ligne %d\n",yylineno);
@@ -1544,6 +1693,7 @@ if :
 	IF LBRA evaluation RBRA step_begin ligne step_end else {
 		printf("IF LBRA evaluation RBRA ligne else -> if\n");
 		
+		checkNULLSymbol($3.symbolEval);
 		if($3.constEval){
 			instructionListFree($3.instructionEval);
 			$3.instructionEval = NULL;
@@ -1605,6 +1755,7 @@ evaluation :
 	evaluation COMPARATOR_OR evaluation {
 		printf("evaluation COMPARATOR_OR evaluation -> evaluation\n");
 
+		checkNULLSymbol($1.symbolEval);checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
@@ -1625,13 +1776,15 @@ evaluation :
 			++labelCounter;
 		}
 		$$.constEval = $1.constEval && $3.constEval; 
-
+		
+		$$.symbolEval = NULL;
 		free($2);
 	}
 // ---1----------2--------------3------------------------------------ DONE
 	| evaluation COMPARATOR_AND evaluation {
 		printf("evaluation COMPARATOR_AND evaluation -> evaluation\n");
 		
+		checkNULLSymbol($1.symbolEval);checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
@@ -1652,13 +1805,15 @@ evaluation :
 			++labelCounter;	
 		}
 		$$.constEval = $1.constEval && $3.constEval; 
-
+		
+		$$.symbolEval = NULL;
 		free($2);
 	}
 // ---1----------2-------------------3------------------------------- DONE 
 	| evaluation COMPARATOR_EQUALITY evaluation {
 		printf("evaluation COMPARATOR_EQUALITY evaluation -> evaluation\n");
 
+		checkNULLSymbol($1.symbolEval);checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
@@ -1690,6 +1845,7 @@ evaluation :
 		}
 		$$.constEval = $1.constEval && $3.constEval; 
 
+		$$.symbolEval = NULL;
 		free($2);
 	}
 // ---1----------2--------------------3------------------------------ DONE 
@@ -1697,6 +1853,7 @@ evaluation :
 		printf("evaluation COMPARATOR_SUPREMACY evaluation -> evaluation\n");
 		char inst[4];
 
+		checkNULLSymbol($1.symbolEval);checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
@@ -1734,13 +1891,15 @@ evaluation :
 			++labelCounter;	
 		}
 		$$.constEval = $1.constEval && $3.constEval; 
-
+		
+		$$.symbolEval = NULL;
 		free($2);
 	}
 // ---1----------2-----------------3--------------------------------- DONE
 	| evaluation OPERATOR_ADDITION evaluation {
 		printf("evaluation OPERATOR_ADDITION evaluation -> evaluation\n");
 
+		checkNULLSymbol($1.symbolEval);checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
@@ -1763,6 +1922,7 @@ evaluation :
 			}
 		}
 		$$.constEval = $1.constEval && $3.constEval; 
+		$$.symbolEval = NULL;
 
 		free($2);
 	}
@@ -1770,6 +1930,7 @@ evaluation :
 	| evaluation OPERATOR_MULTI evaluation {
 		printf("evaluation OPERATOR_MULTI evaluation -> evaluation\n");
 		
+		checkNULLSymbol($1.symbolEval);checkNULLSymbol($3.symbolEval);
 		$$ = $1;
 		if($1.constEval && $3.constEval){
 			instructionReAlloc(&$$.instructionEval);
@@ -1807,6 +1968,7 @@ evaluation :
 			}			
 		}
 		$$.constEval = $1.constEval && $3.constEval; 
+		$$.symbolEval = NULL;
 		free($2);
 	}
 // ---1----2----------3---------------------------------------------- DONE
@@ -1835,6 +1997,7 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"add $sp $sp %d",4*4);
 		}
 
+		$$.symbolEval = NULL;
 		free($1);
 		free($3);
 	}
@@ -1842,6 +2005,7 @@ evaluation :
 	| PRINTI LBRA evaluation RBRA {
 		printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
 		
+		checkNULLSymbol($3.symbolEval);
 		$$ = $3;
 		PUSH_BACK($$.instructionEval,1,"move $a0 $t0");
 		PUSH_BACK($$.instructionEval,1,"li $v0 1");
@@ -1849,13 +2013,14 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"li $t0 0");
 		$$.constEval = false;
 
+		$$.symbolEval = NULL;
 		free($1);
 		free($2);
 		free($4);
 	}
 // ---1-----2----3--------------------------------------------------- DONE
 	| SCANI LBRA RBRA {
-		printf("PRINTI LBRA evaluation RBRA -> evaluation\n");
+		printf("PRINTI LBRA RBRA -> evaluation\n");
 		
 		instructionListMalloc(&$$.instructionEval);
 		PUSH_BACK($$.instructionEval,1,"li $v0 5");
@@ -1863,6 +2028,7 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"move $t0 $v0");
 		$$.constEval = false;
 
+		$$.symbolEval = NULL;
 		free($1);
 		free($2);
 		free($3);
@@ -1880,6 +2046,7 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"li $t0 0");
 		$$.constEval = false;
 
+		$$.symbolEval = NULL;
 		free($1);
 		free($2);
 		free($3);
@@ -1889,6 +2056,7 @@ evaluation :
 	| OPERATOR_NEGATION evaluation {
 		printf("OPERATOR_NEGATION evaluation -> evaluation\n");
 		
+		checkNULLSymbol($2.symbolEval);
 		$$ = $2;
 		if($$.constEval){
 			$$.constInt = !$$.constInt;
@@ -1903,7 +2071,8 @@ evaluation :
 			PUSH_BACK($$.instructionEval,1,"OPPE_NEG_%llu_FIN :",labelCounter);
 			++labelCounter;		
 		}
-
+		
+		$$.symbolEval = NULL;
 		free($1);
 	}
 // ---1-------------------------------------------------------------- DONE
@@ -1914,6 +2083,7 @@ evaluation :
 		PUSH_BACK($$.instructionEval,1,"li $t0 %d",$1);
 		$$.constEval = true;
 		$$.constInt = $1;
+		$$.symbolEval = NULL;
 	}
 // ---1-------------------------------------------------------------- DONE
 	| variable_incr	{
@@ -1921,26 +2091,27 @@ evaluation :
 		
 		$$ = $1;
 	}
-// ---1--2----3------------------------------------------------------ DONE TODO args
-	| ID LBRA RBRA {
+// ---1-------------2---------3-------------------------------------- DONE
+	| function_call arguments RBRA {
 		printf("variable -> variable_incr\n");
-	
+		int i;
+		
 		instructionListMalloc(&$$.instructionEval);
-		Symbol sym = symbolsTableGetSymbolById(functionsTable,$1);
-		if( sym == NULL){
-			ERROR("Référence inconue vers la fonction '%s' ",$1);	
-		}
-		Function* fun = sym->data;
-		if( sym->type != function ){
-			ERROR("Symbole inatendu '%s'",$1);
-		}
 		$$.constEval = false;
+		$$.symbolEval = NULL;
+		Function* fun = funCallStack[funCallLength-1];
+		
+		//stack les variables utiliser dans la fonction
 		instructionCopy($$.instructionEval,fun->stackInstructions);
+		instructionConcat($$.instructionEval,$2.instructionArgs);
 		PUSH_BACK($$.instructionEval,1,"jal %s",fun->mipsId);
+		//unstack les variables utiliser dans la fonction
 		instructionCopy($$.instructionEval,fun->unStackInstructions);
+		
+		instructionStackUnstackUsedRegister($$.instructionEval);
 
-		free($1);
-		free($2);
+		funCallStack = (void*)realloc(funCallStack,(--funCallLength)*sizeof(void*));
+		
 		free($3);
 	}
 	;
@@ -2014,6 +2185,7 @@ variable_incr :
 				break;
 		}
 
+		$$.symbolEval = NULL;
 		free($1);
 	}
 // ---1--------2----------------------------------------------------- DONE
@@ -2089,9 +2261,10 @@ variable_incr :
 				break;
 		}
 
+		$$.symbolEval = NULL;
 		free($2);
 	}
-// ---1--------2----------------3------------------------------------
+// ---1--------2----------------3------------------------------------ DONE
 	| variable OPERATOR_STENCIL variable {
 		printf("variable OPERATOR_STENCIL variable -> variable_incr\n");
 
@@ -2203,6 +2376,7 @@ variable_incr :
 		//unstack sten
 		$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,sArr);
 
+		$$.symbolEval = NULL;
 		free($2);
 	}
 // ---1-------------------------------------------------------------- DONE
@@ -2215,6 +2389,7 @@ variable_incr :
 		Stencil* sten = (Stencil*)$1->data;
 		Unit* uni = (Unit*)$1->data;
 		ConstUnit* cons = (ConstUnit*)$1->data;
+		$$.symbolEval = NULL;
 		switch($1->type){
 			case unit :
 				if( uni->init == false ){
@@ -2228,19 +2403,25 @@ variable_incr :
 				$$.constInt = cons->value;
 				break;
 			case array :
-				instructionConcat($$.instructionEval,arr->stepsToAcces);
-				arr->stepsToAcces = NULL;
-				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
-				break;
+				if(arr->stepsToAcces == NULL){
+					$$.symbolEval = $1;
+				}else{
+					instructionConcat($$.instructionEval,arr->stepsToAcces);
+					arr->stepsToAcces = NULL;
+					PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
+					$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
+					$$.symbolEval = NULL;
+				}break;
 			case stencil :
 				if(sten->stepsToAcces == NULL){
-					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
+					$$.symbolEval = $1;
+				}else{
+					instructionConcat($$.instructionEval,sten->stepsToAcces);
+					sten->stepsToAcces = NULL;
+					PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
+					$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
+					$$.symbolEval = NULL;
 				}
-				instructionConcat($$.instructionEval,sten->stepsToAcces);
-				sten->stepsToAcces = NULL;
-				PUSH_BACK($$.instructionEval,1,"lw $t0 0($s4)");
-				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			default :
 				ERROR("Symbole inatendu '%u'",$1->type);
@@ -2270,6 +2451,221 @@ number :
 	}
 	;
 
+//__________________________________________________________________________________
+	
+function_call :
+// -1--2------------------------------------------------------------- DONE
+	ID LBRA {
+		Symbol sym = symbolsTableGetSymbolById(functionsTable,$1);
+		if( sym == NULL){
+			ERROR("Référence inconue vers la fonction '%s' ",$1);	
+		}
+		Function* fun = sym->data;
+		if( sym->type != function ){
+			ERROR("Symbole inatendu '%s'",$1);
+		}
+		
+		if(funCallLength = 0){
+			funCallStack = (void**) malloc(sizeof(void*));
+			funCallStack[funCallLength++] = fun;
+		}else{
+			funCallStack = (void **)realloc(funCallStack,(funCallLength+1)*sizeof(void*));
+			funCallStack[funCallLength++] = fun;
+		}
+		
+		free($1);
+		free($2);
+	}
+	;
+	
+//__________________________________________________________________________________
+
+arguments :
+// -1---------------------------------------------------------------- DONE
+	arguments_serie {
+		$$.instructionArgs = $1.instructionArgs;
+		$$.nbArgs = $1.nbArgs;
+		Function* fun = funCallStack[funCallLength-1];
+		if(fun->nbArgs != $1.nbArgs){
+			ERROR("Pas suffisamment d'arguments pour la fonction %s",fun->id);
+		}
+	}
+// ------------------------------------------------------------------ DONE
+	| { 
+		instructionListMalloc(&$$.instructionArgs);
+		$$.nbArgs = 0;
+	}
+	;
+
+//__________________________________________________________________________________
+
+arguments_serie : 
+// -1---------------2-----3------------------------------------------ DONE
+	arguments_serie COMMA evaluation {
+		$$.instructionArgs = $1.instructionArgs;
+		$$.nbArgs = $1.nbArgs;
+		
+		
+		Function* fun = funCallStack[funCallLength-1];
+		Symbol symFun = getSymbolByIdx(fun->argumentsTable,$$.nbArgs);
+		Symbol symEval = $3.symbolEval;
+		Array* arr;
+		Stencil* sten;
+		Unit * unitFun;
+		Array* arrFun;
+		Stencil* stenFun;
+		if(symFun == NULL){
+			ERROR("Trop d'arguments pour la fonction %s",fun->id);
+		}
+		switch(symFun->type){
+			case unit :
+				if(symEval == NULL){
+					unitFun = (Unit*)symFun->data;
+					
+					instructionConcat($$.instructionArgs,$3.instructionEval);
+					PUSH_BACK($$.instructionArgs,1,"sw $t0 %s",unitFun->mipsId);
+				}else if(symEval->type == array){
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu int recu tableau",$$.nbArgs+1,fun->id);
+				}else{ //stencil 
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu int recu stencil",$$.nbArgs+1,fun->id);
+				}
+				break;
+			case array :
+				if(symEval == NULL){
+						ERROR("Erreur de parametre n°%d de la fonction %s : attendu tableau recu int",$$.nbArgs+1,fun->id);
+				}else if(symEval->type == array){
+					arr = (Array*)symEval->data;
+					arrFun = (Array*)symFun->data;
+					
+					instructionListFree($3.instructionEval);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",arrFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_multiplicator",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_multiplicator",arrFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_verificator",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_verificator",arrFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_accesTable",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_accesTable",arrFun->mipsId);
+				}else{ //stencil 
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu tableau recu stencil",$$.nbArgs+1,fun->id);
+				}
+				break;
+			case stencil :
+				if(symEval == NULL){
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu stencil recu int",$$.nbArgs+1,fun->id);
+				}else if(symEval->type == array){
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu stencil recu tableau",$$.nbArgs+1,fun->id);
+				}else{ //stencil 
+					sten = (Stencil*)symEval->data;
+					stenFun = (Stencil*)symFun->data;
+					
+					instructionListFree($3.instructionEval);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_multiplicator",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_multiplicator",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_verificator",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_verificator",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_accesTable",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_accesTable",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_nbDimension",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_nbDimension",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_nbNeighbourg",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_nbNeighbourg",stenFun->mipsId);
+				}
+				break;
+			default :
+				ERROR("Symbole Inatendu");
+		}
+	
+		$$.nbArgs++;
+		free($2);
+	}
+// ---1-------------------------------------------------------------- DONE
+	| evaluation {
+		$$.nbArgs = 0;
+		Function* fun = funCallStack[funCallLength-1];
+		Symbol symFun = getSymbolByIdx(fun->argumentsTable,$$.nbArgs);
+		Symbol symEval = $1.symbolEval;
+		Array* arr;
+		Stencil* sten;
+		Unit * unitFun;
+		Array* arrFun;
+		Stencil* stenFun;
+		if(symFun == NULL){
+			ERROR("Trop d'arguments pour la fonction %s",fun->id);
+		}
+		switch(symFun->type){
+			case unit :
+				if(symEval == NULL){
+					unitFun = (Unit*)symFun->data;
+					
+					$$.instructionArgs = $1.instructionEval;
+					PUSH_BACK($$.instructionArgs,1,"sw $t0 %s",unitFun->mipsId);
+				}else if(symEval->type == array){
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu int recu tableau",$$.nbArgs+1,fun->id);
+				}else{ //stencil 
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu int recu stencil",$$.nbArgs+1,fun->id);
+				}
+				break;
+			case array :
+				if(symEval == NULL){
+						ERROR("Erreur de parametre n°%d de la fonction %s : attendu tableau recu int",$$.nbArgs+1,fun->id);
+				}else if(symEval->type == array){
+					arr = (Array*)symEval->data;
+					arrFun = (Array*)symFun->data;
+					
+					if(arr->nbDimension != arrFun->nbDimension){
+						ERROR("Erreur de parametre n°%d de la fonction %s : dimention incompatible attendu %d recu %d",$$.nbArgs+1,fun->id,arrFun->nbDimension,arr->nbDimension);
+					}
+					
+					instructionListFree($1.instructionEval);
+					instructionListMalloc(&$$.instructionArgs);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",arrFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_multiplicator",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_multiplicator",arrFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_verificator",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_verificator",arrFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_accesTable",arr->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_accesTable",arrFun->mipsId);
+				}else{ //stencil 
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu tableau recu stencil",$$.nbArgs+1,fun->id);
+				}
+				break;
+			case stencil :
+				if(symEval == NULL){
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu stencil recu int",$$.nbArgs+1,fun->id);
+				}else if(symEval->type == array){
+					ERROR("Erreur de parametre n°%d de la fonction %s : attendu stencil recu tableau",$$.nbArgs+1,fun->id);
+				}else{ //stencil 
+					sten = (Stencil*)symEval->data;
+					stenFun = (Stencil*)symFun->data;
+					
+					instructionListFree($1.instructionEval);
+					instructionListMalloc(&$$.instructionArgs);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_multiplicator",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_multiplicator",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_verificator",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_verificator",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_accesTable",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_accesTable",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_nbDimension",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_nbDimension",stenFun->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_nbNeighbourg",sten->mipsId);
+					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s_nbNeighbourg",stenFun->mipsId);
+				}
+				break;
+			default :
+				ERROR("Symbole Inatendu");
+		}
+		
+		$$.nbArgs++;
+	}
+	;	
+	
 %%//==============================================================================================
 
 void clearProg()
@@ -2306,4 +2702,14 @@ void yyerror (char const *s)
 {
 	fprintf(stderr,"erreur : %s a la ligne %d\n",s,yylineno);
 	exit(EXIT_SUCCESS);
+}
+
+void checkNULLSymbol(Symbol s){
+	if(s != NULL){
+		if(s->type == array){
+			ERROR("Utilisation incorrect du tableau %s",((Array*)s->type)->id);
+		}else{//stencil
+			ERROR("Utilisation incorrect du stencil %s",((Stencil*)s->type)->id);
+		}
+	}
 }

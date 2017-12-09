@@ -12,6 +12,7 @@ extern int mainFound;
 
 void symbolsTableMalloc(SymbolsTable* l){
 	*l = (SymbolsTable)malloc(sizeof(struct s_symbol*));
+	memset(*l, 0, sizeof(struct s_symbol*));
 	**l = NULL;
 }
 
@@ -25,6 +26,8 @@ void symbolsTableFreeBis(Symbol n){
 				((Function*)n->data)->stackInstructions = NULL;
 				instructionListFree(((Function*)n->data)->unStackInstructions);
 				((Function*)n->data)->unStackInstructions = NULL;
+				symbolsTableFree(((Function*)n->data)->argumentsTable);
+				((Function*)n->data)->argumentsTable = NULL;
 			}
 			free(n->data);
 			n->data = NULL;
@@ -44,10 +47,12 @@ void symbolsTableFree(SymbolsTable l){
 Symbol symbolsTableAddSymbolUnitBis(Symbol n, char* c, bool init){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
 		Unit* data = (Unit*)malloc(sizeof(Unit));
+		memset(data, 0, sizeof(Unit));
 		strncpy(data->id,c,BUFFER_SIZE);
 		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Unit",variableCounter++);
-		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0    # -> %s",data->mipsId,c);
 		instructionPushBack(rootTree,temp,1);
 		data->init = init;
 		result->type = unit;
@@ -68,7 +73,9 @@ Symbol symbolsTableAddSymbolUnit(SymbolsTable l, char* c, bool init){
 Symbol symbolsTableAddSymbolDefineBis(Symbol n, char* c, int i){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
 		ConstUnit* data = (ConstUnit*)malloc(sizeof(ConstUnit));
+		memset(data, 0, sizeof(ConstUnit));
 		strncpy(data->id,c,BUFFER_SIZE);
 		data->value = i;
 		result->type = constUnit;
@@ -89,10 +96,12 @@ Symbol symbolsTableAddSymbolDefine(SymbolsTable l, char* c, int i){
 Symbol symbolsTableAddArrayBis(Symbol n, char* c){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
 		Array* data = (Array*)malloc(sizeof(Array));
+		memset(data, 0, sizeof(Array));
 		strncpy(data->id,c,BUFFER_SIZE);
 		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Array",variableCounter++);
-		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0    # -> %s",data->mipsId,c);
 		instructionPushBack(rootTree,temp,1);
 		data->nbDimension = 0;
 		data->stepsToAcces = NULL;
@@ -115,10 +124,12 @@ Symbol symbolsTableAddArray(SymbolsTable l, char* c){
 Symbol symbolsTableAddStencilBis(Symbol n, char* c){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
 		Stencil* data = (Stencil*)malloc(sizeof(Stencil));
+		memset(data, 0, sizeof(Stencil));
 		strncpy(data->id,c,BUFFER_SIZE);
 		snprintf(data->mipsId,BUFFER_SIZE,"var_%llu_Stencil",variableCounter++);
-		snprintf(temp,BUFFER_SIZE,"%s: .word 0",data->mipsId);
+		snprintf(temp,BUFFER_SIZE,"%s: .word 0    # -> %s",data->mipsId,c);
 		instructionPushBack(rootTree,temp,1);
 		data->nbNeighbour = 0;
 		data->nbDimension = 0;
@@ -143,7 +154,9 @@ Symbol symbolsTableAddStencil(SymbolsTable l, char* c){
 Symbol symbolsTableAddFunctionBis(Symbol n, char* c){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
 		Function* data = (Function*)malloc(sizeof(Function));
+		memset(data, 0, sizeof(Function));
 		strncpy(data->id,c,BUFFER_SIZE);
 		if(!strcmp(c,"main")){
 			snprintf(data->mipsId,BUFFER_SIZE,"FUN_MAIN");
@@ -152,9 +165,9 @@ Symbol symbolsTableAddFunctionBis(Symbol n, char* c){
 			snprintf(data->mipsId,BUFFER_SIZE,"FUN_%llu",variableCounter++);
 		}			
 		data->nbArgs = 0;
-		data->numOfFirstArg = variableCounter;
 		instructionListMalloc(&data->stackInstructions);
 		instructionListMalloc(&data->unStackInstructions);
+		symbolsTableMalloc(&data->argumentsTable);
 		result->type = function;
 		result->data = (void*)data;
 		result->next = NULL;
@@ -173,6 +186,7 @@ Symbol symbolsTableAddFunction(SymbolsTable l, char* c){
 Symbol symbolsTableAddStepBis(Symbol n){
 	if(n == NULL){
 		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
 		result->type = step;
 		result->next = NULL;
 		result->data = NULL;
@@ -256,14 +270,46 @@ void symbolsTableRemoveUntilStep(SymbolsTable l){
 	}
 }
 
-// Symbol symbolsTableAddSymboleAlreadyExitBis(Symbol s, void * data, Type type){
-	// if(s == NULL){
-		
-	// }else{
-		
-	// }
-// }
+Symbol symbolsTableAddSymboleAlreadyExistBis(Symbol s, Symbol s2){
+	if(s == NULL){
+		Symbol result = (Symbol)malloc(sizeof(struct s_symbol));
+		memset(result, 0, sizeof(struct s_symbol));
+		result->type = s2->type;
+		void * data;
+		switch(s2->type){
+			case unit :
+				data = (Unit*)malloc(sizeof(Unit));
+				memcpy(data,s2->data,sizeof(Unit));
+				break;
+			case array :
+				data = (Array*)malloc(sizeof(Array));
+				memcpy(data,s2->data,sizeof(Array));
+				break;
+			case stencil :
+				data = (Stencil*)malloc(sizeof(Stencil));
+				memcpy(data,s2->data,sizeof(Stencil));
+				break;
+			default :
+				return NULL;
+		}
+		result->data = data;
+		return result;
+	}else{
+		s->next = symbolsTableAddSymboleAlreadyExistBis(s->next,s2);
+		return s;	
+	}
+}
 
-// Symbol symbolsTableAddSymboleAlreadyExit(SymboleTable s, void * data, Type type){
-	
-// }
+void symbolsTableAddSymboleAlreadyExist(SymbolsTable s, Symbol s2){
+	*s = symbolsTableAddSymboleAlreadyExistBis(*s, s2);
+}
+
+Symbol getSymbolByIdxBis(Symbol s, int i){
+	if(i == 0 || s == NULL) return s;
+	return getSymbolByIdxBis(s->next,i-1);
+}
+
+Symbol getSymbolByIdx(SymbolsTable s, int i){
+	if(i < 0) return NULL;
+	return getSymbolByIdxBis(*s,i);
+}

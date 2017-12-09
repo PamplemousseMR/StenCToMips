@@ -213,3 +213,29 @@ InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList l,void * s){
 	
 	return result;
 }
+
+
+void instructionStackUnstackUsedRegister(InstructionsList l){
+	
+	
+	instructionPushForward(l,"sw $s1 0($sp)",1);
+	instructionPushForward(l,"sw $s2 4($sp)",1);
+	instructionPushForward(l,"sw $s3 8($sp)",1);
+	instructionPushForward(l,"sw $s4 12($sp)",1);
+	instructionPushForward(l,"sw $s5 16($sp)",1);
+	instructionPushForward(l,"sw $s6 20($sp)",1);
+	instructionPushForward(l,"sw $s7 24($sp)",1);
+	instructionPushForward(l,"sw $t8 28($sp)",1);
+	instructionPushForward(l,"sub $sp $sp 32",1);
+	
+	instructionPushBack(l,"lw $s1 0($sp)",1);
+	instructionPushBack(l,"lw $s2 4($sp)",1);
+	instructionPushBack(l,"lw $s3 8($sp)",1);
+	instructionPushBack(l,"lw $s4 12($sp)",1);
+	instructionPushBack(l,"lw $s5 16($sp)",1);
+	instructionPushBack(l,"lw $s6 20($sp)",1);
+	instructionPushBack(l,"lw $s7 24($sp)",1);
+	instructionPushBack(l,"lw $t8 28($sp)",1);
+	instructionPushBack(l,"add $sp $sp 32",1);
+	
+}

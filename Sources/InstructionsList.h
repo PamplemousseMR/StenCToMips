@@ -27,4 +27,5 @@ void instructionCopy(InstructionsList, InstructionsList);
 void instructionListPrintFILE(InstructionsList,FILE*);
 
 InstructionsList instructionStackUnstackS4S5S6S7T8(InstructionsList,void*);
+void instructionStackUnstackUsedRegister(InstructionsList);
 #endif
