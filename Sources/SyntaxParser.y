@@ -655,8 +655,11 @@ variable :
 		switch(s->type){
 			case unit :
 			case constUnit :
-			case stencil : 				
+			case stencil : 	
+				((Stencil*)s->data)->stepsToAcces = NULL;	
+				break;		
 			case array :
+				((Array*)s->data)->stepsToAcces = NULL;			
 				break;
 			default :
 				ERROR("Symbole inatendu '%s'",$1);
@@ -674,7 +677,7 @@ variable :
 		if( (s=symbolsTableGetSymbolById(symbolsTable,$1)) == NULL){
 			ERROR("La variable '%s' n'existe pas",$1); 
 		}
-		Array* arr = (Array*)s->data;
+		Array* arr = NULL;
 		Stencil* sten = (Stencil*)s->data;
 		switch(s->type){
 			case unit :
@@ -682,6 +685,7 @@ variable :
 				ERROR("La variable '%s' n'est pas un tableau",$1);				
 				break;
 			case array :
+				arr = (Array*)s->data;
 				if($3.nbValue > arr->nbDimension){
 					ERROR("Trop de dimmension pour le tableau '%s', attendu : %d, actuel : %d",arr->id, arr->nbDimension, $3.nbValue);			
 				}else if($3.nbValue < arr->nbDimension){
@@ -708,6 +712,7 @@ variable :
 				PUSH_BACK(arr->stepsToAcces,1,"add $s4 $s4 $t1");
 				break;
 			case stencil :
+				sten = (Stencil*)s->data;
 				if(sten->constEval && $3.nbValue > sten->nbDimension){
 					ERROR("Trop de dimmension pour le stencil '%s', attendu : %d, actuel : %d",sten->id, sten->nbDimension, $3.nbValue);			
 				}else if(sten->constEval &&  $3.nbValue < sten->nbDimension){
@@ -1366,20 +1371,23 @@ affectation :
 		printf("variable EQUALS evaluation -> affectation\n");
 
 		checkNULLSymbol($3.symbolEval);
-		Array* arr = (Array*)$1->data;
-		Stencil* sten = (Stencil*)$1->data;
-		Unit* uni = (Unit*)$1->data;
-		ConstUnit* cons = (ConstUnit*)$1->data;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* uni = NULL;
+		ConstUnit* cons = NULL;
 		switch($1->type){
 			case unit :
+				uni = (Unit*)$1->data;
 				$$ = $3.instructionEval;
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				uni->init = true;
 				break;
 			case constUnit :
+				cons = (ConstUnit*)$1->data;
 				ERROR("La variable '%s' a ete declare constante",cons->id); 
 				break;
 			case array :
+				arr = (Array*)$1->data;
 				$$ = arr->stepsToAcces;
 				if(arr->constant){
 					ERROR("Le tableau '%s' a ete declare constante",arr->id); 	
@@ -1393,6 +1401,7 @@ affectation :
 				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			case stencil :
+				sten = (Stencil*)$1->data;
 				if(sten->stepsToAcces == NULL){
 					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
@@ -1421,12 +1430,13 @@ affectation :
 		printf("variable AFFECT evaluation -> affectation\n");
 
 		checkNULLSymbol($3.symbolEval);
-		Array* arr = (Array*)$1->data;
-		Unit* uni = (Unit*)$1->data;
-		Stencil* sten = (Stencil*)$1->data;
-		ConstUnit* cons = (ConstUnit*)$1->data;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* uni = NULL;
+		ConstUnit* cons = NULL;
 		switch($1->type){
 			case unit :
+				uni = (Unit*)$1->data;
 				$$ = $3.instructionEval;
 				if(uni->init == false){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 
@@ -1448,9 +1458,11 @@ affectation :
 				PUSH_BACK($$,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
+				cons = (ConstUnit*)$1->data;
 				ERROR("La variable '%s' a ete declare constante",cons->id); 
 				break;
 			case array :
+				arr = (Array*)$1->data;
 				$$ = arr->stepsToAcces;
 				if(arr->constant){
 					ERROR("Le tableau '%s' a ete declare constante",arr->id); 
@@ -1477,6 +1489,7 @@ affectation :
 				$$ = instructionStackUnstackS4S5S6S7T8($$,$1);
 				break;
 			case stencil :
+				sten = (Stencil*)$1->data;
 				if(sten->stepsToAcces == NULL){
 					ERROR("Le stencil '%s' a besoin de crochet",sten->id); 	
 				}
@@ -1701,7 +1714,7 @@ if :
 				$$.instructionLine = $6.instructionLine;
 				$$.willReturn = $6.willReturn;
 				instructionListFree($8.instructionLine);
-				$6.instructionLine = NULL;
+				$8.instructionLine = NULL;
 			}else{
 				$$.instructionLine = $8.instructionLine;
 				$$.willReturn = $8.willReturn;
@@ -2104,6 +2117,7 @@ evaluation :
 		//stack les variables utiliser dans la fonction
 		instructionCopy($$.instructionEval,fun->stackInstructions);
 		instructionConcat($$.instructionEval,$2.instructionArgs);
+		$2.instructionArgs = NULL;
 		PUSH_BACK($$.instructionEval,1,"jal %s",fun->mipsId);
 		//unstack les variables utiliser dans la fonction
 		instructionCopy($$.instructionEval,fun->unStackInstructions);
@@ -2125,12 +2139,13 @@ variable_incr :
 
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
-		Array* arr = (Array*)$2->data;
-		Stencil* sten = (Stencil*)$2->data;
-		Unit* uni = (Unit*)$2->data;
-		ConstUnit* cons = (ConstUnit*)$2->data;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* uni = NULL;
+		ConstUnit* cons = NULL;
 		switch($2->type){
 			case unit :
+				uni = (Unit*)$2->data;
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id);
 				}
@@ -2143,9 +2158,11 @@ variable_incr :
 				PUSH_BACK($$.instructionEval,1,"sw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
+				cons = (ConstUnit*)$2->data;
 				ERROR("La variable '%s' a ete declare constante",cons->id); 
 				break;
 			case array :
+				arr = (Array*)$2->data;
 				if(arr->constant){
 					ERROR("Le tebleau '%s' a ete declare constante",arr->id); 
 				}
@@ -2162,6 +2179,7 @@ variable_incr :
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$2);
 				break;
 			case stencil :
+				sten = (Stencil*)$2->data;
 				if(sten->constant){
 					ERROR("Le stencil '%s' a ete declare constante",arr->id); 
 				}
@@ -2194,12 +2212,13 @@ variable_incr :
 		
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
-		Array* arr = (Array*)$1->data;
-		Stencil* sten = (Stencil*)$1->data;
-		Unit* uni = (Unit*)$1->data;
-		ConstUnit* cons = (ConstUnit*)$1->data;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* uni = NULL;
+		ConstUnit* cons = NULL;
 		switch($1->type){
 			case unit :
+				uni = (Unit*)$1->data;
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 	
 				}
@@ -2217,9 +2236,11 @@ variable_incr :
 				}
 				break;
 			case constUnit :
+				cons = (ConstUnit*)$1->data;
 				ERROR("La variable '%s' a ete declare constante",cons->id);
 				break;
 			case array :
+				arr = (Array*)$1->data;
 				if(arr->constant){
 					ERROR("Le tableau '%s' a ete declare constante",arr->id); 
 				}
@@ -2237,6 +2258,7 @@ variable_incr :
 				$$.instructionEval = instructionStackUnstackS4S5S6S7T8($$.instructionEval,$1);
 				break;
 			case stencil :
+				sten = (Stencil*)$1->data;
 				if(sten->constant){
 					ERROR("Le stencil '%s' a ete declare constante",arr->id); 
 				}
@@ -2385,24 +2407,27 @@ variable_incr :
 
 		instructionListMalloc(&$$.instructionEval);
 		$$.constEval = false;
-		Array* arr = (Array*)$1->data;
-		Stencil* sten = (Stencil*)$1->data;
-		Unit* uni = (Unit*)$1->data;
-		ConstUnit* cons = (ConstUnit*)$1->data;
 		$$.symbolEval = NULL;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* uni = NULL;
+		ConstUnit* cons = NULL;
 		switch($1->type){
 			case unit :
+				uni = (Unit*)$1->data;
 				if( uni->init == false ){
 					ERROR("La variable '%s' est utilise mais pas initialise",uni->id); 
 				}
 				PUSH_BACK($$.instructionEval,1,"lw $t0 %s",uni->mipsId);
 				break;
 			case constUnit :
+				cons = (ConstUnit*)$1->data;
 				PUSH_BACK($$.instructionEval,1,"li $t0 %d",cons->value);
 				$$.constEval = true;
 				$$.constInt = cons->value;
 				break;
 			case array :
+				arr = (Array*)$1->data;
 				if(arr->stepsToAcces == NULL){
 					$$.symbolEval = $1;
 				}else{
@@ -2413,6 +2438,7 @@ variable_incr :
 					$$.symbolEval = NULL;
 				}break;
 			case stencil :
+				sten = (Stencil*)$1->data;
 				if(sten->stepsToAcces == NULL){
 					$$.symbolEval = $1;
 				}else{
@@ -2509,11 +2535,11 @@ arguments_serie :
 		Function* fun = funCallStack[funCallLength-1];
 		Symbol symFun = getSymbolByIdx(fun->argumentsTable,$$.nbArgs);
 		Symbol symEval = $3.symbolEval;
-		Array* arr;
-		Stencil* sten;
-		Unit * unitFun;
-		Array* arrFun;
-		Stencil* stenFun;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* unitFun = NULL;
+		Array* arrFun = NULL;
+		Stencil* stenFun = NULL;
 		if(symFun == NULL){
 			ERROR("Trop d'arguments pour la fonction %s",fun->id);
 		}
@@ -2523,6 +2549,7 @@ arguments_serie :
 					unitFun = (Unit*)symFun->data;
 					
 					instructionConcat($$.instructionArgs,$3.instructionEval);
+					$3.instructionEval = NULL;
 					PUSH_BACK($$.instructionArgs,1,"sw $t0 %s",unitFun->mipsId);
 				}else if(symEval->type == array){
 					ERROR("Erreur de parametre n°%d de la fonction %s : attendu int recu tableau",$$.nbArgs+1,fun->id);
@@ -2538,6 +2565,7 @@ arguments_serie :
 					arrFun = (Array*)symFun->data;
 					
 					instructionListFree($3.instructionEval);
+					$3.instructionEval = NULL;
 					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",arr->mipsId);
 					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",arrFun->mipsId);
 					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_multiplicator",arr->mipsId);
@@ -2560,6 +2588,7 @@ arguments_serie :
 					stenFun = (Stencil*)symFun->data;
 					
 					instructionListFree($3.instructionEval);
+					$3.instructionEval = NULL;
 					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",sten->mipsId);
 					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",stenFun->mipsId);
 					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s_multiplicator",sten->mipsId);
@@ -2587,11 +2616,11 @@ arguments_serie :
 		Function* fun = funCallStack[funCallLength-1];
 		Symbol symFun = getSymbolByIdx(fun->argumentsTable,$$.nbArgs);
 		Symbol symEval = $1.symbolEval;
-		Array* arr;
-		Stencil* sten;
-		Unit * unitFun;
-		Array* arrFun;
-		Stencil* stenFun;
+		Array* arr = NULL;
+		Stencil* sten = NULL;
+		Unit* unitFun = NULL;
+		Array* arrFun = NULL;
+		Stencil* stenFun = NULL;
 		if(symFun == NULL){
 			ERROR("Trop d'arguments pour la fonction %s",fun->id);
 		}
@@ -2620,6 +2649,7 @@ arguments_serie :
 					}
 					
 					instructionListFree($1.instructionEval);
+					$1.instructionEval = NULL;
 					instructionListMalloc(&$$.instructionArgs);
 					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",arr->mipsId);
 					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",arrFun->mipsId);
@@ -2643,6 +2673,7 @@ arguments_serie :
 					stenFun = (Stencil*)symFun->data;
 					
 					instructionListFree($1.instructionEval);
+					$1.instructionEval = NULL;
 					instructionListMalloc(&$$.instructionArgs);
 					PUSH_BACK($$.instructionArgs,1,"lw $t1 %s",sten->mipsId);
 					PUSH_BACK($$.instructionArgs,1,"sw $t1 %s",stenFun->mipsId);
