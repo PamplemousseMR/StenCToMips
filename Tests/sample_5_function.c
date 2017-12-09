@@ -44,7 +44,7 @@ int fibo(int i)
 }
 
 int test(int i){
-	i = 12;
+	i += i;
 	return i;
 }
 
@@ -67,7 +67,7 @@ int main()
 	printf("\n-------\n");
 	printi(k);
 	printf("\n-------\n");
-	printi(fibo(10));
+	printi(fibo(test(5)));
 
 	return 0;
 }

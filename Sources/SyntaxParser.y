@@ -661,9 +661,8 @@ variable :
 			case stencil : 	
 				sten = (Stencil*)s->data;
 				if(sten->stepsToAcces != NULL){
-					fprintf(stdout,"ASRdfSDF\n");
-					/*instructionListFree(sten->stepsToAcces);*/
-					/*sten->stepsToAcces = NULL;*/
+					instructionListFree(sten->stepsToAcces);
+					sten->stepsToAcces = NULL;
 				}
 				break;		
 			case array :
