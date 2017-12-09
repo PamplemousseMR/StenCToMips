@@ -2,5 +2,3 @@ macro
 switch case default
 & et | binaire
 géré les break et continue
-commentaire /* */ marche pas
-probleme avec des commentaire // dans un /* */

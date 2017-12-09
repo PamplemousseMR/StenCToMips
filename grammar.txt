@@ -1,0 +1,292 @@
+//=================================================================================================
+//				La structure d'un programme
+//=================================================================================================
+
+programme :
+	preprocessor_instructions_serie functions_serie
+
+//__________________________________________________________________________________
+
+preprocessor_instructions_serie :
+	preprocessor_instruction preprocessor_instructions_serie
+	|
+
+//__________________________________________________________________________________
+
+preprocessor_instruction :
+	DEFINE ID number ENDLINE
+
+//__________________________________________________________________________________
+
+functions_serie :
+	function functions_serie
+	| function
+
+//__________________________________________________________________________________
+	
+function : 	
+	function_begin LBRA step_begin argument_list RBRA LEMB instructions_serie step_end REMB
+
+//__________________________________________________________________________________
+
+argument_list : 
+	argument_init_serie
+	|
+
+//__________________________________________________________________________________
+
+argument_init_serie :
+    argument_init_serie COMMA argument_init 
+    | argument_init
+
+//__________________________________________________________________________________
+
+argument_init :
+// -1----2--3-------------------------------------------------------- DONE
+    TYPE ID argument_init_hooks
+	| STENCIL ID
+
+//__________________________________________________________________________________
+
+argument_init_hooks :
+    LHOO RHOO argument_init_hooks
+    |
+
+//__________________________________________________________________________________
+
+function_begin :
+	TYPE ID
+//__________________________________________________________________________________
+
+instructions_serie :
+	ligne instructions_serie
+	| ligne
+
+//__________________________________________________________________________________
+
+ligne :
+	write_ligne_number for
+	| write_ligne_number while
+	| write_ligne_number if
+	| LEMB step_begin instructions_serie step_end REMB
+	| write_ligne_number initialisation SEMI
+	| write_ligne_number affectation SEMI
+	| write_ligne_number return SEMI
+	| write_ligne_number evaluation SEMI
+
+//__________________________________________________________________________________
+
+step_begin
+	
+//__________________________________________________________________________________
+
+step_end
+
+//__________________________________________________________________________________
+
+write_ligne_number
+
+//__________________________________________________________________________________
+
+return :
+	RETURN evaluation
+
+//=================================================================================================
+//				Les variables
+//=================================================================================================
+
+variable :
+	ID
+	| ID LHOO hooks
+
+//__________________________________________________________________________________
+
+hooks :
+	hooks LHOO evaluation RHOO
+	| evaluation RHOO
+
+//=================================================================================================
+//				Les initialisations de variables
+//=================================================================================================
+
+initialisation :
+	const TYPE variables_init_serie
+	| const STENCIL stencils_init_serie
+
+//__________________________________________________________________________________
+
+const :
+	CONST
+	|
+
+//__________________________________________________________________________________
+
+variables_init_serie :
+	variable_init COMMA variables_init_serie
+	| variable_init
+
+//__________________________________________________________________________________ 
+
+variable_init :		
+	unit_init
+	| array_init
+
+//__________________________________________________________________________________
+
+unit_init :
+	ID EQUALS evaluation
+	| ID
+	
+//__________________________________________________________________________________
+
+array_init :	
+	array_init_begin hooks_init array_affect
+
+//__________________________________________________________________________________
+
+array_affect :
+	EQUALS number_serie_serie
+	|
+
+//__________________________________________________________________________________
+
+array_init_begin : 
+	ID LHOO
+	
+//__________________________________________________________________________________
+
+hooks_init :
+	hooks_init LHOO evaluation RHOO
+	| evaluation RHOO
+
+//__________________________________________________________________________________
+
+number_serie_serie :
+	LEMB number_serie_comma REMB
+	| LEMB number_serie REMB
+
+number_serie_comma : 
+	number_serie_serie COMMA number_serie_comma
+	| number_serie_serie
+	
+//__________________________________________________________________________________
+
+number_serie :
+	number_serie COMMA evaluation
+	| evaluation
+
+//=================================================================================================
+//				Les initialisations de stencil
+//=================================================================================================
+
+stencils_init_serie :
+	stencil_init COMMA stencils_init_serie
+	| stencil_init
+//__________________________________________________________________________________
+
+stencil_init :
+	ID LEMB evaluation COMMA evaluation REMB array_affect
+
+//=================================================================================================
+//				Les affectations de variables
+//=================================================================================================
+
+affectation :
+	variable EQUALS evaluation
+	| variable AFFECT evaluation
+
+//=================================================================================================
+//				Les instructions conditionnelles
+//=================================================================================================
+
+for :
+	FOR step_begin LBRA for_init_serie SEMI evaluation SEMI evaluations_serie RBRA ligne step_end
+
+//__________________________________________________________________________________
+
+for_init_serie :
+	affectations_serie
+	| const TYPE variables_init_serie
+
+//__________________________________________________________________________________
+
+affectations_serie :
+	affectations_serie COMMA affectation
+	| affectation
+
+//__________________________________________________________________________________
+
+evaluations_serie :
+	evaluations_serie COMMA evaluation
+	| evaluations_serie COMMA affectation
+	| evaluation
+	| affectation
+
+//__________________________________________________________________________________
+
+while :
+	WHILE LBRA evaluation RBRA step_begin ligne step_end
+
+//__________________________________________________________________________________
+
+if :
+	IF LBRA evaluation RBRA step_begin ligne step_end else
+ 
+//__________________________________________________________________________________ 
+ 
+else : 
+	ELSE step_begin ligne step_end
+	| 
+
+//=================================================================================================
+//				Le retour des valeurs
+//=================================================================================================
+
+evaluation :
+	evaluation COMPARATOR_OR evaluation
+	| evaluation COMPARATOR_AND evaluation
+	| evaluation COMPARATOR_EQUALITY evaluation
+	| evaluation COMPARATOR_SUPREMACY evaluation
+	| evaluation OPERATOR_ADDITION evaluation
+	| evaluation OPERATOR_MULTI evaluation
+	| LBRA evaluation RBRA
+	| PRINTI LBRA evaluation RBRA
+	| SCANI LBRA RBRA
+	| PRINTF LBRA STRING RBRA
+	| OPERATOR_NEGATION evaluation
+	| number
+	| variable_incr
+	| function_call arguments RBRA
+
+//__________________________________________________________________________________
+
+variable_incr :
+	OPERATOR_INCREMENT variable
+	| variable OPERATOR_INCREMENT
+	| variable OPERATOR_STENCIL variable
+	| variable
+
+//__________________________________________________________________________________
+
+number :
+	NUMBER
+	| OPERATOR_ADDITION NUMBER
+
+//=================================================================================================
+//				Les fonctions
+//=================================================================================================
+		
+function_call :
+	ID LBRA
+	
+//__________________________________________________________________________________
+
+arguments :
+	arguments_serie
+	|
+
+//__________________________________________________________________________________
+
+arguments_serie : 
+	arguments_serie COMMA evaluation
+	| evaluation
