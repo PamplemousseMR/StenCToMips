@@ -1,4 +1,4 @@
-EXEC = YACCFOREVER.prog
+EXEC = StenCToMips.prog
 SRCDIR = Sources
 CCFORCEDFLAGS = -I Sources/ -c -o
 CCFLAGS = -O3
