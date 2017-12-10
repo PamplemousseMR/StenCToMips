@@ -57,7 +57,7 @@ REMB				(\})
 COMMA				(\,)
 SEMI				(\;)
 COM_SINGLE			(\/\/[^\n]*)
-COM_MULTI			(\/\*([^\*\/]|\*[^\/])*\*\/)
+COM_MULTI			(\/\*([^\*\/]|\*[^\/]|\/)*\*\/)
 STRING				(\"([^\"\n]|\\(.|\n))*\")
 USELESS				[ \t]
 UNKNOW				.
