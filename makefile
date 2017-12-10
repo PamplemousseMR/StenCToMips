@@ -5,6 +5,7 @@ CCFLAGS = -O3
 BUILD = Build
 OBJS = $(BUILD)/SyntaxParser.o $(BUILD)/LexicalParser.o $(BUILD)/SymbolsTable.o $(BUILD)/InstructionsList.o
 GCC = gcc -g
+OUTPUT = output.mips
 
 $(EXEC) : $(BUILD) $(OBJS)
 	gcc $(CCFLAGS) $(OBJS) -ly -ll -o $@ 
@@ -30,4 +31,4 @@ debug: CCFLAGS = -DDEBUG -Wall -Wextra
 debug: $(EXEC)
 
 clean :
-	rm -Rf $(EXEC) $(BUILD)	
+	rm -Rf $(EXEC) $(BUILD) $(OUTPUT)
