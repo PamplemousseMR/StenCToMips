@@ -3,6 +3,10 @@
 The goal of this project is to implement a compiler for StenC language, write in C using Lex and Yacc tools.
 This project produces a MIPS executable code corresponding to the input programs.
 
+## Travis
+
+[![Build Status](https://travis-ci.com/PamplemousseMR/StenCToMips.svg?branch=master)](https://travis-ci.com/PamplemousseMR/StenCToMips)
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
