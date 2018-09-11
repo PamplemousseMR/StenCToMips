@@ -1,6 +1,3 @@
-Build/
-StenCToMips\.prog
-
-output\.mips
-
-Simple_MIPS_Quick_Reference\.pdf
+Build/*
+output.mips
+stenctomips

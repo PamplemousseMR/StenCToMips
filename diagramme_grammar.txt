@@ -1,4 +1,0 @@
-macro
-switch case default
-& et | binaire
-géré les break et continue

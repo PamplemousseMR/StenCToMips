@@ -1,4 +1,4 @@
-EXEC = StenCToMips.prog
+EXEC = stenctomips
 SRCDIR = Sources
 CCFORCEDFLAGS = -I Sources/ -c -o
 CCFLAGS = -O3
@@ -31,4 +31,4 @@ debug: CCFLAGS = -DDEBUG -Wall -Wextra
 debug: $(EXEC)
 
 clean :
-	rm -Rf $(EXEC) $(BUILD) $(OUTPUT)
+	rm -r -f  $(EXEC) $(BUILD) $(OUTPUT)
