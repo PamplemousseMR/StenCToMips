@@ -1,3 +1,7 @@
 Build/*
 output.mips
 stenctomips
+
+*.pdf
+
+StenCToMips\.prog
