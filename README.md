@@ -16,7 +16,7 @@ These instructions will get you a copy of the project up and running on your loc
 - [lex](https://en.wikipedia.org/wiki/Lex_(software)) : A computer program that generates lexical analyzers. 
 - [yacc](https://en.wikipedia.org/wiki/Yacc) : A Look Ahead Left-to-Right (LALR) parser generator.
 
-### compilation
+### Compilation
 
 Compile using the makefile : `make`.
 
