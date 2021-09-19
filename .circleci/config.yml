@@ -1,0 +1,196 @@
+version: 2.1
+jobs:
+  Ubuntu-14-04:
+    docker:
+      - image: ubuntu:14.04
+    steps:
+      - checkout
+      - run: 
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get --assume-yes install make
+            apt-get --assume-yes install bison flex
+            apt-get --assume-yes install gcc-4.7 gcc-4.8
+      - run:
+          name: Build project gcc 4.7
+          command: |
+            export CC=gcc-4.7
+            make
+            make clean
+      - run:
+          name: Build project gcc 4.8
+          command: |
+            export CC=gcc-4.8
+            make
+            make clean
+
+  Ubuntu-16-04:
+    docker:
+      - image: ubuntu:16.04
+    steps:
+      - checkout
+      - run: 
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get --assume-yes install make
+            apt-get --assume-yes install bison flex
+            apt-get --assume-yes install gcc-4.7 gcc-4.8 gcc-4.7 gcc-4.9 gcc-5
+      - run:
+          name: Build project gcc 4.7
+          command: |
+            export CC=gcc-4.7
+            make
+            make clean
+      - run:
+          name: Build project gcc 4.8
+          command: |
+            export CC=gcc-4.8
+            make
+            make clean
+      - run:
+          name: Build project gcc 4.9
+          command: |
+            export CC=gcc-4.9
+            make
+            make clean
+      - run:
+          name: Build project gcc 5
+          command: |
+            export CC=gcc-5
+            make
+            make clean
+
+  Ubuntu-18-04:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: 
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get --assume-yes install make
+            apt-get --assume-yes install bison flex
+            apt-get --assume-yes install gcc-4.8 gcc-5 gcc-6 gcc-7 gcc-8
+      - run:
+          name: Build project gcc 4.8
+          command: |
+            export CC=gcc-4.8
+            make
+            make clean
+      - run:
+          name: Build project gcc 5
+          command: |
+            export CC=gcc-5
+            make
+            make clean
+      - run:
+          name: Build project gcc 6
+          command: |
+            export CC=gcc-6
+            make
+            make clean
+      - run:
+          name: Build project gcc 7
+          command: |
+            export CC=gcc-7
+            make
+            make clean
+      - run:
+          name: Build project gcc 8
+          command: |
+            export CC=gcc-8
+            make
+            make clean          
+
+  Ubuntu-20-04:
+    docker:
+      - image: ubuntu:20.04
+    steps:
+      - checkout
+      - run: 
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get --assume-yes install make
+            apt-get --assume-yes install bison flex
+            apt-get --assume-yes install gcc-7 gcc-8 gcc-9 gcc-10
+      - run:
+          name: Build project gcc 7
+          command: |
+            export CC=gcc-7
+            make
+            make clean
+      - run:
+          name: Build project gcc 8
+          command: |
+            export CC=gcc-8
+            make
+            make clean
+      - run:
+          name: Build project gcc 9
+          command: |
+            export CC=gcc-9
+            make
+            make clean
+      - run:
+          name: Build project gcc 10
+          command: |
+            export CC=gcc-10
+            make
+            make clean
+
+  Ubuntu-21-04:
+    docker:
+      - image: ubuntu:21.04
+    steps:
+      - checkout
+      - run: 
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get --assume-yes install make
+            apt-get --assume-yes install bison flex
+            apt-get --assume-yes install gcc-7 gcc-8 gcc-9 gcc-10 gcc-11
+      - run:
+          name: Build project gcc 7
+          command: |
+            export CC=gcc-7
+            make
+            make clean
+      - run:
+          name: Build project gcc 8
+          command: |
+            export CC=gcc-8
+            make
+            make clean
+      - run:
+          name: Build project gcc 9
+          command: |
+            export CC=gcc-9
+            make
+            make clean
+      - run:
+          name: Build project gcc 10
+          command: |
+            export CC=gcc-10
+            make
+            make clean
+      - run:
+          name: Build project gcc 11
+          command: |
+            export CC=gcc-11
+            make
+            make clean
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - Ubuntu-14-04
+      - Ubuntu-16-04
+      - Ubuntu-18-04
+      - Ubuntu-20-04
+      - Ubuntu-21-04
