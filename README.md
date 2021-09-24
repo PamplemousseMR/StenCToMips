@@ -3,9 +3,10 @@
 The goal of this project is to implement a compiler for StenC language, write in C using Lex and Yacc tools.
 This project produces a MIPS executable code corresponding to the input programs.
 
-## Circle-CI
+## CI
 
-[![Build Status](https://circleci.com/gh/PamplemousseMR/StenCToMips/tree/master.svg?style=svg)](https://circleci.com/gh/PamplemousseMR/StenCToMips/tree/master)
+![Build Status](https://github.com/PamplemousseMR/StenCToMips/actions/workflows/build.yml/badge.svg)
+
 
 ## Getting Started
 
